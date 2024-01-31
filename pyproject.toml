@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ttboard_tinytapeout"
+version = "0.9.2"
+authors = [
+  { name="Pat Deegan" },
+]
+description = "This library provides the DemoBoard class, which is the primary entry point to all the TinyTapeout demo pcb's RP2040 functionality, and supporting components"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://tinytapeout.com/"
+Issues = "https://github.com/TinyTapeout/tt-micropython-firmware/issues"
