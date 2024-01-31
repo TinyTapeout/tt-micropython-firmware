@@ -191,7 +191,7 @@ class DemoBoard:
         try:
             self._clock_pwm = self.project_clk.pwm(freqHz, duty_u16)
         except  Exception as e:
-            log.error(f"Could not set clock PWM: {e}")
+            log.error(f"Could not set project clock PWM: {e}")
         return self._clock_pwm
     
     def clock_project_stop(self):
@@ -277,7 +277,7 @@ class DemoBoard:
         if projConfig.has('clock_frequency'):
             if self.mode == RPMode.ASIC_MANUAL_INPUTS:
                 log.info('In "manual inputs" mode but clock freq set--setting up for CLK/RST RP ctrl')
-                self.pins.proj_clk_nrst_driven_by_RP2040(True)
+                self.pins.project_clk_nrst_driven_by_RP2040(True)
             self.clock_project_PWM(projConfig.clock_frequency)
         else:
             self.clock_project_stop()
