@@ -258,7 +258,7 @@ class Pins:
         log.debug('begin: ASIC_ON_BOARD')
         self.begin_inputs_all()
         self._begin_alwaysOut()
-        self.proj_clk_nrst_driven_by_RP2040(True)
+        self.project_clk_nrst_driven_by_RP2040(True)
         for pname in GPIOMap.all().keys():
             if pname.startswith('in'):
                 p = getattr(self, pname)
@@ -274,7 +274,7 @@ class Pins:
         self.begin_inputs_all()
         self._begin_alwaysOut()
         # leave clk and reset as inputs, for manual operation
-        self.proj_clk_nrst_driven_by_RP2040(False)
+        self.project_clk_nrst_driven_by_RP2040(False)
         # leave in* as inputs
         self._begin_muxPins()
         
@@ -284,7 +284,7 @@ class Pins:
         log.debug('begin: STANDALONE')
         self.begin_inputs_all()
         self._begin_alwaysOut()
-        self.proj_clk_nrst_driven_by_RP2040(True)
+        self.project_clk_nrst_driven_by_RP2040(True)
         
         for pname in GPIOMap.all().keys():
             if pname.startswith('out'):
@@ -297,7 +297,7 @@ class Pins:
                 
         self._begin_muxPins()
         
-    def proj_clk_nrst_driven_by_RP2040(self, rpControlled:bool):
+    def project_clk_nrst_driven_by_RP2040(self, rpControlled:bool):
     
         for pname in ['nproject_rst', 'rp_projclk']:
             p = getattr(self, pname)

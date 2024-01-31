@@ -188,7 +188,10 @@ class DemoBoard:
         self.clock_project_stop()
         if freqHz < 1: # equiv to stop 
             return 
-        self._clock_pwm = self.project_clk.pwm(freqHz, duty_u16)
+        try:
+            self._clock_pwm = self.project_clk.pwm(freqHz, duty_u16)
+        except  Exception as e:
+            log.error(f"Could not set clock PWM: {e}")
         return self._clock_pwm
     
     def clock_project_stop(self):
