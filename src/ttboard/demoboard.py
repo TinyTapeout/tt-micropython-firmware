@@ -182,14 +182,11 @@ class DemoBoard:
         '''
             Start an automatic clock for the selected project (using
             PWM).
-            @param freqHz: The frequency of the clocking, in Hz
+            @param freqHz: The frequency of the clocking, in Hz, or 0 to disable PWM
             @param duty_u16: Optional duty cycle (0-0xffff), defaults to 50%  
         '''
-        self.clock_project_stop()
-        if freqHz < 1: # equiv to stop 
-            return 
         try:
-            self._clock_pwm = self.project_clk.pwm(freqHz, duty_u16)
+            self._clock_pwm = self.pins.rp_projclk.pwm(freqHz, duty_u16)
         except  Exception as e:
             log.error(f"Could not set project clock PWM: {e}")
         return self._clock_pwm
@@ -202,8 +199,7 @@ class DemoBoard:
         if self._clock_pwm is None:
             return 
         
-        self._clock_pwm.deinit()
-        self._clock_pwm = None
+        self.clock_project_PWM(0)
     
     
     def apply_user_config(self, design:Design):
