@@ -1,4 +1,4 @@
-name: CLI Release
+name: UF2 Release
 on:
   workflow_dispatch:
   push:
