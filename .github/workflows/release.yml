@@ -16,6 +16,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
+        path: sdk
     # get the RPI UF2
     - name: get the os
       run: wget -O /tmp/rp2-pico.uf2 "https://micropython.org/resources/firmware/$RPOS_UF2FILE"
@@ -28,7 +29,7 @@ jobs:
     # build it
     - run: |
            pip install uf2utils
-           python -m uf2utils.examples.custom_pico --fs_root tt-micropython-firmware/src --upython /tmp/rp2-pico.uf2 --out /tmp/tt-demo-rp2040.uf2
+           python -m uf2utils.examples.custom_pico --fs_root $GITHUB_WORKSPACE/sdk/src --upython /tmp/rp2-pico.uf2 --out /tmp/tt-demo-rp2040.uf2
     - name: Upload Release
       uses: ncipollo/release-action@v1
       with:
