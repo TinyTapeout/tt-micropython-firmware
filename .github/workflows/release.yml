@@ -1,4 +1,4 @@
-name: UF2 Release
+name: UF2 Generate and Release
 on:
   workflow_dispatch:
   push:
