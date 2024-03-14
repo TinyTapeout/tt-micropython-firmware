@@ -1,0 +1,40 @@
+name: CLI Release
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+jobs:
+  create-release:
+    # ubuntu
+    env:
+      RPOS_UF2FILE: RPI_PICO-20240222-v1.22.2.uf2
+    runs-on: ubuntu-latest
+    steps:
+    # need the repo checked out
+    - name: checkout repo
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    # get the RPI UF2
+    - name: get the os
+      run: wget -O /tmp/rp2-pico.uf2 "https://micropython.org/resources/firmware/$RPOS_UF2FILE"
+    # get python setup
+    - name: build the merged UF2
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    # build it
+    - run: |
+           pip install uf2utils
+           python -m uf2utils.examples.custom_pico --fs_root tt-micropython-firmware/src --upython /tmp/rp2-pico.uf2 --out /tmp/tt-demo-rp2040.uf2
+    - name: Upload Release
+      uses: ncipollo/release-action@v1
+      with:
+          artifacts: '/tmp/tt-demo-rp2040.uf2'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true
+    
+    
+    
