@@ -68,6 +68,12 @@ class PowerOnSelfTest:
     
     
     @classmethod 
+    def both_project_buttons_held(cls):
+        return cls.read_pin('rp_projclk') and not cls.read_pin('nproject_rst')
+    
+# could also check
+    
+    @classmethod 
     def first_boot(cls):
         return FirstBoot.is_first_boot()
     

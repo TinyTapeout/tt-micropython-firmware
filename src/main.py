@@ -30,7 +30,7 @@ This code accesses the PowerOnSelfTest functions to:
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 import ttboard.util.time as time
-# from ttboard.mode import RPMode
+from ttboard.mode import RPMode
 from ttboard.demoboard import DemoBoard, Pins
 from ttboard.boot.post import PowerOnSelfTest
 
@@ -107,14 +107,10 @@ if PowerOnSelfTest.first_boot():
     
 
 
-# take a look at project clock pin on startup
-# make note if it was HIGH, we'll use this as a flag 
-# to run additional POST tests
+# take a look at project user button state at startup
 # all this "raw" pin access should happen before the DemoBoard object 
 # is instantiated
-startup_with_clock_high = PowerOnSelfTest.read_pin('rp_projclk')
-# could also check
-# PowerOnSelfTest.read_pin('nproject_rst')
+run_post_tests = PowerOnSelfTest.both_project_buttons_held()
 # or get a dict with PowerOnSelfTest.read_all_pins()
 
 
@@ -122,11 +118,11 @@ tt = startup()
 
 # run a test if clock button held high 
 # during startup
-if startup_with_clock_high:
+if run_post_tests:
     print('\n\nDoing startup test!')
     
     post = PowerOnSelfTest(tt)
-    if post.test_bidirs():
+    if not post.test_bidirs():
         print('ERRORS encountered while running POST bidir test!')
     else:
         print('Startup test GOOD')
