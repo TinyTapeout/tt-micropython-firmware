@@ -41,7 +41,12 @@ if IsRP2040:
     
     def basicConfig(level:int):
         global DefaultLogLevel
+        global RPLoggers
         DefaultLogLevel = level
+        for logger in RPLoggers.values():
+            logger.loglevel = level
+            
+        
 else:
     # on desktop, use normal logging
     import logging

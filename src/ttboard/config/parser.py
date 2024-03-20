@@ -52,6 +52,7 @@ input_byte = 0b11001000
 '''
 
 class ConfigParser:
+    
     def __init__(self):
         self.convertToBools = {
             'true': True,

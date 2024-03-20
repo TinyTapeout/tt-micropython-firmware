@@ -6,6 +6,7 @@ Created on Jan 22, 2024
 '''
 from ttboard.config.parser import ConfigParser
 from ttboard.mode import RPMode
+from ttboard.config.config_file import ConfigFile
 
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
@@ -33,46 +34,33 @@ class UserProjectConfig:
 
     
 
-class UserConfig:
-    def __init__(self, iniFile:str='config.ini'):
-        self._inifile = iniFile 
-        self._config = ConfigParser()
-        self.load(iniFile)
+class UserConfig(ConfigFile):
+    def __init__(self, ini_filepath:str='config.ini'):
+        super().__init__(ini_filepath)
         
-    def load(self, file:str):
-        try:
-            self._config.read(file)
-            log.info(f'Loaded config {file}')
-        except: # no FileNotFoundError on uPython
-            log.warn(f'Could not load config file {file}')
-        
-    @property 
-    def config(self):
-        return self._config
-    
     @property 
     def default_mode(self):
-        if not self.config.has_option('DEFAULT', 'mode'):
+        if not self.has_option('DEFAULT', 'mode'):
             return None 
         
-        modeStr = self.config.get('DEFAULT', 'mode')
+        modeStr = self.get('DEFAULT', 'mode')
         return RPMode.from_string(modeStr)
         
     @property
     def default_project(self):
-        if self.config.has_option('DEFAULT', 'project'):
-            return self.config.get('DEFAULT', 'project')
+        if self.has_option('DEFAULT', 'project'):
+            return self.get('DEFAULT', 'project')
         return None
     
     @property 
     def default_start_in_reset(self):
-        if self.config.has_option('DEFAULT', 'start_in_reset'):
-            return self.config.get('DEFAULT', 'start_in_reset')
+        if self.has_option('DEFAULT', 'start_in_reset'):
+            return self.get('DEFAULT', 'start_in_reset')
         return None
         
     
     def has_project(self, name:str):
-        if self.config.has_section(name):
+        if self.has_section(name):
             return True 
         return False 
     
@@ -80,7 +68,7 @@ class UserConfig:
         if not self.has_project(name):
             return None 
         
-        return UserProjectConfig(name, self.config)
+        return UserProjectConfig(name, self.ini_file)
     
     
         

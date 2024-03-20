@@ -1,32 +1,47 @@
 '''
 Created on Jan 9, 2024
 
+Code here, in main.py, runs on every power-up.
+
+You can put anything you like in here, including any utility functions 
+you might want to have access to when connecting to the REPL.  
+
+If you want to use the SDK, all
+you really need is something like
+  
+      tt = DemoBoard()
+
+Then you can 
+    # enable test project
+    tt.shuttle.tt_um_test.enable()
+
+and play with i/o as desired.
+
+This code accesses the PowerOnSelfTest functions to:
+
+    * check if the project clock button was held during powerup;
+    * if so, run a basic test of the bidir pins (and implicitly of 
+      the mux, output reads etc); and
+    * and check if this was a first boot, to run special codes in
+      such cases
+
+
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 import ttboard.util.time as time
-from ttboard.mode import RPMode
-from ttboard.demoboard import DemoBoard
-from ttboard.pins.gpio_map import GPIOMap
+# from ttboard.mode import RPMode
+from ttboard.demoboard import DemoBoard, Pins
+from ttboard.boot.post import PowerOnSelfTest
 
-# Pin import to provide access in REPL
-# to things like tt.uio3.mode = Pin.OUT
-from ttboard.pins.upython import Pin
 
 tt = None
-startup_with_clock_high = False
 def startup():
-    global tt, startup_with_clock_high
-    
-    # take a look at project clock pin on startup
-    # make note if it was HIGH
-    clkPin = Pin(GPIOMap.RP_PROJCLK, Pin.IN)
-    startup_with_clock_high = clkPin()
     
     # construct DemoBoard
     # either pass an appropriate RPMode, e.g. RPMode.ASIC_ON_BOARD
     # or have "mode = ASIC_ON_BOARD" in ini DEFAULT section
-    tt = DemoBoard()
+    ttdemoboard = DemoBoard()
 
     
     print("\n\n")
@@ -39,6 +54,8 @@ def startup():
     print("Config of pins may be done using mode attribute, e.g. ")
     print("tt.uio3.mode = Pins.OUT")
     print("\n\n")
+    
+    return ttdemoboard
 
 def autoClockProject(freqHz:int):
     tt.clock_project_PWM(freqHz)
@@ -70,38 +87,6 @@ def test_design_tnt_counter():
     except KeyboardInterrupt:
         tt.clock_project_stop()
         
-def test_bidirs(sleepTimeMillis:int=1):
-    # select the project from the shuttle
-    tt.shuttle.tt_um_test.enable()
-    curMode = tt.mode 
-    tt.mode = RPMode.ASIC_ON_BOARD # make sure we're controlling everything
-    
-    tt.in0(0) # want this low
-    tt.clock_project_PWM(1e3) # clock it real good
-    
-    for bp in tt.bidirs:
-        bp.mode = Pin.OUT
-        bp(0) # start low
-    
-    errCount = 0
-    for i in range(0xff):
-        tt.bidir_byte = i 
-        time.sleep_ms(sleepTimeMillis)
-        outbyte = tt.output_byte
-        if outbyte !=  i:
-            print(f'MISMATCH between bidir val {i} and output {outbyte}')
-            errCount += 1
-    
-    if errCount:
-        print(f'{errCount} ERRORS encountered??!')
-    else:
-        print('Bi-directional pins acting pretty nicely as inputs!')
-        
-    # reset everything
-    tt.mode = curMode
-    
-    return errCount
-            
     
 
 def test_neptune():
@@ -113,17 +98,38 @@ def test_neptune():
     
     tt.in5.pwm(0) # disable pwm
 
-startup()
+
+if PowerOnSelfTest.first_boot():
+    print('First boot!')
+    PowerOnSelfTest.handle_first_boot()
+    
+
+
+# take a look at project clock pin on startup
+# make note if it was HIGH, we'll use this as a flag 
+# to run additional POST tests
+# all this "raw" pin access should happen before the DemoBoard object 
+# is instantiated
+startup_with_clock_high = PowerOnSelfTest.read_pin('rp_projclk')
+# could also check
+# PowerOnSelfTest.read_pin('nproject_rst')
+# or get a dict with PowerOnSelfTest.read_all_pins()
+
+
+tt = startup()
 
 # run a test if clock button held high 
 # during startup
 if startup_with_clock_high:
     print('\n\nDoing startup test!')
-    if test_bidirs():
-        print('ERRORS encountered!')
+    
+    post = PowerOnSelfTest(tt)
+    if post.test_bidirs():
+        print('ERRORS encountered while running POST bidir test!')
     else:
         print('Startup test GOOD')
     print('\n\n')
 
 #tt.shuttle.tt_um_psychogenic_neptuneproportional.enable()
 print(tt)
+print()

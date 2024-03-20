@@ -10,3 +10,15 @@ try:
     IsRP2040 = True 
 except:
     pass
+
+if IsRP2040:
+    def isfile(file_path:str):
+        try:
+            f = open(file_path, 'r')
+        except OSError:
+            return False 
+        f.close()
+        return True 
+else:
+    import os.path 
+    isfile = os.path.isfile

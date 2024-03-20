@@ -71,6 +71,10 @@ class DemoBoard:
         # interfaces 
         self.user_config = UserConfig(iniFile)
         
+        log_level = self.user_config.log_level
+        if log_level is not None:
+            logging.basicConfig(level=log_level)
+        
         if mode is not None:
             self.default_mode = mode 
         else:
