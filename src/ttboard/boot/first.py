@@ -1,6 +1,31 @@
 '''
 Created on Mar 20, 2024
 
+First boot management
+This class is used to:
+ * detect "first boot" (by presence of FirstBootIniFile, '/first_boot.ini')
+ * run tests as specified
+ * optionally clear out the first boot init file
+
+The ini file has 4 types of section
+[DEFAULT] -- just basic defaults
+and 3 others, which all have
+ - an optional message, to print out
+ - a command, an operation to run
+ 
+[setup] will execute the operation
+[run_*] (any number of sections) will run tests, having access to a DemoBoard instance
+[onsuccess] assuming all tests are valid, if this section is present the command
+can let the system know it should clear out the ini file.
+
+The message is a simple string.
+The command is actual evaluated python, however this must be 
+  * a function call
+  * for a function defined in ttboard.boot.firstboot_operations
+
+[run_*] sections will be executed in alphanumeric sort order.
+
+
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
@@ -15,9 +40,15 @@ import ttboard.logging as logging
 log = logging.getLogger(__name__)
 
 class FirstBootConfig(ConfigFile):
+    '''
+        Wrapper for the first_boot.ini config file
+    '''
     pass
 
 class FirstBootOperation:
+    '''
+        An executable section from the first boot ini file.
+    '''
     def __init__(self, section_name:str, config:FirstBootConfig):
         self.section = section_name 
         self._config = config 
@@ -54,6 +85,9 @@ class RunOperation(FirstBootOperation):
         
         
 class FirstBoot:
+    '''
+        The system level manager for first boot functionality
+    '''
     
     FirstBootIniFile = '/first_boot.ini'
     

@@ -99,6 +99,8 @@ def test_neptune():
     tt.in5.pwm(0) # disable pwm
 
 
+# check if this is the first boot, if so, 
+# handle that
 if PowerOnSelfTest.first_boot():
     print('First boot!')
     PowerOnSelfTest.handle_first_boot()

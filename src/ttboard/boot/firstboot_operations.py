@@ -1,6 +1,14 @@
 '''
 Created on Mar 20, 2024
 
+Anything that's a command in the first_boot.ini file has 
+to be defined here.
+
+During run tests, demoboard instance is available through 
+get_demoboard()
+
+The function used by [onsuccess] must return true if we
+don't want to go through firstboot routine again. 
 
 
 @author: Pat Deegan
@@ -20,15 +28,21 @@ def get_demoboard() -> DemoBoard:
     return locals()['demoboard']
 
 def setup_somehow():
+    # any setup we might need done
     print("nothing much to setup")
     
 def firstboot_completed():
-    # called when all tests passed
+    # called when all tests passed.
+    # if you return True, the first boot ini file will 
+    # be unlinked and we won't come through this again.
+    # can only happen if all tests ([run_*] sections)
+    # run and return True
     print("Done first boot")
     return True
     
     
 def test_bidirs(max_idx:int, delay_interval_ms:int=1):
+    # a test, must return True to consider a pass
     tt = get_demoboard()
     print(f'Testing bidirs up to {max_idx} on {tt}')
     
@@ -71,6 +85,7 @@ def test_bidirs(max_idx:int, delay_interval_ms:int=1):
     return True
 
 def say_hello(delay_interval_ms:int=100, times:int=1):
+    # a test, must return True to consider a pass
     print(f'Saying hello')
     
     hello_values = [0x74, 0x79, 0x30, 0x30, 0x5c, 0, 0x50, 0x10, 0x78, 0x77]
