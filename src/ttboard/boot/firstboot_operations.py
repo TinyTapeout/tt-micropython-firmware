@@ -27,6 +27,9 @@ log = logging.getLogger(__name__)
 def get_demoboard() -> DemoBoard:
     return locals()['demoboard']
 
+def get_context() -> dict:
+    return locals()['context']
+
 def setup_somehow():
     # any setup we might need done
     print("nothing much to setup")
@@ -38,7 +41,21 @@ def firstboot_completed():
     # can only happen if all tests ([run_*] sections)
     # run and return True
     print("Done first boot")
+    say_hello(180, times=2)
     return True
+
+
+def firstboot_failure():
+    context = get_context()
+    print('\r\n\r\n\r\n****** TEST RESULTS ****** \r\n')
+    for test,passed in context['tests'].items():
+        if passed:
+            print(f"Test {test} pass")
+        else:
+            print(f"Test {test} FAILED")
+            
+    print("*****************************")
+    print()
     
     
 def test_bidirs(max_idx:int, delay_interval_ms:int=1):
@@ -62,7 +79,7 @@ def test_bidirs(max_idx:int, delay_interval_ms:int=1):
         bp(0) # start low
     
     errCount = 0
-    for i in range(0xff):
+    for i in range(max_idx):
         tt.bidir_byte = i 
         time.sleep_ms(update_delay_ms)
         outbyte = tt.output_byte
@@ -83,6 +100,45 @@ def test_bidirs(max_idx:int, delay_interval_ms:int=1):
     
     log.info('Bi-directional pins acting pretty nicely as inputs!')
     return True
+
+
+
+def test_clocking(max_idx:int=30, delay_interval_ms:int=50):
+    # a test, must return True to consider a pass
+    tt = get_demoboard()
+    print(f'Testing manual clocking up to {max_idx} on {tt}')
+    
+    
+    # select the project from the shuttle
+    tt.shuttle.tt_um_test.enable()
+    tt.mode = RPMode.ASIC_ON_BOARD # make sure we're controlling everything
+    
+    
+    tt.reset_project(True)
+    tt.input_byte = 1
+    tt.clock_project_stop()
+    tt.reset_project(False)
+    
+    errCount = 0
+    for i in range(max_idx):
+        tt.clock_project_once()
+        time.sleep_ms(delay_interval_ms)
+        if tt.output_byte != i:
+            log.warn(f'MISMATCH between bidir val {i} and output {tt.output_byte}')
+            errCount += 1
+    
+    
+    if errCount:
+        log.error(f'{errCount} ERRORS encountered')
+        return False 
+    
+    log.info('RP2040 clocking acting pretty nicely')
+    return True
+
+
+
+
+
 
 def say_hello(delay_interval_ms:int=100, times:int=1):
     # a test, must return True to consider a pass

@@ -60,7 +60,7 @@ class FirstBootOperation:
     def get(self, option_name:str):
         return self._config.get(self.section, option_name)
     
-    def execute(self) -> bool:
+    def execute(self, run_context:dict) -> bool:
         log.debug(f'Executing {self.section}')
         if not self.has('command'):
             log.warn('No command present')
@@ -68,7 +68,9 @@ class FirstBootOperation:
         cmd = self.get('command')
         demoboard = self.ttdemoboard
         try:
-            self.operation_return_value = eval(f'fbops.{cmd}', {'fbops':fbops, 'demoboard':demoboard})
+            self.operation_return_value = eval(f'fbops.{cmd}', {'fbops':fbops, 
+                                                                'demoboard':demoboard, 
+                                                                'context':run_context})
         except:
             log.error(f"Error executing {cmd}")
             return False 
@@ -99,9 +101,10 @@ class FirstBoot:
     def initialize(cls):
         fb = cls(cls.FirstBootIniFile)
         if not fb.ready:
+            print("ERROR: you shouldn't be calling initialize without an ini file")
             return False 
         
-        fb.run()
+        return fb.run()
         
          
     
@@ -137,28 +140,34 @@ class FirstBoot:
                 time.sleep_ms(startup_delay_ms)
                 log.info(f'Delayed startup by {startup_delay_ms}ms')
         
+        context = {'tests':dict()}
         if self.config.has_section('setup'):
-            if not SetupOperation('setup', self.config).execute():
+            if not SetupOperation('setup', self.config).execute(context):
                 log.error('Could not execute setup -- abort!')
                 return False
             
         demoboard = DemoBoard()
-        numFailures = 0
+        num_fails = 0
+        keep_running_tests = True
         for section in sorted(self.config.sections):
-            if section.startswith('run_'):
-                if not RunOperation(demoboard, section, self.config).execute():
+            if keep_running_tests and section.startswith('run_'):
+                context['tests'][section] = True
+                if not RunOperation(demoboard, section, self.config).execute(context):
                     log.error(f'Execution of {section} failed')
-                    numFailures += 1
+                    context['tests'][section] = False
+                    num_fails += 1
                     if abort_runs_on_err:
                         log.error(f'And abort_runs_on_error is set, aborting.')
-                        return False
+                        keep_running_tests = False
                     
-        if numFailures:
+        if num_fails:
+            if self.config.has_section('onfail'):
+                RunOperation(demoboard, 'onfail', self.config).execute(context)
             return False
     
         if self.config.has_section('onsuccess'):
-            should_delete_op = SetupOperation('onsuccess', self.config)
-            if not should_delete_op.execute():
+            should_delete_op = RunOperation(demoboard, 'onsuccess', self.config)
+            if not should_delete_op.execute(context):
                 log.error('Could not execute onsuccess???')
                 return False
             
