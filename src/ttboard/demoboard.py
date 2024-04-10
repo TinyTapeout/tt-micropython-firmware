@@ -49,6 +49,20 @@ class DemoBoard:
         
     
     '''
+    
+    _DemoBoardSingleton_Instance = None 
+    
+    @classmethod 
+    def get(cls):
+        if cls._DemoBoardSingleton_Instance is None:
+            cls._DemoBoardSingleton_Instance = cls()
+            
+        return cls._DemoBoardSingleton_Instance
+    
+    
+    
+    
+    
     def __init__(self, 
                  mode:int=None, 
                  iniFile:str='config.ini',
@@ -102,6 +116,10 @@ class DemoBoard:
                 self.shuttle.get(self.user_config.default_project).enable()
             else:
                 log.warn(f'Default project is unknown "{self.user_config.default_project}"')
+                
+        if DemoBoard._DemoBoardSingleton_Instance is None:
+            DemoBoard._DemoBoardSingleton_Instance = self 
+        
         
     @property 
     def mode(self):
