@@ -299,7 +299,8 @@ class Pins:
         
     def project_clk_nrst_driven_by_RP2040(self, rpControlled:bool):
     
-        for pname in ['nproject_rst', 'rp_projclk']:
+        # for pname in ['nprojectrst', 'rp_projclk']:
+        for pname in ['rp_projclk']:
             p = getattr(self, pname)
             if rpControlled:
                 p.mode = Pin.OUT
@@ -315,6 +316,8 @@ class Pins:
         muxedPins = GPIOMap.muxed_pairs()
         modeMap = GPIOMap.muxed_pinmode_map(self.mode)
         for pname, muxPair in muxedPins.items():
+            print("********************************")
+            print (muxPair)
             mp = MuxedPin(pname, self.muxCtrl, 
                           getattr(self, pname),
                           MuxedPinInfo(muxPair[0],
@@ -333,6 +336,18 @@ class Pins:
     @property 
     def project_clk(self):
         return self.rp_projclk
+    
+    @property 
+    def nproject_rst(self):
+        # had to munge the name because nproject_rst
+        # is now in hardware MUX group, alias
+        # allows use of old name with_underscore
+        return self.nprojectrst
+    
+    @property 
+    def ctrl_ena(self):
+        # had to munge name, now going through hw mux
+        return self.cena
     
     def _dumpPin(self, p:StandardPin):
         print(f'  {p.name} {p.mode_str} {p()}') 

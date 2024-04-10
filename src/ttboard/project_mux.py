@@ -74,7 +74,7 @@ class ProjectMux:
         log.debug('Resetting project mux')
         self.p.cinc(0)
         self.p.ncrst(0)
-        self.p.ctrl_ena(0)
+        self.p.cena(0)
         time.sleep_ms(10)
         self.p.ncrst(1)
         time.sleep_ms(10)
@@ -108,7 +108,7 @@ class ProjectMux:
             self.p.cinc(0)
             time.sleep_ms(1)
         
-        self.p.ctrl_ena(1)
+        self.p.cena(1)
         self.p.muxCtrl.mode_project_IO() 
         
     @property

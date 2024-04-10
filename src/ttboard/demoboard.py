@@ -155,7 +155,8 @@ class DemoBoard:
             
             @see: reset_project()
         '''
-        return self.pins.nproject_rst
+        return self.pins.nprojectrst
+    
     
     def reset_project(self, putInReset:bool):
         '''
