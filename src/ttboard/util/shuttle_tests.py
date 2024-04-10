@@ -12,7 +12,7 @@ from ttboard.mode import RPMode
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
 
-def factory_test_bidirs(tt:DemoBoard, max_idx:int, delay_interval_ms:int=1):
+def factory_test_bidirs(tt:DemoBoard, max_idx:int=255, delay_interval_ms:int=1):
     '''
         Tests project comms and bidir pins by using tt_um_test to reflect 
         bidir to output.
