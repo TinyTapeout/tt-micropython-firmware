@@ -18,6 +18,7 @@ don't want to go through firstboot routine again.
 from ttboard.demoboard import DemoBoard, Pins
 import ttboard.util.time as time
 from ttboard.mode import RPMode
+import ttboard.util.shuttle_tests as shut_tests
 
 
 import ttboard.logging as logging
@@ -25,14 +26,23 @@ log = logging.getLogger(__name__)
 
 
 def get_demoboard() -> DemoBoard:
-    return locals()['demoboard']
+    locvars = locals()
+    if 'demoboard' in locvars:
+        return locvars['demoboard']
+    
+    return DemoBoard.get()
 
 def get_context() -> dict:
-    return locals()['context']
+    locvars = locals()
+    if 'context' in locvars:
+        return locvars['context']
+    
+    raise KeyError('Cannot find context in localvars??')
 
 def setup_somehow():
     # any setup we might need done
     print("nothing much to setup")
+    return True
     
 def firstboot_completed():
     # called when all tests passed.
@@ -62,43 +72,12 @@ def test_bidirs(max_idx:int, delay_interval_ms:int=1):
     # a test, must return True to consider a pass
     tt = get_demoboard()
     print(f'Testing bidirs up to {max_idx} on {tt}')
+    err = shut_tests.factory_test_bidirs(tt, max_idx, delay_interval_ms)
     
-    # select the project from the shuttle
-    update_delay_ms = delay_interval_ms
-    auto_clock_freq = 1e3
-    tt.shuttle.tt_um_test.enable()
-    curMode = tt.mode 
-    tt.mode = RPMode.ASIC_ON_BOARD # make sure we're controlling everything
-    
-    tt.in0(0) # want this low
-    tt.clock_project_PWM(auto_clock_freq) # clock it real good
-    
-    log.info('First boot: starting bidirection pins tests')
-    for bp in tt.bidirs:
-        bp.mode = Pins.OUT
-        bp(0) # start low
-    
-    errCount = 0
-    for i in range(max_idx):
-        tt.bidir_byte = i 
-        time.sleep_ms(update_delay_ms)
-        outbyte = tt.output_byte
-        if outbyte !=  i:
-            log.warn(f'MISMATCH between bidir val {i} and output {outbyte}')
-            errCount += 1
-    
-    # reset everything
-    for bp in tt.bidirs:
-        bp.mode = Pins.IN
-        
-    tt.clock_project_stop()
-    tt.mode = curMode
-    
-    if errCount:
-        log.error(f'{errCount} ERRORS encountered')
+    if err is not None:
+        log.error(err)
         return False 
     
-    log.info('Bi-directional pins acting pretty nicely as inputs!')
     return True
 
 
@@ -107,34 +86,12 @@ def test_clocking(max_idx:int=30, delay_interval_ms:int=50):
     # a test, must return True to consider a pass
     tt = get_demoboard()
     print(f'Testing manual clocking up to {max_idx} on {tt}')
-    
-    
-    # select the project from the shuttle
-    tt.shuttle.tt_um_test.enable()
-    tt.mode = RPMode.ASIC_ON_BOARD # make sure we're controlling everything
-    
-    
-    tt.reset_project(True)
-    tt.input_byte = 1
-    tt.clock_project_stop()
-    tt.reset_project(False)
-    
-    errCount = 0
-    for i in range(max_idx):
-        tt.clock_project_once()
-        time.sleep_ms(delay_interval_ms)
-        if tt.output_byte != i:
-            log.warn(f'MISMATCH between bidir val {i} and output {tt.output_byte}')
-            errCount += 1
-    
-    
-    if errCount:
-        log.error(f'{errCount} ERRORS encountered')
+    err = shut_tests.factory_test_clocking(tt, max_idx, delay_interval_ms)
+    if err is not None:
+        log.error(err)
         return False 
     
-    log.info('RP2040 clocking acting pretty nicely')
     return True
-
 
 
 

@@ -39,6 +39,15 @@ import ttboard.boot.firstboot_operations as fbops
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
 
+def doEval(command:str, loc_vals:dict):
+    ret_val = None
+    if ttboard.util.platform.IsRP2040:
+        ret_val = eval(command, loc_vals)
+    else:
+        ret_val = eval(command, loc_vals, loc_vals)
+    
+    return ret_val
+ 
 class FirstBootConfig(ConfigFile):
     '''
         Wrapper for the first_boot.ini config file
@@ -68,14 +77,14 @@ class FirstBootOperation:
         cmd = self.get('command')
         demoboard = self.ttdemoboard
         try:
-            self.operation_return_value = eval(f'fbops.{cmd}', {'fbops':fbops, 
+            self.operation_return_value =  doEval(f'fbops.{cmd}', {'fbops':fbops, 
                                                                 'demoboard':demoboard, 
                                                                 'context':run_context})
-        except:
-            log.error(f"Error executing {cmd}")
+        except Exception as e:
+            log.error(f"Error executing {cmd}: {e}")
             return False 
         
-        return True
+        return self.operation_return_value
 
 class SetupOperation(FirstBootOperation):
     pass 
@@ -146,7 +155,7 @@ class FirstBoot:
                 log.error('Could not execute setup -- abort!')
                 return False
             
-        demoboard = DemoBoard()
+        demoboard = DemoBoard.get()
         num_fails = 0
         keep_running_tests = True
         for section in sorted(self.config.sections):
