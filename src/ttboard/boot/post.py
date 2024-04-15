@@ -69,7 +69,7 @@ class PowerOnSelfTest:
     
     @classmethod 
     def both_project_buttons_held(cls):
-        return cls.read_pin('rp_projclk') and not cls.read_pin('nproject_rst')
+        return cls.read_pin('rp_projclk') and not cls.read_pin('nprojectrst')
     
 # could also check
     
