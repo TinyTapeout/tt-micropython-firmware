@@ -316,8 +316,6 @@ class Pins:
         muxedPins = GPIOMap.muxed_pairs()
         modeMap = GPIOMap.muxed_pinmode_map(self.mode)
         for pname, muxPair in muxedPins.items():
-            print("********************************")
-            print (muxPair)
             mp = MuxedPin(pname, self.muxCtrl, 
                           getattr(self, pname),
                           MuxedPinInfo(muxPair[0],
