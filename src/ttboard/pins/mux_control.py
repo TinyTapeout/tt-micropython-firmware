@@ -43,6 +43,10 @@ class MuxControl:
     def add_muxed(self, muxd):
         self._muxedPins.append(muxd)
         
+    @property 
+    def selected(self):
+        return self.currentValue
+    
     def select(self, value:int):
         if value == self.currentValue:
             return 

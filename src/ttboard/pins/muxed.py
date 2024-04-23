@@ -34,13 +34,74 @@ class MuxedSelection:
     @property 
     def direction(self):
         return self.info.dir
-     
+    
+    
+    @direction.setter 
+    def direction(self, set_to:int):
+        cur_dir = self.info.dir 
+        
+        if set_to == Pin.IN or set_to == Pin.OUT:
+            self.info.dir = set_to 
+        else:
+            raise ValueError(f'Invalid direction {set_to}')
+        
+        if set_to != cur_dir:
+            if self._parent.selected == self.info.select:
+                # we are selected and have changed direction
+                self._parent.current_dir = set_to 
+        
     @property
     def info_string(self):
         direction = 'OUT'
         if self.direction == Pin.IN:
             direction = 'IN'
         return f'{self.info.name}[{direction}]'
+    
+    
+    @property 
+    def mode(self):
+        return self.direction 
+    
+    @mode.setter 
+    def mode(self, setMode:int):
+        # we override mode here to use direction
+        # such that if you manually tweak this 
+        # it will be remembered as we switch 
+        # the mux back and forth
+        self.direction = setMode 
+    
+    @property 
+    def mode_str(self):
+        return self._parent.mode_str 
+    
+    
+    # punting low-level pin things to parent
+    # but this is risky-business -- not currently
+    # maintained as part of the muxed pin state
+    # just happening on the real GPIO, so use 
+    # wisely
+    @property 
+    def pull(self):
+        return self._parent.pull 
+    
+    @pull.setter 
+    def pull(self, set_pull:int):
+        self._parent.pull = set_pull
+        
+    @property 
+    def drive(self):
+        return self._parent.drive 
+    
+    @drive.setter 
+    def drive(self, set_drive:int):
+        self._parent.driver = set_drive
+        
+    @property 
+    def gpio_num(self):
+        return self._parent.gpio_num 
+    
+    
+    
     
     def __call__(self, value:int=None):
         self._parent.select_pin(self.info)
@@ -105,7 +166,9 @@ class MuxedPin(StandardPin):
         self.ctrl.select(pInfo.select)
         self.current_dir = pInfo.dir 
         
-    
+    @property 
+    def selected(self):
+        return self.ctrl.selected
     
     def __repr__(self):
         return f'<MuxedPin {self.name} {self.gpio_num} ({self.mode_str}) {self._sel_low.info_string}/{self._sel_high.info_string}>'

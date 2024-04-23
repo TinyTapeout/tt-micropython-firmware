@@ -258,25 +258,32 @@ class Pins:
         log.debug('begin: ASIC_ON_BOARD')
         self.begin_inputs_all()
         self._begin_alwaysOut()
-        self.project_clk_nrst_driven_by_RP2040(True)
+        unconfigured_pins = []
         for pname in GPIOMap.all().keys():
             if pname.startswith('in'):
                 p = getattr(self, pname)
                 if self.dieOnInputControlSwitchHigh:
                     if p():
-                        raise ValueError(f'Trying to control {pname} but possible contention (it is reading HIGH)')
+                        log.warn(f'Trying to control {pname} but possible contention (it is reading HIGH)')
+                        unconfigured_pins.append(pname)
+                        continue 
                 p.mode = Pin.OUT
-                
+        
+        if len(unconfigured_pins):
+            log.error(f'Following pins have not be set as outputs owing to contention: {",".join(unconfigured_pins)}')
         self._begin_muxPins()
+        # needs to be after mux because reset now muxed
+        self.project_clk_nrst_driven_by_RP2040(True)
         
     def begin_asic_manual_inputs(self):
         log.debug('begin: ASIC + MANUAL INPUTS')
         self.begin_inputs_all()
         self._begin_alwaysOut()
-        # leave clk and reset as inputs, for manual operation
-        self.project_clk_nrst_driven_by_RP2040(False)
         # leave in* as inputs
         self._begin_muxPins()
+        # leave clk and reset as inputs, for manual operation
+        # needs to be after mux, because reset now muxed
+        self.project_clk_nrst_driven_by_RP2040(False)
         
         
     
@@ -284,7 +291,6 @@ class Pins:
         log.debug('begin: STANDALONE')
         self.begin_inputs_all()
         self._begin_alwaysOut()
-        self.project_clk_nrst_driven_by_RP2040(True)
         
         for pname in GPIOMap.all().keys():
             if pname.startswith('out'):
@@ -296,11 +302,13 @@ class Pins:
                 p.pull = Pin.PULL_DOWN
                 
         self._begin_muxPins()
+        # needs to be after mux, because reset now muxed
+        self.project_clk_nrst_driven_by_RP2040(True)
         
     def project_clk_nrst_driven_by_RP2040(self, rpControlled:bool):
     
         # for pname in ['nprojectrst', 'rp_projclk']:
-        for pname in ['rp_projclk']:
+        for pname in ['rp_projclk', 'nprojectrst']:
             p = getattr(self, pname)
             if rpControlled:
                 p.mode = Pin.OUT
