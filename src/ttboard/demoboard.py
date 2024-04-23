@@ -136,6 +136,10 @@ class DemoBoard:
         self.pins.mode = setTo 
         
     @property 
+    def mode_str(self):
+        return RPMode.to_string(self.mode)
+        
+    @property 
     def is_auto_clocking(self):
         return self._clock_pwm is not None
     @property 
