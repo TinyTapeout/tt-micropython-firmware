@@ -19,6 +19,7 @@ from ttboard.mode import RPMode
 from ttboard.pins import Pins
 from ttboard.project_mux import ProjectMux, Design
 from ttboard.config.user_config import UserConfig
+import ttboard.util.platform as platform 
 
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
@@ -297,6 +298,8 @@ class DemoBoard:
             for i in range(8):
                 if dirBits & (1 << i):
                     bidirs[i].mode = Pins.OUT
+                else:
+                    bidirs[i].mode = Pins.IN
                     
             if projConfig.bidir_byte is not None:
                 valBits = projConfig.bidir_byte
@@ -308,6 +311,31 @@ class DemoBoard:
                             bidirs[i](1)
                         else: # nah, want it low
                             bidirs[i](0)
+                            
+        
+        current_sys_clock = platform.get_RP_system_clock()
+        if projConfig.has('rp_clock_frequency'):
+            sys_clk_hz = projConfig.rp_clock_frequency
+            if sys_clk_hz != current_sys_clock:
+                self.clock_project_stop() # ensure we aren't PWMing
+                log.info(f'Setting system clock to {sys_clk_hz}Hz')
+                try:
+                    platform.set_RP_system_clock(sys_clk_hz)
+                except ValueError:
+                    log.error(f"Could not set system clock to requested {sys_clk_hz}Hz")
+        else:
+            # nothing set in project config, assume we want default system clock
+            def_sys_clock = self.user_config.default_rp_clock
+            if def_sys_clock is None:
+                def_sys_clock = platform.RP2040SystemClockDefaultHz 
+            if def_sys_clock != current_sys_clock and def_sys_clock > 0:
+                self.clock_project_stop() # ensure we aren't PWMing
+                log.info(f'Resetting system clock to default {def_sys_clock}Hz')
+                try:
+                    platform.set_RP_system_clock(def_sys_clock)
+                except ValueError:
+                    log.error(f'Default sys clock setting {def_sys_clock} is invalid?')
+                    
                     
         if projConfig.has('clock_frequency'):
             if self.mode == RPMode.ASIC_MANUAL_INPUTS:
