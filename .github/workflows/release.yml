@@ -29,7 +29,8 @@ jobs:
     # build it
     - run: |
            pip install uf2utils
-           python -m uf2utils.examples.custom_pico --fs_root $GITHUB_WORKSPACE/sdk/src --upython /tmp/rp2-pico.uf2 --out /tmp/tt-demo-rp2040.uf2
+           touch $GITHUB_WORKSPACE/sdk/src/release_${{  github.ref_name }}
+           python -m uf2utils.examples.custom_pico --fs_root $GITHUB_WORKSPACE/sdk/src --upython /tmp/rp2-pico.uf2 --out /tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2
     - name: Upload Release
       uses: ncipollo/release-action@v1
       with:
