@@ -101,6 +101,7 @@ class FirstBoot:
     '''
     
     FirstBootIniFile = '/first_boot.ini'
+    FirstBootLogFile = '/first_boot.log'
     
     @classmethod
     def is_first_boot(cls):
@@ -121,13 +122,31 @@ class FirstBoot:
     def __init__(self, ini_file:str):
         self._config = FirstBootConfig(ini_file)
         self._ready = self._config.is_loaded
+        self._first_log = None 
         if not self._ready:
             log.error(f'Issue reading {ini_file}')
         else:
             log_level = self.config.log_level
             if log_level is not None:
                 logging.basicConfig(level=log_level)
-                log.info(f'Set log_level to {log_level}')
+            
+                self.log_message(f'Set log_level to {log_level}')
+                
+            
+    @property 
+    def first_log(self):
+        if self._first_log is None:
+            self._first_log = open(self.FirstBootLogFile, 'w+')
+        
+        return self._first_log
+    
+    def log_message(self, message:str):
+        log.info(message)
+        self.first_log.write(f'{message}\n')
+            
+    def log_error(self, message:str):
+        log.error(message)
+        self.first_log.write(f'ERROR: {message}\n')
             
             
     @property 
@@ -147,13 +166,13 @@ class FirstBoot:
             startup_delay_ms = self.config.get('DEFAULT', 'startup_delay_ms')
             if startup_delay_ms > 0:
                 time.sleep_ms(startup_delay_ms)
-                log.info(f'Delayed startup by {startup_delay_ms}ms')
+                self.log_message(f'Delayed startup by {startup_delay_ms}ms')
         
         context = {'tests':dict()}
         if self.config.has_section('setup'):
             if not SetupOperation('setup', self.config).execute(context):
-                log.error('Could not execute setup -- abort!')
-                return False
+                self.log_error('Could not execute setup -- abort!')
+                return self.run_complete(False)
             
         demoboard = DemoBoard.get()
         num_fails = 0
@@ -162,29 +181,46 @@ class FirstBoot:
             if keep_running_tests and section.startswith('run_'):
                 context['tests'][section] = True
                 if not RunOperation(demoboard, section, self.config).execute(context):
-                    log.error(f'Execution of {section} failed')
+                    self.log_error(f'Execution of {section} failed')
                     context['tests'][section] = False
                     num_fails += 1
                     if abort_runs_on_err:
-                        log.error(f'And abort_runs_on_error is set, aborting.')
+                        self.log_error(f'And abort_runs_on_error is set, aborting.')
                         keep_running_tests = False
                     
         if num_fails:
             if self.config.has_section('onfail'):
                 RunOperation(demoboard, 'onfail', self.config).execute(context)
-            return False
+            return self.run_complete(False)
     
         if self.config.has_section('onsuccess'):
             should_delete_op = RunOperation(demoboard, 'onsuccess', self.config)
             if not should_delete_op.execute(context):
-                log.error('Could not execute onsuccess???')
-                return False
+                self.log_error('Could not execute onsuccess???')
+                self.run_complete(False)
             
             if should_delete_op.operation_return_value:
-                log.warn("First boot is done: unlinking fb config")
+                self.log_message("First boot is done: unlinking fb config")
                 os.unlink(self.FirstBootIniFile)
+        return self.run_complete(True)
+    
+    def run_complete(self, success:bool):
+        try:
+            # we always unlink this file, cases like the FPGA 
+            # demoboard will never pass this
+            os.unlink(self.FirstBootIniFile)
+            self.log_message('Unlinked first_boot ini file')
+        except:
+            self.log_error(f'Issue unlinking {self.FirstBootIniFile}?')
             
-        return True
+        self.log_message(f'First boot run success: {success}')
+        if self._first_log is not None:
+            self._first_log.close()
+            self._first_log = None
+            
+        return success
+            
+        
             
             
                 
