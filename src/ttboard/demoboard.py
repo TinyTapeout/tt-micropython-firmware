@@ -111,15 +111,19 @@ class DemoBoard:
         self.shuttle.designEnabledCallback = self.apply_user_config
         self._clock_pwm = None
         
+        self.load_default_project() 
+        
+        if DemoBoard._DemoBoardSingleton_Instance is None:
+            DemoBoard._DemoBoardSingleton_Instance = self 
+        
+        
+    def load_default_project(self):
         if self.user_config.default_project is not None:
             if self.shuttle.has(self.user_config.default_project):
                 self.shuttle.get(self.user_config.default_project).enable()
             else:
                 log.warn(f'Default project is unknown "{self.user_config.default_project}"')
                 
-        if DemoBoard._DemoBoardSingleton_Instance is None:
-            DemoBoard._DemoBoardSingleton_Instance = self 
-        
         
     @property 
     def mode(self):
@@ -188,9 +192,17 @@ class DemoBoard:
             reset_project(True) # project is in reset
             reset_project(False) # now it ain't
         '''
+        cur_mode = self.project_nrst.mode
         if putInReset:
+            if cur_mode != Pins.OUT:
+                self.project_nrst.mode = Pins.OUT
+                log.info("Changing reset to output mode")
             self.project_nrst(0) # inverted logic
         else:
+            if cur_mode != Pins.OUT:
+                log.debug("Project not currently controled by RP--should not be reset anyway")
+            else:
+                self.project_nrst.mode = Pins.IN
             self.project_nrst(1)
             
     def clock_project_once(self, msDelay:int=0):
