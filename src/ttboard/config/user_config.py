@@ -29,7 +29,8 @@ class UserProjectConfig:
             - input_byte (int)
             - bidir_direction (int)
             - bidir_byte (int)
-            - clock_frequency (int)
+            - clock_frequency (int) project clock
+            - rp_clock_frequency (int) RP2040 system clock frequency
             
         all keys are optional.
         
@@ -65,6 +66,7 @@ class UserProjectConfig:
                          'bidir_direction',
                          'bidir_byte',
                          'clock_frequency',
+                         'rp_clock_frequency'
                          ]
         for atr in known_attribs:
             v = self.get(atr)
@@ -113,25 +115,30 @@ class UserConfig(ConfigFile):
     def __init__(self, ini_filepath:str='config.ini'):
         super().__init__(ini_filepath)
         
+    def _get_default_option(self, name:str, def_value=None):
+        if not self.has_option('DEFAULT', name):
+            return def_value 
+        return self.get('DEFAULT', name)
+    
     @property 
     def default_mode(self):
-        if not self.has_option('DEFAULT', 'mode'):
+        mode_str = self._get_default_option('mode')
+        if mode_str is None:
             return None 
         
-        modeStr = self.get('DEFAULT', 'mode')
-        return RPMode.from_string(modeStr)
+        return RPMode.from_string(mode_str)
         
     @property
     def default_project(self):
-        if self.has_option('DEFAULT', 'project'):
-            return self.get('DEFAULT', 'project')
-        return None
+        return self._get_default_option('project')
     
     @property 
     def default_start_in_reset(self):
-        if self.has_option('DEFAULT', 'start_in_reset'):
-            return self.get('DEFAULT', 'start_in_reset')
-        return None
+        return self._get_default_option('start_in_reset')
+    
+    @property 
+    def default_rp_clock(self):
+        return self._get_default_option('rp_clock_frequency')
         
     
     def has_project(self, name:str):
@@ -155,9 +162,7 @@ class UserConfig(ConfigFile):
         return f'<UserConfig {self.filepath}, default project: {self.default_project}>'
     
     def __str__(self):
-        def_mode = self.default_mode
-        if def_mode is not None:
-            def_mode = RPMode.to_string(def_mode)
+        def_mode = self._get_default_option('mode')
         return f'UserConfig {self.filepath}, Defaults:\nproject: {self.default_project}\nmode: {def_mode}'
     
         

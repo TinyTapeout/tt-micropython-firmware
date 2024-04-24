@@ -12,6 +12,12 @@ from ttboard.pins import Pins
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
 
+'''
+Fetched with
+https://index.tinytapeout.com/tt03p5.json?fields=repo,address,commit,clock_hz
+https://index.tinytapeout.com/tt04.json?fields=repo,address,commit,clock_hz
+
+'''
 class Design:
     def __init__(self, projectMux, projindex:int, info:dict):
         self.mux = projectMux
@@ -20,6 +26,7 @@ class Design:
         self.name = info['macro']
         self.repo = info['repo']
         self.commit = info['commit']
+        self.clock_hz = info['clock_hz']
         self._all = info
         
     def enable(self):
@@ -40,8 +47,8 @@ class DesignIndex:
         self._project_count = 0
         with open(srcJSONFile) as fh:
             index = json.load(fh)
-            for project in index["mux"]:
-                des = Design(projectMux, project, index["mux"][project])
+            for project in index["projects"]:
+                des = Design(projectMux, project["address"], project)
                 self._shuttle_index[des.name] = des
                 setattr(self, des.name, des)
                 self._project_count += 1
