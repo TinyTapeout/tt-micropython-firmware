@@ -170,8 +170,18 @@ class MuxedPin(StandardPin):
     def selected(self):
         return self.ctrl.selected
     
+    @property 
+    def selected_str(self):
+        sel = self.selected 
+        if sel ==  self.high_pin.select:
+            return 'HPIN'
+        elif sel == self.low_pin.select:
+            return 'LPIN'
+        else:
+            return '???PIN'
+    
     def __repr__(self):
-        return f'<MuxedPin {self.name} {self.gpio_num} ({self.mode_str}) {self._sel_low.info_string}/{self._sel_high.info_string}>'
+        return f'<MuxedPin {self.name} {self.gpio_num} ({self.selected_str} selected, {self.mode_str}) {self._sel_low.info_string}/{self._sel_high.info_string}>'
     
     def __str__(self):
-        return f'MuxedPin {self.name} {self.gpio_num} (now as {self.mode_str}) {self._sel_low.info_string}/{self._sel_high.info_string}'
+        return f'MuxedPin {self.name} {self.gpio_num} ({self.selected_str} pin selected, now as {self.mode_str}) {self._sel_low.info_string}/{self._sel_high.info_string}'

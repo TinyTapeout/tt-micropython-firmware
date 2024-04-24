@@ -170,7 +170,18 @@ class Pins:
         beginFunc = startupMap[setTo]
         beginFunc()
         
-    
+    def _setmode_on_pins(self, pinslist:list, modelist:list):
+        max_idx = len(pinslist)
+        if len(modelist) < max_idx:
+            max_idx = len(modelist)
+            
+        for i in range(max_idx):
+            p = pinslist[i]
+            p.mode = modelist[i]
+            
+    def _getmode_for_pins(self, pinslist:list):
+        return list(map(lambda x: x.mode, pinslist))
+            
     @property 
     def outputs(self):
         return self.list_port('out')
@@ -186,6 +197,15 @@ class Pins:
     @output_byte.setter 
     def output_byte(self, val:int):
         self._write_byte(self.outputs, val)
+        
+    @property 
+    def output_mode(self):
+        return self._getmode_for_pins(self.outputs)
+    
+    @output_mode.setter
+    def output_mode(self, pinmodes:list):
+        self._setmode_on_pins(self.outputs, pinmodes)
+        
     
     @property 
     def inputs(self):
@@ -206,6 +226,15 @@ class Pins:
     
     
     @property 
+    def input_mode(self):
+        return self._getmode_for_pins(self.inputs)
+    
+    @input_mode.setter
+    def input_mode(self, pinmodes:list):
+        self._setmode_on_pins(self.inputs, pinmodes)
+    
+    
+    @property 
     def bidirs(self):
         return self.list_port('uio')
     
@@ -222,6 +251,14 @@ class Pins:
         self._write_byte(self.bidirs, val)
     
         
+    @property 
+    def bidir_mode(self):
+        return self._getmode_for_pins(self.bidirs)
+    
+    @bidir_mode.setter
+    def bidir_mode(self, pinmodes:list):
+        self._setmode_on_pins(self.bidirs, pinmodes)
+    
     def begin_inputs_all(self):
         
         for name,gpio in GPIOMap.all().items():
