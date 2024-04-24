@@ -120,9 +120,11 @@ tt = startup()
 # during startup
 if run_post_tests:
     print('\n\nDoing startup test!')
-    while PowerOnSelfTest.dotest_buttons_held():
+    wait_count = 0
+    while PowerOnSelfTest.dotest_buttons_held() and wait_count < 10:
         print("Waiting for button release...")
-        time.sleep_ms(500)
+        time.sleep_ms(250)
+        wait_count += 1
     
     post = PowerOnSelfTest(tt)
     if not post.test_bidirs():
