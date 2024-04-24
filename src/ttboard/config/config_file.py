@@ -43,6 +43,13 @@ class ConfigFile:
         except: # no FileNotFoundError on uPython
             log.warn(f'Could not load config file {filepath}')
     
+    @property
+    def filepath(self):
+        return self._inifile_path
+    
+    @filepath.setter 
+    def filepath(self, set_to:str):
+        self.load(set_to)
     @property 
     def is_loaded(self):
         return self._ini_file_loaded
