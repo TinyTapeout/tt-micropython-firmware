@@ -68,8 +68,8 @@ class PowerOnSelfTest:
     
     
     @classmethod 
-    def both_project_buttons_held(cls):
-        return cls.read_pin('rp_projclk') # and not cls.read_pin('nprojectrst')
+    def dotest_buttons_held(cls):
+        return cls.read_pin('rp_projclk') # and not cls.read_pin('sdi_nprojectrst')
     
 # could also check
     
@@ -102,18 +102,20 @@ class PowerOnSelfTest:
             @return: False on any failure, True otherwise
         '''
         # select the project from the shuttle
-        update_delay_ms = 1
+        update_delay_ms = 2
         auto_clock_freq = 1e3
+        self.tt.mode = RPMode.ASIC_ON_BOARD # make sure we're controlling everything
+        
         self.tt.shuttle.tt_um_test.enable()
         curMode = self.tt.mode 
         self.tt.mode = RPMode.ASIC_ON_BOARD # make sure we're controlling everything
-        
+        self.tt.reset_project(False)
         self.tt.in0(0) # want this low
         self.tt.clock_project_PWM(auto_clock_freq) # clock it real good
         
         log.info('POST: starting bidirection pins tests')
+        self.tt.bidir_mode = [Pin.OUT] * 8
         for bp in self.tt.bidirs:
-            bp.mode = Pin.OUT
             bp(0) # start low
         
         errCount = 0
@@ -126,8 +128,7 @@ class PowerOnSelfTest:
                 errCount += 1
         
         # reset everything
-        for bp in self.tt.bidirs:
-            bp.mode = Pin.IN
+        self.tt.bidir_mode = [Pin.IN] * 8
             
         self.tt.clock_project_stop()
         self.tt.mode = curMode

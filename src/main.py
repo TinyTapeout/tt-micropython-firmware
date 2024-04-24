@@ -110,7 +110,7 @@ if PowerOnSelfTest.first_boot():
 # take a look at project user button state at startup
 # all this "raw" pin access should happen before the DemoBoard object 
 # is instantiated
-run_post_tests = PowerOnSelfTest.both_project_buttons_held()
+run_post_tests = PowerOnSelfTest.dotest_buttons_held()
 # or get a dict with PowerOnSelfTest.read_all_pins()
 
 
@@ -120,12 +120,16 @@ tt = startup()
 # during startup
 if run_post_tests:
     print('\n\nDoing startup test!')
+    while PowerOnSelfTest.dotest_buttons_held():
+        print("Waiting for button release...")
+        time.sleep_ms(500)
     
     post = PowerOnSelfTest(tt)
     if not post.test_bidirs():
         print('ERRORS encountered while running POST bidir test!')
     else:
         print('Startup test GOOD')
+        tt.load_default_project()
     print('\n\n')
 
 #tt.shuttle.tt_um_psychogenic_neptuneproportional.enable()
