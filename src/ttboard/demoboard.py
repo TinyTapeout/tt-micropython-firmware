@@ -240,6 +240,7 @@ class DemoBoard:
             return 
         
         self.clock_project_PWM(0)
+        self.project_clk(0) # make certain we are low
     
     
     def apply_user_config(self, design:Design):
