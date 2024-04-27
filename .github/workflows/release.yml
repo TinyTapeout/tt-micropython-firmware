@@ -9,6 +9,7 @@ jobs:
     # ubuntu
     env:
       RPOS_UF2FILE: RPI_PICO-20240222-v1.22.2.uf2
+      TT_RUNS_SUPPORTED: "tt03p5 tt04"
     runs-on: ubuntu-latest
     steps:
     # need the repo checked out
@@ -26,6 +27,12 @@ jobs:
       with:
         python-version: '3.10'
         cache: 'pip'
+    # build it
+    - name: get the os
+      run: |
+           mkdir $GITHUB_WORKSPACE/sdk/src/shuttles
+           for chip in $TT_RUNS_SUPPORTED; do wget -O $GITHUB_WORKSPACE/sdk/src/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=repo,address,commit,clock_hz"; done
+     run: |
     # build it
     - run: |
            pip install uf2utils

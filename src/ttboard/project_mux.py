@@ -8,6 +8,7 @@ Created on Jan 9, 2024
 import json
 import ttboard.util.time as time
 from ttboard.pins import Pins
+from ttboard.boot.rom import ChipROM
 
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
@@ -42,16 +43,19 @@ class Design:
         return f'<Design {self.project_index}: {self.name}>'
         
 class DesignIndex:
-    def __init__(self, projectMux,  srcJSONFile:str='shuttle_index.json'):
+    def __init__(self, projectMux,  src_JSON_file:str='shuttle_index.json'):
         self._shuttle_index = dict()
         self._project_count = 0
-        with open(srcJSONFile) as fh:
-            index = json.load(fh)
-            for project in index["projects"]:
-                des = Design(projectMux, project["address"], project)
-                self._shuttle_index[des.name] = des
-                setattr(self, des.name, des)
-                self._project_count += 1
+        try:
+            with open(src_JSON_file) as fh:
+                index = json.load(fh)
+                for project in index["projects"]:
+                    des = Design(projectMux, project["address"], project)
+                    self._shuttle_index[des.name] = des
+                    setattr(self, des.name, des)
+                    self._project_count += 1
+        except OSError:
+            log.error(f'Could not open shuttle index {src_JSON_file}')
              
     
     @property
@@ -71,11 +75,12 @@ class DesignIndex:
                 
         
 class ProjectMux:
-    def __init__(self, pins:Pins):
+    def __init__(self, pins:Pins, shuttle_index_file:str=None):
         self.p = pins 
         self._design_index = None
         self.enabled = None
-        self.designEnabledCallback = None
+        self.design_enabled_callback = None
+        self.shuttle_index_file = shuttle_index_file
     
     def reset(self):
         log.debug('Resetting project mux')
@@ -97,8 +102,8 @@ class ProjectMux:
         log.info(f'Enable design {design.name}')
         self.reset_and_clock_mux(design.count)
         self.enabled = design
-        if self.designEnabledCallback is not None:
-            self.designEnabledCallback(design)
+        if self.design_enabled_callback is not None:
+            self.design_enabled_callback(design)
             
     
     def reset_and_clock_mux(self, count:int):
@@ -118,10 +123,23 @@ class ProjectMux:
         self.p.cena(1)
         self.p.muxCtrl.mode_project_IO() 
         
+    @property 
+    def pins(self) -> Pins:
+        return self.p
     @property
     def projects(self):
         if self._design_index is None:
-            self._design_index = DesignIndex(self)
+            if self.shuttle_index_file is None:
+                log.debug('No shuttle index file specified, loading rom')
+                rom = ChipROM(self)
+                log.info(f'Chip reported by ROM is {rom.shuttle} commit {rom.commit}')
+                shuttle_file = f'/shuttles/{rom.shuttle}.json'
+                self.shuttle_index_file = shuttle_file
+                
+            
+            log.info(f'Loading shuttle file {self.shuttle_index_file}')
+                
+            self._design_index = DesignIndex(self, src_JSON_file=self.shuttle_index_file)
 
         return self._design_index
     

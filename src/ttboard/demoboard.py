@@ -15,6 +15,7 @@ entry point to all the RP2040 demo pcb functionality, including
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 import ttboard.util.time as time
+from ttboard.globals import Globals
 from ttboard.mode import RPMode
 from ttboard.pins import Pins
 from ttboard.project_mux import ProjectMux, Design
@@ -102,14 +103,14 @@ class DemoBoard:
             
         log.info(f'Demoboard starting up in mode {RPMode.to_string(mode)}')
         
-        self.pins = Pins(mode=mode)
-        self.shuttle = ProjectMux(self.pins)
+        self.pins = Globals.pins(mode=mode)
+        self.shuttle = Globals.project_mux()
         
         # config
         self.apply_configs = apply_user_config
         
         # internal
-        self.shuttle.designEnabledCallback = self.apply_user_config
+        self.shuttle.design_enabled_callback = self.apply_user_config
         self._clock_pwm = None
         
         self.load_default_project() 

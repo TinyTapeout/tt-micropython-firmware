@@ -211,7 +211,8 @@ class FirstBoot:
             os.unlink(self.FirstBootIniFile)
             self.log_message('Unlinked first_boot ini file')
         except:
-            self.log_error(f'Issue unlinking {self.FirstBootIniFile}?')
+            # can happen (unlinked above)
+            pass
             
         self.log_message(f'First boot run success: {success}')
         if self._first_log is not None:
