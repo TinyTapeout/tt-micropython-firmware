@@ -104,11 +104,11 @@ class PowerOnSelfTest:
         # select the project from the shuttle
         update_delay_ms = 2
         auto_clock_freq = 1e3
-        self.tt.mode = RPMode.ASIC_ON_BOARD # make sure we're controlling everything
+        self.tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
         
         self.tt.shuttle.tt_um_test.enable()
         curMode = self.tt.mode 
-        self.tt.mode = RPMode.ASIC_ON_BOARD # make sure we're controlling everything
+        self.tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
         self.tt.reset_project(False)
         self.tt.in0(0) # want this low
         self.tt.clock_project_PWM(auto_clock_freq) # clock it real good

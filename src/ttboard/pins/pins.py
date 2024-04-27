@@ -13,7 +13,7 @@ Main purposes of this module are to:
   
 TLDR
   1) get pins
-  p = Pins(RPMode.ASIC_ON_BOARD) # monitor/control ASIC
+  p = Pins(RPMode.ASIC_RP_CONTROL) # monitor/control ASIC
   
   2) play with pins
   print(p.out2()) # read
@@ -106,7 +106,7 @@ class Pins:
         
         So this class has 3 modes of pin init at startup:
          * RPMode.SAFE, the default, which has every pin as an INPUT, no pulls
-         * RPMode.ASIC_ON_BOARD, for use with ASICs, where it watches the OUTn 
+         * RPMode.ASIC_RP_CONTROL, for use with ASICs, where it watches the OUTn 
            (configured as inputs) and can drive the INn and tickle the 
            ASIC inputs (configured as outputs)
          * RPMode.STANDALONE: where OUTn is an OUTPUT, INn is an input, useful
@@ -157,7 +157,7 @@ class Pins:
     def mode(self, setTo:int):
         startupMap = {
             RPModeDEVELOPMENT.STANDALONE: self.begin_standalone,
-            RPMode.ASIC_ON_BOARD: self.begin_asiconboard,
+            RPMode.ASIC_RP_CONTROL: self.begin_asiconboard,
             RPMode.ASIC_MANUAL_INPUTS: self.begin_asic_manual_inputs,
             RPMode.SAFE: self.begin_safe
         }
@@ -292,7 +292,7 @@ class Pins:
     
     
     def begin_asiconboard(self):
-        log.debug('begin: ASIC_ON_BOARD')
+        log.debug('begin: ASIC_RP_CONTROL')
         self.begin_inputs_all()
         self._begin_alwaysOut()
         unconfigured_pins = []

@@ -6,14 +6,14 @@ Created on Jan 23, 2024
 '''
 class ModeBase:
     SAFE = 0
-    ASIC_ON_BOARD = 1
+    ASIC_RP_CONTROL = 1
     ASIC_MANUAL_INPUTS = 2
     
     @classmethod 
     def modemap(cls):
         modeMap = {  
             'SAFE': cls.SAFE,
-            'ASIC_ON_BOARD': cls.ASIC_ON_BOARD,
+            'ASIC_RP_CONTROL': cls.ASIC_RP_CONTROL,
             'ASIC_MANUAL_INPUTS': cls.ASIC_MANUAL_INPUTS
         }
         return modeMap
@@ -34,7 +34,7 @@ class ModeBase:
     def namemap(cls):
         nameMap = { 
             cls.SAFE: 'SAFE',
-            cls.ASIC_ON_BOARD: 'ASIC_ON_BOARD',
+            cls.ASIC_RP_CONTROL: 'ASIC_RP_CONTROL',
             cls.ASIC_MANUAL_INPUTS: 'ASIC_MANUAL_INPUTS',
         }
         return nameMap 
@@ -52,7 +52,7 @@ class RPMode(ModeBase):
       RPMode.MODE notation and code completion
       where MODE is one of:
         SAFE
-        ASIC_ON_BOARD
+        ASIC_RP_CONTROL
         ASIC_MANUAL_INPUTS
     '''
     pass 
@@ -70,7 +70,7 @@ class RPModeDEVELOPMENT(ModeBase):
     def modemap(cls):
         modeMap = {  
             'SAFE': cls.SAFE,
-            'ASIC_ON_BOARD': cls.ASIC_ON_BOARD,
+            'ASIC_RP_CONTROL': cls.ASIC_RP_CONTROL,
             'ASIC_MANUAL_INPUTS': cls.ASIC_MANUAL_INPUTS,
             'STANDALONE': cls.STANDALONE
         }
@@ -80,7 +80,7 @@ class RPModeDEVELOPMENT(ModeBase):
     def namemap(cls):
         nameMap = { 
             cls.SAFE: 'SAFE',
-            cls.ASIC_ON_BOARD: 'ASIC_ON_BOARD',
+            cls.ASIC_RP_CONTROL: 'ASIC_RP_CONTROL',
             cls.ASIC_MANUAL_INPUTS: 'ASIC_MANUAL_INPUTS',
             cls.STANDALONE: 'STANDALONE'
         }

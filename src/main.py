@@ -39,8 +39,8 @@ tt = None
 def startup():
     
     # construct DemoBoard
-    # either pass an appropriate RPMode, e.g. RPMode.ASIC_ON_BOARD
-    # or have "mode = ASIC_ON_BOARD" in ini DEFAULT section
+    # either pass an appropriate RPMode, e.g. RPMode.ASIC_RP_CONTROL
+    # or have "mode = ASIC_RP_CONTROL" in ini DEFAULT section
     ttdemoboard = DemoBoard()
 
     

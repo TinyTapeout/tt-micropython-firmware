@@ -104,7 +104,7 @@ def say_hello(delay_interval_ms:int=100, times:int=1):
     hello_values = [0x74, 0x79, 0x30, 0x30, 0x5c, 0, 0x50, 0x10, 0x78, 0x77]
     tt = get_demoboard()
     tt.shuttle.tt_um_test.enable()
-    tt.mode = RPMode.ASIC_ON_BOARD # make sure we're controlling everything
+    tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
     
     tt.in0(0) # want this low
     tt.clock_project_PWM(1e3) # clock it real good

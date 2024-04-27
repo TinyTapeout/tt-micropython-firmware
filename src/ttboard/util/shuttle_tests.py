@@ -27,7 +27,7 @@ def factory_test_bidirs(tt:DemoBoard, max_idx:int=255, delay_interval_ms:int=1):
     auto_clock_freq = 1e3
     tt.shuttle.tt_um_test.enable()
     curMode = tt.mode 
-    tt.mode = RPMode.ASIC_ON_BOARD # make sure we're controlling everything
+    tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
     
     tt.in0(0) # want this low
     tt.clock_project_PWM(auto_clock_freq) # clock it real good
@@ -75,7 +75,7 @@ def factory_test_clocking(tt:DemoBoard, max_idx:int=30, delay_interval_ms:int=50
     
     # select the project from the shuttle
     tt.shuttle.tt_um_test.enable()
-    tt.mode = RPMode.ASIC_ON_BOARD # make sure we're controlling everything
+    tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
     
     
     tt.reset_project(True)

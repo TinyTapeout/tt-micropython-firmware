@@ -21,7 +21,7 @@ class UserProjectConfig:
             clock_frequency = 4000
             # clock config 4k, disp single bits
             input_byte = 0b11001000
-            mode = ASIC_ON_BOARD
+            mode = ASIC_RP_CONTROL
         
         You can use this to set:
             - mode (str)
@@ -98,9 +98,9 @@ class UserConfig(ConfigFile):
             
             # mode can be any of
             #  - SAFE: all RP2040 pins inputs
-            #  - ASIC_ON_BOARD: TT inputs,nrst and clock driven, outputs monitored
+            #  - ASIC_RP_CONTROL: TT inputs,nrst and clock driven, outputs monitored
             #  - ASIC_MANUAL_INPUTS: basically same as safe, but intent is clear
-            mode = ASIC_ON_BOARD
+            mode = ASIC_RP_CONTROL
             
             # log_level can be one of
             #  - DEBUG

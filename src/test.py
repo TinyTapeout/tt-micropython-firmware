@@ -10,7 +10,7 @@ Michael Bell's tests, migrated to ttboard OO SDK.
 import time
 from ttboard.demoboard import DemoBoard, RPMode
 
-tt = DemoBoard(RPMode.ASIC_ON_BOARD)
+tt = DemoBoard(RPMode.ASIC_RP_CONTROL)
 
 def test_design_tnt_counter():
     tt.shuttle.tt_um_test.enable()
