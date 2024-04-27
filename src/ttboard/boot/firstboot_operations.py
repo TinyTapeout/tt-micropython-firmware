@@ -51,7 +51,14 @@ def firstboot_completed():
     # can only happen if all tests ([run_*] sections)
     # run and return True
     print("Done first boot")
-    say_hello(180, times=2)
+    tt = get_demoboard()
+    if tt.chip_ROM.shuttle == 'tt03p5':
+        print("CHIPROM shuttle is 03p5, saying hello")
+        say_hello_03p5(180, times=2)
+    else:
+        print(f"CHIPROM shuttle {tt.chip_ROM.shuttle}, saying hello")
+        say_hello(180, times=2)
+        
     return True
 
 
@@ -68,11 +75,11 @@ def firstboot_failure():
     print()
     
     
-def test_bidirs(max_idx:int, delay_interval_ms:int=1):
+def test_bidirs_03p5(max_idx:int, delay_interval_ms:int=1):
     # a test, must return True to consider a pass
     tt = get_demoboard()
     print(f'Testing bidirs up to {max_idx} on {tt}')
-    err = shut_tests.factory_test_bidirs(tt, max_idx, delay_interval_ms)
+    err = shut_tests.factory_test_bidirs_03p5(tt, max_idx, delay_interval_ms)
     
     if err is not None:
         log.error(err)
@@ -81,12 +88,21 @@ def test_bidirs(max_idx:int, delay_interval_ms:int=1):
     return True
 
 
+def test_clocking_04(max_idx:int=30, delay_interval_ms:int=50):
+    tt = get_demoboard()
+    print(f'Testing manual clocking up to {max_idx} on {tt}')
+    err = shut_tests.factory_test_clocking_04(tt, max_idx, delay_interval_ms)
+    if err is not None:
+        log.error(err)
+        return False 
+    
+    return True
 
-def test_clocking(max_idx:int=30, delay_interval_ms:int=50):
+def test_clocking_03p5(max_idx:int=30, delay_interval_ms:int=50):
     # a test, must return True to consider a pass
     tt = get_demoboard()
     print(f'Testing manual clocking up to {max_idx} on {tt}')
-    err = shut_tests.factory_test_clocking(tt, max_idx, delay_interval_ms)
+    err = shut_tests.factory_test_clocking_03p5(tt, max_idx, delay_interval_ms)
     if err is not None:
         log.error(err)
         return False 
@@ -96,27 +112,70 @@ def test_clocking(max_idx:int=30, delay_interval_ms:int=50):
 
 
 
-
-def say_hello(delay_interval_ms:int=100, times:int=1):
-    # a test, must return True to consider a pass
-    print(f'Saying hello')
+def say_hello(delay_interval_ms:int=200, times:int=1):
     
-    hello_values = [0x74, 0x79, 0x30, 0x30, 0x5c, 0, 0x50, 0x10, 0x78, 0x77]
+    hello_values = [0x74, 0x79, 0x30, 0x30, 0x5c, 0, 0]
     tt = get_demoboard()
-    tt.shuttle.tt_um_test.enable()
+    try:
+        tt.shuttle.factory_test.enable()
+    except:
+        print('Failed to load factory test?')
+        return 
+    
+        
     tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
     
     tt.in0(0) # want this low
     tt.clock_project_PWM(1e3) # clock it real good
     
     log.info('First boot: saying hello')
-    for bp in tt.bidirs:
-        bp.mode = Pins.OUT
-        bp(0) # start low
+    # for bp in tt.bidirs:
+    #    bp.mode = Pins.OUT
+    #    bp(0) # start low
+    for _i in range(times):
+        for v in hello_values:
+            tt.input_byte = v
+            time.sleep_ms(delay_interval_ms)
+            
+            tt.input_byte = 0
+            time.sleep_ms(int(delay_interval_ms/10))
+        
+        tt.input_byte = 0
+        time.sleep_ms(int(delay_interval_ms/2))
+        
+    tt.clock_project_stop()
+    
+    return True
+
+
+def say_hello_03p5(delay_interval_ms:int=200, times:int=1):
+    # a test, must return True to consider a pass
+    hello_values = [0x74, 0x79, 0x30, 0x30, 0x5c, 0, 0]
+    tt = get_demoboard()
+    try:
+        tt.shuttle.factory_test.enable()
+    except:
+        print('Failed to load factory test?')
+        return 
+    
+        
+    tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
+    
+    tt.in0(0) # want this low
+    tt.clock_project_PWM(1e3) # clock it real good
+    
+    log.info('First boot: saying hello')
+    # for bp in tt.bidirs:
+    #    bp.mode = Pins.OUT
+    #    bp(0) # start low
+    
+    tt.bidir_mode = [Pins.OUT] * 8
+    tt.bidir_byte = 0
     
     for _i in range(times):
         for v in hello_values:
             tt.bidir_byte = v
+            log.warn(f'Wrote {v} to bidir, waiting {delay_interval_ms}')
             time.sleep_ms(delay_interval_ms)
             
             tt.bidir_byte = 0
@@ -128,8 +187,7 @@ def say_hello(delay_interval_ms:int=100, times:int=1):
     
     
     # reset everything
-    for bp in tt.bidirs:
-        bp.mode = Pins.IN
+    tt.bidir_mode = [Pins.IN] * 8
         
     tt.clock_project_stop()
     

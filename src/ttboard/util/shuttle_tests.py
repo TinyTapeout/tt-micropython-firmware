@@ -12,7 +12,7 @@ from ttboard.mode import RPMode
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
 
-def factory_test_bidirs(tt:DemoBoard, max_idx:int=255, delay_interval_ms:int=1):
+def factory_test_bidirs_03p5(tt:DemoBoard, max_idx:int=255, delay_interval_ms:int=1):
     '''
         Tests project comms and bidir pins by using tt_um_test to reflect 
         bidir to output.
@@ -62,7 +62,31 @@ def factory_test_bidirs(tt:DemoBoard, max_idx:int=255, delay_interval_ms:int=1):
     return None
 
 
-def factory_test_clocking(tt:DemoBoard, max_idx:int=30, delay_interval_ms:int=50):
+def clock_and_compare_output(tt:DemoBoard, max_idx:int, delay_interval_ms:int):
+    err_count = 0
+    for i in range(max_idx):
+        tt.clock_project_once()
+        time.sleep_ms(delay_interval_ms)
+        out_byte = tt.output_byte
+        
+        # give ourselves a little jitter room, in case we're a step
+        # behind as has happened for reasons unclear
+        if out_byte != i and out_byte != (i+1) and out_byte != (i-1):
+            log.warn(f'MISMATCH between expected count {i} and output {out_byte}')
+            err_count += 1
+        else:
+            log.debug(f'Clock count {i}, got {out_byte}')
+    
+    
+    if err_count:
+        err_msg = f'{err_count}/{max_idx} mismatches during counting test'
+        log.error(err_msg)
+        return err_msg 
+    
+    log.info('RP2040 clocking acting pretty nicely')
+    return None
+    
+def factory_test_clocking_03p5(tt:DemoBoard, max_idx:int=30, delay_interval_ms:int=50):
     '''
         Tests project comms, clocking and output pins by using tt_um_test to 
         count clock ticks.
@@ -82,26 +106,22 @@ def factory_test_clocking(tt:DemoBoard, max_idx:int=30, delay_interval_ms:int=50
     tt.input_byte = 1
     tt.clock_project_stop()
     tt.reset_project(False)
-    
-    err_count = 0
-    for i in range(max_idx):
-        tt.clock_project_once()
-        time.sleep_ms(delay_interval_ms)
-        out_byte = tt.output_byte
-        
-        # give ourselves a little jitter room, in case we're a step
-        # behind as has happened for reasons unclear
-        if out_byte != i and out_byte != (i+1) and out_byte != (i-1):
-            log.warn(f'MISMATCH between expected count {i} and output {tt.output_byte}')
-            err_count += 1
-    
-    
-    if err_count:
-        err_msg = f'{err_count}/{max_idx} mismatches during counting test'
-        log.error(err_msg)
-        return err_msg 
-    
-    log.info('RP2040 clocking acting pretty nicely')
-    return None
+    return clock_and_compare_output(tt, max_idx, delay_interval_ms)
 
 
+def factory_test_clocking_04(tt:DemoBoard, max_idx:int=30, delay_interval_ms:int=50):
+    
+    log.info(f'Testing manual clocking up to {max_idx} on {tt}')
+    
+    
+    # select the project from the shuttle
+    tt.shuttle.tt_um_factory_test.enable()
+    tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
+    
+    
+    tt.reset_project(True)
+    tt.input_byte = 1
+    tt.clock_project_stop()
+    tt.reset_project(False)
+    
+    return clock_and_compare_output(tt, max_idx, delay_interval_ms)

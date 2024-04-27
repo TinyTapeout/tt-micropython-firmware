@@ -78,7 +78,7 @@ class PowerOnSelfTest:
     
     @classmethod 
     def dotest_buttons_held(cls):
-        cls.write_pin('hk_csb', 1)
+        cls.write_pin('hk_csb', 1) # make sure mux is pointed right way
         if cls.read_pin('rp_projclk') and not cls.read_pin('sdi_nprojectrst'):
             log.info('POST "do test" buttons held')
             return True 

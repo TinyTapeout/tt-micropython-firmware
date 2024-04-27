@@ -179,6 +179,14 @@ class FirstBoot:
         keep_running_tests = True
         for section in sorted(self.config.sections):
             if keep_running_tests and section.startswith('run_'):
+                if self.config.has_option(section, 'shuttle'):
+                    shuttle = self.config.get(section, 'shuttle')
+                    if shuttle is not None and len(shuttle) and shuttle != demoboard.chip_ROM.shuttle:
+                        self.log_message(f'Section {section} is for shuttle {shuttle}, we are {demoboard.chip_ROM.shuttle}: skipping')
+                        continue 
+                    
+                self.log_message(f'Found section {section} to run')
+                
                 context['tests'][section] = True
                 if not RunOperation(demoboard, section, self.config).execute(context):
                     self.log_error(f'Execution of {section} failed')
@@ -187,6 +195,7 @@ class FirstBoot:
                     if abort_runs_on_err:
                         self.log_error(f'And abort_runs_on_error is set, aborting.')
                         keep_running_tests = False
+                        
                     
         if num_fails:
             if self.config.has_section('onfail'):
@@ -195,6 +204,7 @@ class FirstBoot:
     
         if self.config.has_section('onsuccess'):
             should_delete_op = RunOperation(demoboard, 'onsuccess', self.config)
+            self.log_message('Running onsuccess')
             if not should_delete_op.execute(context):
                 self.log_error('Could not execute onsuccess???')
                 self.run_complete(False)

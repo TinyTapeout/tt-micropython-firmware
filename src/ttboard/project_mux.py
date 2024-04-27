@@ -81,6 +81,7 @@ class ProjectMux:
         self.enabled = None
         self.design_enabled_callback = None
         self.shuttle_index_file = shuttle_index_file
+        self._chip_rom = None
     
     def reset(self):
         log.debug('Resetting project mux')
@@ -126,12 +127,33 @@ class ProjectMux:
     @property 
     def pins(self) -> Pins:
         return self.p
+    
+    @property 
+    def chip_ROM(self) -> ChipROM:
+        if self._chip_rom is None:
+            self._chip_rom = ChipROM(self)
+        
+        return self._chip_rom
+    
+    
+    @property 
+    def factory_test(self) -> Design:
+        try:
+            shuttle = self.chip_ROM.shuttle
+            if  shuttle == 'tt03p5':
+                return self.tt_um_test
+            return self.tt_um_factory_test
+        
+        except:
+            pass 
+        return None
+            
     @property
     def projects(self):
         if self._design_index is None:
             if self.shuttle_index_file is None:
                 log.debug('No shuttle index file specified, loading rom')
-                rom = ChipROM(self)
+                rom = self.chip_ROM
                 log.info(f'Chip reported by ROM is {rom.shuttle} commit {rom.commit}')
                 shuttle_file = f'/shuttles/{rom.shuttle}.json'
                 self.shuttle_index_file = shuttle_file

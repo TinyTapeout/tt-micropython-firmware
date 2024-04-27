@@ -128,6 +128,10 @@ class DemoBoard:
                 
         
     @property 
+    def chip_ROM(self):
+        return self.shuttle.chip_ROM
+    
+    @property 
     def mode(self):
         return self.pins.mode 
     
