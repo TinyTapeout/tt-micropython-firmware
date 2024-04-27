@@ -42,7 +42,19 @@ class PowerOnSelfTest:
             pin_states[name] = p() 
             
         return pin_states
+    @classmethod 
+    def _get_pin(cls, pin:str, direction:int) -> Pin:
         
+        pin_ionum = None
+        if isinstance(pin, int):
+            pin_ionum = pin 
+        else:
+            pin_name_to_io = GPIOMap.all()
+            if pin not in pin_name_to_io:
+                raise KeyError(f'No pin named {pin} found')
+            pin_ionum = pin_name_to_io[pin]
+            
+        return Pin(pin_ionum, direction)
     @classmethod 
     def read_pin(cls, pin:str) -> int:
         '''
@@ -54,22 +66,24 @@ class PowerOnSelfTest:
             @return: the value read
         '''
         
-        pin_ionum = None
-        if isinstance(pin, int):
-            pin_ionum = pin 
-        else:
-            pin_name_to_io = GPIOMap.all()
-            if pin not in pin_name_to_io:
-                raise KeyError(f'No pin named {pin} found')
-            pin_ionum = pin_name_to_io[pin]
-        
-        p = Pin(pin_ionum, Pin.IN)
+        p = cls._get_pin(pin, Pin.IN)
         return p()
+    
+    @classmethod 
+    def write_pin(cls, pin:str, value:int):
+        p = cls._get_pin(pin, Pin.OUT)
+        p(value)
+        
     
     
     @classmethod 
     def dotest_buttons_held(cls):
-        return cls.read_pin('rp_projclk') # and not cls.read_pin('sdi_nprojectrst')
+        cls.write_pin('hk_csb', 1)
+        if cls.read_pin('rp_projclk') and not cls.read_pin('sdi_nprojectrst'):
+            log.info('POST "do test" buttons held')
+            return True 
+        
+        return False
     
 # could also check
     
