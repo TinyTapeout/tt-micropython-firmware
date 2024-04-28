@@ -6,4 +6,4 @@ The TinyTapeout Demo Board PCB RPi SDK
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
-VERSION='0.9.16'
+VERSION='0.9.16b'

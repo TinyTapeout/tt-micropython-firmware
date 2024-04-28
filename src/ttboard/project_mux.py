@@ -135,6 +135,13 @@ class ProjectMux:
         
         return self._chip_rom
     
+    @property 
+    def run(self) -> str:
+        '''
+            The shuttle run, eg 'tt04'
+        '''
+        return self.chip_ROM.shuttle
+    
     
     @property 
     def factory_test(self) -> Design:
