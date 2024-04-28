@@ -32,7 +32,7 @@ The system will go through a little sequence on first boot and twiddle the 7-seg
 
 ## Quick Start
 
-See main.py for some sample usage of scripts.  
+See main.py for some sample usage of scripts.  You can also see example interaction with projects from the SDK in the [examples package](src/examples/).
 
 A good way to get a feel for the system is to connect via a serial terminal through the USB port and explore the REPL.
 
@@ -321,7 +321,10 @@ Values that may be set are
  * bidir_direction: bits set to 1 are driven by RP2040
  * bidir_byte: actual value to set (only applies to outputs)
  * mode: tt mode to set for this project
- 
+
+
+Values unspecified in a configuration are left as-is on project enable().
+
 Project auto-clocking is stopped by default when a project is loaded.  If the clock_frequency is set, then 
 it will be setup accordingly (*after* the rp_clock_frequency has been configured if that's present).
 
