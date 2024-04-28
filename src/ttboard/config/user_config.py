@@ -80,7 +80,13 @@ class UserProjectConfig:
         return f'<UserProjectConfig {self.section}, {props["clock_frequency"]}Hz, mode: {props["mode"]}>'
     
     def __str__(self):
-        return f'UserProjectConfig {self.section}\n{self._properties_dict()}'
+        property_strs = []
+        pdict = self._properties_dict()
+        for k in sorted(pdict.keys()):
+            property_strs.append(f'  {k}: {pdict[k]}')
+        
+        properties = '\n'.join(property_strs)
+        return f'{self.section}\n{properties}'
 
 class UserConfig(ConfigFile):
     '''
@@ -163,6 +169,8 @@ class UserConfig(ConfigFile):
     
     def __str__(self):
         def_mode = self._get_default_option('mode')
-        return f'UserConfig {self.filepath}, Defaults:\nproject: {self.default_project}\nmode: {def_mode}'
+        section_props = '\n'.join(map(lambda psect: str(self.project(psect)), 
+                                 filter(lambda s: s != 'DEFAULT', self.sections)))
+        return f'UserConfig {self.filepath}, Defaults:\nproject: {self.default_project}\nmode: {def_mode}\n{section_props}'
     
         
