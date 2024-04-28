@@ -10,9 +10,31 @@ entry point to all the TinyTapeout demo pcb's RP2040 functionality, including
     * basic utilities (auto clocking projects etc)
     * default and per-project configuration with ini file
     
+    
+# Installation
+
+The RP2040 makes installation really simple:
+
+  * get a UF2 file, which includes OS, SDK and configuration, from the [releases](https://github.com/TinyTapeout/tt-micropython-firmware/releases), e.g. 
+  tt-demo-rp2040-v0.9.14.uf2
+
+  * Hold the boot button on the demo board, and connect to computer via the USB port (top left)
+
+![demo board boot](images/demoboard_bootbutton.jpg)
+
+  * Release the boot button, the RPI-RP2 drive should appear
+  
+  * Copy over the UF2 file
+  
+The system will go through a little sequence on first boot and twiddle the 7-segment display.  You may connect to the device during this time, using a serial terminal (appears as /dev/ttyACM0 on my system)
+
+
+
 ## Quick Start
 
-See main.py for some sample usage.
+See main.py for some sample usage of scripts.  
+
+A good way to get a feel for the system is to connect via a serial terminal through the USB port and explore the REPL.
 
 
 ### Automatic Load and Default Config
@@ -29,9 +51,9 @@ start_in_reset = no
 
 # mode can be any of
 #  - SAFE: all RP2040 pins inputs
-#  - ASIC_ON_BOARD: TT inputs,nrst and clock driven, outputs monitored
+#  - ASIC_RP_CONTROL: TT inputs,nrst and clock driven, outputs monitored
 #  - ASIC_MANUAL_INPUTS: basically same as safe, but intent is clear
-mode = ASIC_ON_BOARD
+mode = ASIC_RP_CONTROL
 
 ```
 Each project on the shuttle may have it's own section as well, with additional attributes.  All attributes are optional.
@@ -93,20 +115,8 @@ tt.uio2.pwm(0) # stop PWMing
 
 # if you changed modes on pins, like bidir, and want 
 # to switch project, reset them to IN or just
-tt.mode = RPMode.ASIC_ON_BOARD # or RPMode.SAFE etc
+tt.mode = RPMode.ASIC_RP_CONTROL # or RPMode.SAFE etc
 ```
-
-
-# Installation 
-
-For all this to work, you need [MicroPython](https://micropython.org/) and these modules installed.
-
-The directions for installing uPython are exactly those for 
-[installing it on the Raspberry Pi Pico](https://www.raspberrypi.com/documentation/microcontrollers/micropython.html).  Hold the BOOT button while plugging into usb, copy over the UF2 file. The end.
-
-Next, copy over the entire contents of this directory to the /pyboard/ using rshell or mpremote.
-
-Finally, access the REPL using a serial terminal (under Linux, the port shows up as /dev/ttyACM0, baudrate seem irrelevant).
 
 
 # Usage
@@ -146,7 +156,7 @@ tt = DemoBoard() # whatever was in DEFAULT.mode of config.ini
 tt = DemoBoard(RPMode.SAFE) # all RP2040 pins are inputs
 
 # or: ASIC on board
-tt = DemoBoard(RPMode.ASIC_ON_BOARD) # ASIC drives the inputs (i.e. in0, in1 etc are OUTPUTS for the RP2040)
+tt = DemoBoard(RPMode.ASIC_RP_CONTROL) # ASIC drives the inputs (i.e. in0, in1 etc are OUTPUTS for the RP2040)
 
 # or: ASIC on board but you want to twiddle inputs and clock 
 # using on-board DIP switches and buttons
@@ -160,7 +170,7 @@ If you've played with the pin mode (direction), you've loaded a project that mod
 ```
 
 # simply set the tt mode
-tt.mode = RPMode.ASIC_ON_BOARD
+tt.mode = RPMode.ASIC_RP_CONTROL
 
 # or call reset on the pins, to set to whatever the
 # last mode was
@@ -203,12 +213,12 @@ The currently enabled project, if any, is accessible in
 <Design 54: tt_um_test>
 
 >>> tt
-<DemoBoard as ASIC_ON_BOARD, auto-clocking @ 10, project 'tt_um_test' (in RESET)>
+<DemoBoard as ASIC_RP_CONTROL, auto-clocking @ 10, project 'tt_um_test' (in RESET)>
 
 >>> tt.reset_project(False)
 
 >>> tt
-<DemoBoard as ASIC_ON_BOARD, auto-clocking @ 10, project 'tt_um_test'>
+<DemoBoard as ASIC_RP_CONTROL, auto-clocking @ 10, project 'tt_um_test'>
 
 ```
 
@@ -216,6 +226,44 @@ The currently enabled project, if any, is accessible in
 ## Configuration
 
 A `config.ini` file may be used to setup defaults (e.g. default mode or project to load on boot) as well as specific configuration to apply when loading a project in particular.  See the included `config.ini` for samples with commentary.
+
+Projects may use their own sections in this file to do preliminary setup, like configure clocking, direction and state of bidir pins, etc.
+
+If you're connected to the REPL, the configuration can be probed just by looking at the repr string or printing the object out
+
+
+```
+>>> tt.user_config
+<UserConfig config.ini, default project: tt_um_factory_test>
+>>> 
+>>> print(tt.user_config)
+UserConfig config.ini, Defaults:
+project: tt_um_factory_test
+mode: ASIC_RP_CONTROL
+```
+
+
+If any override sections are present in the file, sections will show you which are there, and these are present as 
+attributes you can just looking at to see summary info, or print out to see everything the section actually does. 
+
+```
+>>> tt.user_config.sections
+['tt_um_factory_test', 'tt_um_urish_simon', 'tt_um_psychogenic_neptuneproportional', 'tt_um_test', 'tt_um_loopback', 'tt_um_vga_clock', 'tt_um_algofoogle_solo_squash']
+>>> 
+>>> tt.user_config.tt_um_urish_simon
+<UserProjectConfig tt_um_urish_simon, 50000Hz, mode: ASIC_MANUAL_INPUTS>
+>>>
+>>> tt.user_config.tt_um_psychogenic_neptuneproportional
+<UserProjectConfig tt_um_psychogenic_neptuneproportional, 4000Hz, mode: ASIC_RP_CONTROL>
+>>>
+>>> print(tt.user_config.tt_um_vga_clock)
+UserProjectConfig tt_um_vga_clock
+{'rp_clock_frequency': 1.26e+08, 'mode': 'ASIC_RP_CONTROL', 'clock_frequency': 3.15e+07}
+```
+
+
+
+
 
 ### Sections and Values
 
@@ -243,9 +291,11 @@ System-wide default settings supported are
 
 project: (string) name of project to load on boot, e.g. *tt_um_loopback*
 
-mode: (string) ASIC_ON_BOARD, ASIC_MANUAL_INPUTS (to use the on-board switches/buttons), or SAFE 
+mode: (string) ASIC_RP_CONTROL, ASIC_MANUAL_INPUTS (to use the on-board switches/buttons), or SAFE 
 
 start_in_reset: (bool) whether projects should have their nRESET pin held low when enabled
+
+rp_clock_frequency: system clock frequency
 
 
 ### Project-specific
@@ -266,13 +316,14 @@ as specified in the shuttle, for instance
 
 Values that may be set are
  * clock_frequency: Frequency, in Hz, to auto-clock on project clock pin (ignored if in ASIC_MANUAL_INPUTS)
+ * rp_clock_frequency: system clock frequency -- useful if you need precision for your project clock PWM
  * input_byte: value to set for inputs on startup (ignored if in ASIC_MANUAL_INPUTS)
  * bidir_direction: bits set to 1 are driven by RP2040
  * bidir_byte: actual value to set (only applies to outputs)
  * mode: tt mode to set for this project
  
 Project auto-clocking is stopped by default when a project is loaded.  If the clock_frequency is set, then 
-it will be setup accordingly.
+it will be setup accordingly (*after* the rp_clock_frequency has been configured if that's present).
 
 Bi-directional pins (uio*) are reset to inputs when enabling another project.
 
@@ -354,7 +405,20 @@ tt.bidirs[2](1)
 
 ```
 
-The list (all 8 pins) and _byte attributes are available for inputs, outputs and bidir.
+The list (all 8 pins) and XYZ_byte attributes are available for inputs, outputs and bidir.  Finally, these ports also have a XYZ_mode attribute, which is just a list of the pin direction that lets you read them or set them all in one go, mostly useful with the bidir pins.
+
+```
+>>> from machine import Pin
+>>> # uio pins are currently all inputs
+>>> tt.uio2.mode == Pin.OUT
+False
+>>> tt.uio3.mode == Pin.OUT
+False
+>>> # change all to outputs, say
+>>> tt.bidir_mode = [Pin.OUT]*8
+>>> tt.uio2.mode == Pin.OUT
+True
+```
 
 
 
@@ -383,7 +447,7 @@ The pins available on the tt object include
 
 
 
-NOTE that this naming reflect the perspective of the *ASIC*.  The *ASIC* normally be writing to out pins and reading from in pins, and this is how pins are setup when using the `ASIC_ON_BOARD` mode (you, on the RP2040, read from out5 so it is an Pin.IN, etc).
+NOTE that this naming reflect the perspective of the *ASIC*.  The *ASIC* normally be writing to out pins and reading from in pins, and this is how pins are setup when using the `ASIC_RP_CONTROL` mode (you, on the RP2040, read from out5 so it is an Pin.IN, etc).
 
 
 ### MUX Stuff
@@ -392,8 +456,8 @@ In all instance except where the GPIO pins are MUXed, these behave just like mac
 
 For the MUXed pins, these are also available, namely
 
-  * sdi_out0
-  * sdo_out1
+  * sdi_nprojectrst
+  * cena_out1
   * ncrst_out2
   * cinc_out3
   
@@ -402,12 +466,27 @@ don't *have* to know is how the MUX is transparently handled, but I'm telling yo
 anyway with an example
 
 ```
-tt.sdi(1) # writing to this output
-# MUX now has switched over to control signal set
-# and sdi_out0 is an OUTPUT (which is HIGH)
-print(tt.out0()) # reading that pin
-# to do this MUX has switched back to the outputs set
-# and sdi_out0 is an INPUT
+>>> # look at this muxed bare GPIO pin
+>>> tt.sdi_nprojectrst
+<MuxedPin sdi_nprojectrst 3 (HPIN selected, OUT) sdi[OUT]/nprojectrst[OUT]>
+
+>>> # act on the transparently muxed pin object
+>>> tt.sdi(1)
+
+>>> # now the demoboard mux has switched over
+>>> tt.sdi_nprojectrst
+<MuxedPin sdi_nprojectrst 3 (LPIN selected, OUT) sdi[OUT]/nprojectrst[OUT]>
+
+>>> # use the reset, which is shared with SDI
+>>> tt.project_nrst(1)
+
+>>> # demoboard mux is back to high-side selected
+>>> tt.sdi_nprojectrst
+<MuxedPin sdi_nprojectrst 3 (HPIN selected, OUT) sdi[OUT]/nprojectrst[OUT]>
+>>> 
+
+
+
 ```
 
 ## Useful Utils
@@ -450,11 +529,15 @@ tt.clock_project_PWM(0) # stops it
 
 ```
 
-Also, many objects have decent representation so you can inspect them just by entering their references in the console
+You may also PWM any other pin, in the usual uPython way, but you'll have to manage it on your own and deinit if you switch projects etc.  
+
+When using project PWM auto-clocking, or any PWM, be sure to set the RP system clock, if required, before engaging the PWM--I've seen bad behaviour otherwise.
+
+Many objects have decent representation so you can inspect them just by entering their references in the console
 
 ```
 >>> tt
-<DemoBoard as ASIC_ON_BOARD, auto-clocking @ 10, project 'tt_um_test' (in RESET)>
+<DemoBoard as ASIC_RP_CONTROL, auto-clocking @ 10, project 'tt_um_test' (in RESET)>
 
 >>> tt.uio3
 <StandardPin uio3 24 IN>
@@ -470,11 +553,11 @@ And the DemoBoard objects have a *dump()* method to help with debug.
 >>> tt.dump()
 
 Demoboard status
-Demoboard default mode is ASIC_ON_BOARD
+Demoboard default mode is ASIC_RP_CONTROL
 Project nRESET pin is OUT 0
 Project clock PWM enabled and running at 10
 Selected design: tt_um_test
-Pins configured in mode ASIC_ON_BOARD
+Pins configured in mode ASIC_RP_CONTROL
 Currently:
   cinc_out3 IN 0
   ctrl_ena OUT 1
