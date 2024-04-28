@@ -3,13 +3,20 @@
 &copy; 2024 Pat Deegan, [psychogenic.com](https://psychogenic.com)
 
 This library provides the DemoBoard class, which is the primary
-entry point to all the TinyTapeout demo pcb's RP2040 functionality, including
+entry point to all the Tiny Tapeout demo pcb's RP2040 functionality.
 
-    * pins (named, transparently muxed)
-    * projects (all shuttle projects and means to enable)
-    * basic utilities (auto clocking projects etc)
-    * default and per-project configuration with ini file
-    
+What the RP2040 and this SDK provides, in addition to a base micropython environment (from crucial to nice-to-have):
+
+  *  It handles the ASIC project mux, and gives you a way to forget the json config and do `tt.shuttle.tt_um_myproject.enable()` to select between projects on the chip
+
+  *  Interfaces with all the project I/O, clocking and reset, lets you control those completely programatically, or clock+reset only (say, if you're connecting a PMOD like the Simon), or to be in full don't-touch mode while still being able to switch between projects
+
+  *  Provides abstractions related to the ASIC, so you don't *have* to use individual pins but can think in terms of *ports* (in/out/bidir) and transparently deals with the demoboard-level MUX we had to put on there because we didn't have as many I/O as needed for all the things we wanted to do
+
+  * Gives a system to allow for configuration using a simple config.ini: options for default project loaded on boot, clock speed (both RP2040 and project), settings for bidir pin directions on a per-project level, project load input pin state, etc 
+
+  * Provides a REPL to muck about easily, with objects that are for the most part well behaved (dynamic attributes for each project in the shuttle, say, nice `__repr__` and `__str__` for things you'd want to look at etc)
+
     
 # Installation
 
