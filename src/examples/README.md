@@ -79,7 +79,15 @@ print("Oh nooooo")
 return False
 ```
 
+
 If you want even more info on the ASIC, you may access the `tt.shuttle.chip_ROM` object (see docs/code).
+
+## Coding
+
+As long as the package naming is right and there's a way to access run() from the top level, style is pretty open.
+
+My SHA 256 encoder will only be out with TT05, but the example [is already in](tt_um_psychogenic_shaman/) and shows another way to organize things when the system is a bit more complex.  I have a [wrapper around the TT DemoBoard object](tt_um_psychogenic_shaman/shaman.py) that translates in/out/bidir pins to something meaningful in the code.  This also puts a barrier in the way of trying to run it before the ASIC is actually out, by using a check on the tt.shuttle.run.
+
 
 
 
