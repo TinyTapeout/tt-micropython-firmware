@@ -72,10 +72,11 @@ version_runners = {
 }
 
 if tt.shuttle.run in version_runners:
-    version_runners[tt.shuttle.run]()
-else:
-    print("Oh nooooo")
-    return False
+    return version_runners[tt.shuttle.run]()
+
+# not supported
+print("Oh nooooo")
+return False
 ```
 
 If you want even more info on the ASIC, you may access the `tt.shuttle.chip_ROM` object (see docs/code).
