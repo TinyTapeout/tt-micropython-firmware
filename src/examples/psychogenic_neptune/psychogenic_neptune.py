@@ -19,8 +19,8 @@ def die_on_error(msg:str):
     log.error(msg)
     return False 
 
-def run(tt:DemoBoard, loops:int=2, note_delay_ms:int=2000):
-    
+def run(loops:int=2, note_delay_ms:int=2000):
+    tt = DemoBoard.get()
     if not tt.shuttle.has('tt_um_psychogenic_neptuneproportional'):
         return die_on_error("This chip doesn't got neptune on-board!")
         
@@ -69,4 +69,5 @@ def run(tt:DemoBoard, loops:int=2, note_delay_ms:int=2000):
     pwm.deinit() # shut that down
     tt.in5(0) # bring low
             
-    
+if __name__ == '__main__':
+    run()
