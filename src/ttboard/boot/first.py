@@ -106,6 +106,17 @@ class FirstBoot:
     @classmethod
     def is_first_boot(cls):
         return ttboard.util.platform.isfile(cls.FirstBootIniFile)
+    
+    @classmethod 
+    def first_boot_log(cls):
+        if not ttboard.util.platform.isfile(cls.FirstBootLogFile):
+            return False 
+        
+        contents = ''
+        with open(cls.FirstBootLogFile, 'r') as f:
+            contents = ''.join(f.readlines())
+        
+        return contents
             
     @classmethod 
     def initialize(cls):

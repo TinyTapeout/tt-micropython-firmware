@@ -90,6 +90,9 @@ class PowerOnSelfTest:
     @classmethod 
     def first_boot(cls):
         return FirstBoot.is_first_boot()
+    @classmethod 
+    def first_boot_log(cls):
+        return FirstBoot.first_boot_log()
     
     @classmethod
     def handle_first_boot(cls):
