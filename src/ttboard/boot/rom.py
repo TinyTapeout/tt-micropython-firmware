@@ -5,6 +5,11 @@ Created on Apr 26, 2024
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 
+import ttboard.logging as logging
+log = logging.getLogger(__name__)
+import ttboard.util.time as time
+
+
 class ChipROM:
     def __init__(self, project_mux):
         self.project_mux = project_mux 
@@ -14,19 +19,32 @@ class ChipROM:
     
     def _send_and_rcv(self, send:int):
         self._pins.input_byte = send 
+        time.sleep_ms(1)
         return self._pins.output_byte
         
     @property
     def shuttle(self):
-        return self.contents['shuttle']
+        try:
+            return self.contents['shuttle']
+            log.error("ROM has no 'shuttle'")
+        except:
+            return ''
     
     @property 
     def repo(self):
-        return self.contents['repo']
+        try:
+            return self.contents['repo']
+        except:
+            log.error("ROM has no 'repo'")
+            return ''
     
     @property 
     def commit(self):
-        return self.contents['commit']
+        try:
+            return self.contents['commit']
+        except:
+            log.error("ROM has no 'commit'")
+            return ''
     
     @property 
     def contents(self):
@@ -44,7 +62,6 @@ class ChipROM:
         
         magic = self._send_and_rcv(0)
         if magic != 0x78:
-            
             return self._contents
         
         rom_data = ''
@@ -54,14 +71,20 @@ class ChipROM:
                 break
             rom_data += chr(byte)
         
+        log.info(f'Got ROM data {rom_data}')
+
         self._contents = {}
-        for l in rom_data.splitlines():
-            try:
-                k,v = l.split('=')
-                self._contents[k] = v 
-            except:
-                pass 
-        
+        if not len(rom_data):
+            log.warn("ROM data empty")
+        else:
+            for l in rom_data.splitlines():
+                try:
+                    k,v = l.split('=')
+                    self._contents[k] = v 
+                except:
+                    log.warn(f"Issue splitting {l}")
+                    pass 
+        log.debug(f"GOT ROM: {self._contents}")
         return self._contents
         
         
