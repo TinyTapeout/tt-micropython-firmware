@@ -26,8 +26,8 @@ class ChipROM:
     def shuttle(self):
         try:
             return self.contents['shuttle']
-            log.error("ROM has no 'shuttle'")
         except:
+            log.error("ROM has no 'shuttle'")
             return ''
     
     @property 
@@ -60,9 +60,17 @@ class ChipROM:
                 'commit': ''
         }
         
-        magic = self._send_and_rcv(0)
-        if magic != 0x78:
-            return self._contents
+        # list of expected outputs as
+        # (SEND, RCV)
+        magic_expects = [(0, 0x78), (129, 0x0)]
+        
+        for magic_pairs in magic_expects:
+            magic = self._send_and_rcv(magic_pairs[0])
+            if magic != magic_pairs[1]:
+                log.warn(f"No chip rom here? Got 'magic' {hex(magic)} @ {magic_pairs[0]}")
+                log.info('Fake reporting at tt03p5 chip')
+                self.project_mux.disable()
+                return self._contents
         
         rom_data = ''
         for i in range(32, 128):
@@ -85,6 +93,7 @@ class ChipROM:
                     log.warn(f"Issue splitting {l}")
                     pass 
         log.debug(f"GOT ROM: {self._contents}")
+        self.project_mux.disable()
         return self._contents
         
         

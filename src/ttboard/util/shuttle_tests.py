@@ -62,7 +62,7 @@ def factory_test_bidirs_03p5(tt:DemoBoard, max_idx:int=255, delay_interval_ms:in
     return None
 
 
-def clock_and_compare_output(tt:DemoBoard, max_idx:int, delay_interval_ms:int):
+def clock_and_compare_output(tt:DemoBoard, read_bidirs:bool, max_idx:int, delay_interval_ms:int):
     err_count = 0
     for i in range(max_idx):
         tt.clock_project_once()
@@ -71,11 +71,25 @@ def clock_and_compare_output(tt:DemoBoard, max_idx:int, delay_interval_ms:int):
         
         # give ourselves a little jitter room, in case we're a step
         # behind as has happened for reasons unclear
-        if out_byte != i and out_byte != (i+1) and out_byte != (i-1):
+        max_val = i+1
+        min_val = i-1
+        
+        if out_byte >= min_val and out_byte <= max_val:
+            # close enough
+            log.debug(f'Clock count {i}, got {out_byte}')
+        else:
             log.warn(f'MISMATCH between expected count {i} and output {out_byte}')
             err_count += 1
-        else:
-            log.debug(f'Clock count {i}, got {out_byte}')
+            
+        if read_bidirs:
+            bidir_byte = tt.bidir_byte 
+            if bidir_byte >= min_val and bidir_byte <= max_val:
+                # close enough
+                log.debug(f'Clock count {i}, got bidir {bidir_byte}')
+            else:
+                log.warn(f'MISMATCH between expected count {i} and bidir {bidir_byte}')
+                err_count += 1
+                
     
     
     if err_count:
@@ -86,36 +100,13 @@ def clock_and_compare_output(tt:DemoBoard, max_idx:int, delay_interval_ms:int):
     log.info('RP2040 clocking acting pretty nicely')
     return None
     
-def factory_test_clocking_03p5(tt:DemoBoard, max_idx:int=30, delay_interval_ms:int=50):
-    '''
-        Tests project comms, clocking and output pins by using tt_um_test to 
-        count clock ticks.
-                
-        @return: error message, or None on all passed
-    
-    '''
-    log.info(f'Testing manual clocking up to {max_idx} on {tt}')
-    
-    
-    # select the project from the shuttle
-    tt.shuttle.tt_um_test.enable()
-    tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
-    
-    
-    tt.reset_project(True)
-    tt.input_byte = 1
-    tt.clock_project_stop()
-    tt.reset_project(False)
-    return clock_and_compare_output(tt, max_idx, delay_interval_ms)
 
 
-def factory_test_clocking_04(tt:DemoBoard, max_idx:int=30, delay_interval_ms:int=50):
-    
+def factory_test_clocking(tt:DemoBoard, read_bidirs:bool, max_idx:int=128, delay_interval_ms:int=1):
     log.info(f'Testing manual clocking up to {max_idx} on {tt}')
     
-    
     # select the project from the shuttle
-    tt.shuttle.tt_um_factory_test.enable()
+    tt.shuttle.factory_test.enable()
     tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
     
     
@@ -124,4 +115,13 @@ def factory_test_clocking_04(tt:DemoBoard, max_idx:int=30, delay_interval_ms:int
     tt.clock_project_stop()
     tt.reset_project(False)
     
-    return clock_and_compare_output(tt, max_idx, delay_interval_ms)
+    return clock_and_compare_output(tt, read_bidirs, max_idx, delay_interval_ms)
+
+
+
+def factory_test_clocking_03p5(tt:DemoBoard, max_idx:int=128, delay_interval_ms:int=1):
+    return factory_test_clocking(tt, False, max_idx, delay_interval_ms)
+    
+def factory_test_clocking_04(tt:DemoBoard, max_idx:int=128, delay_interval_ms:int=1):
+    return factory_test_clocking(tt, True, max_idx, delay_interval_ms)
+    

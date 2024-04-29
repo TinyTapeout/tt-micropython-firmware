@@ -96,6 +96,14 @@ class ProjectMux:
     def disable(self):
         log.info(f'Disable (selecting project 0)')
         self.reset_and_clock_mux(0)
+        # enable admin pins through hw mux
+        self.p.muxCtrl.mode_admin() 
+        self.p.cena(0)
+        # let's stay in admin mode from here
+        # so we're actually holding this ena low
+        # as we were directed
+        # self.p.muxCtrl.mode_project_IO()
+        
         self.enabled = None
         
     def enable(self, design:Design):

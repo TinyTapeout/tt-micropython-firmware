@@ -382,7 +382,9 @@ class DemoBoard:
         reset = ''
         if self.shuttle.enabled is not None and not self.project_nrst(): # works whether is input or output
             reset = ' (in RESET)'
-        return f"<DemoBoard as {RPMode.to_string(self.mode)}{autoclocking}, project '{self.shuttle.enabled}'{reset}>"
+            
+        shuttle_run = self.shuttle.run
+        return f"<DemoBoard in {RPMode.to_string(self.mode)}{autoclocking} {shuttle_run} project '{self.shuttle.enabled}'{reset}>"
     
     def __getattr__(self, name):
         if hasattr(self.pins, name):

@@ -88,21 +88,11 @@ def test_bidirs_03p5(max_idx:int, delay_interval_ms:int=1):
     return True
 
 
-def test_clocking_04(max_idx:int=30, delay_interval_ms:int=50):
-    tt = get_demoboard()
-    print(f'Testing manual clocking up to {max_idx} on {tt}')
-    err = shut_tests.factory_test_clocking_04(tt, max_idx, delay_interval_ms)
-    if err is not None:
-        log.error(err)
-        return False 
-    
-    return True
-
-def test_clocking_03p5(max_idx:int=30, delay_interval_ms:int=50):
+def test_clocking(read_bidirs:bool, max_idx:int=128, delay_interval_ms:int=1):
     # a test, must return True to consider a pass
     tt = get_demoboard()
     print(f'Testing manual clocking up to {max_idx} on {tt}')
-    err = shut_tests.factory_test_clocking_03p5(tt, max_idx, delay_interval_ms)
+    err = shut_tests.factory_test_clocking(tt, read_bidirs, max_idx, delay_interval_ms)
     if err is not None:
         log.error(err)
         return False 
