@@ -73,7 +73,7 @@ class ChipROM:
         
         log.info(f'Got ROM data {rom_data}')
 
-        self._contents = {}
+        self._contents = {'shuttle':'tt04', 'commit':'FAKEDATA'}
         if not len(rom_data):
             log.warn("ROM data empty")
         else:
