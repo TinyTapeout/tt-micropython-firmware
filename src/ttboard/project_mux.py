@@ -6,28 +6,37 @@ Created on Jan 9, 2024
 '''
 
 import json
+import re 
 import ttboard.util.time as time
 from ttboard.pins import Pins
 from ttboard.boot.rom import ChipROM
-
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
 
 '''
 Fetched with
-https://index.tinytapeout.com/tt03p5.json?fields=repo,address,commit,clock_hz
-https://index.tinytapeout.com/tt04.json?fields=repo,address,commit,clock_hz
+https://index.tinytapeout.com/tt03p5.json?fields=repo,address,commit,clock_hz,title
+https://index.tinytapeout.com/tt04.json?fields=repo,address,commit,clock_hz,title
 
 '''
 class Design:
+    BadCharsRe = re.compile(r'[^\w\d\s]+')
+    SpaceCharsRe = re.compile(r'\s+')
     def __init__(self, projectMux, projindex:int, info:dict):
         self.mux = projectMux
         self.project_index = projindex
         self.count = int(projindex)
+        self.macro = info['macro']
         self.name = info['macro']
         self.repo = info['repo']
         self.commit = info['commit']
         self.clock_hz = info['clock_hz']
+        # special cleanup for wokwi gen'ed names
+        if self.name.startswith('tt_um_wokwi') and 'title' in info and len(info['title']):
+            new_name = self.SpaceCharsRe.sub('_', self.BadCharsRe.sub('', info['title'])).lower()
+            if len(new_name):
+                self.name = f'tt_um_wokwi_{new_name}'
+        
         self._all = info
         
     def enable(self):
@@ -51,8 +60,12 @@ class DesignIndex:
                 index = json.load(fh)
                 for project in index["projects"]:
                     des = Design(projectMux, project["address"], project)
-                    self._shuttle_index[des.name] = des
-                    setattr(self, des.name, des)
+                    attrib_name = des.name
+                    if attrib_name in self._shuttle_index:
+                        log.warn(f'Already have a "{attrib_name}" here...')
+                        attrib_name = des.macro
+                    self._shuttle_index[attrib_name] = des
+                    setattr(self, attrib_name, des)
                     self._project_count += 1
         except OSError:
             log.error(f'Could not open shuttle index {src_JSON_file}')
@@ -71,8 +84,28 @@ class DesignIndex:
         return self._shuttle_index.values()
     
     def get(self, project_name:str) -> Design:
-        return self._shuttle_index[project_name]
+        if project_name in self._shuttle_index:
+            return self._shuttle_index[project_name]
+        
+        # maybe it's an integer?
+        try: 
+            des_idx = int(project_name)
+            for des in self.all:
+                if des.count == des_idx:
+                    return des 
+        except ValueError:
+            pass 
+        
+        raise ValueError(f'Unknown project "{project_name}"')
+        
+    def __len__(self):
+        return len(self._shuttle_index)
+    
+    def __getitem__(self, idx:int) -> Design:
+        return self.get(idx)
                 
+    def __repr__(self):
+        return f'<DesignIndex {len(self)} projects>'
         
 class ProjectMux:
     def __init__(self, pins:Pins, shuttle_index_file:str=None):
@@ -107,7 +140,6 @@ class ProjectMux:
         self.enabled = None
         
     def enable(self, design:Design):
-        
         log.info(f'Enable design {design.name}')
         self.reset_and_clock_mux(design.count)
         self.enabled = design
@@ -188,7 +220,16 @@ class ProjectMux:
         return getattr(self.projects, project_name)
     
     def __getattr__(self, name):
-        if hasattr(self.projects, name):
+        if hasattr(self, 'projects') and hasattr(self.projects, name):
             return getattr(self.projects, name)
-        raise AttributeError
+        raise AttributeError(f"What is '{name}'?")
+    
+    def __getitem__(self, key) -> Design:
+        if hasattr(self, 'projects'):
+            return self.projects[key]
+        raise None
+    
+    def __repr__(self):
+        des_idx = self.projects
+        return f'<ProjectMux with {len(des_idx)} projects>'
         
