@@ -46,7 +46,7 @@ class Design:
         self.mux.disable()
         
     def __str__(self):
-        return self.name 
+        return f'{self.name} ({self.project_index}) @ {self.repo}'
     
     def __repr__(self):
         return f'<Design {self.project_index}: {self.name}>'
@@ -62,8 +62,15 @@ class DesignIndex:
                     des = Design(projectMux, project["address"], project)
                     attrib_name = des.name
                     if attrib_name in self._shuttle_index:
-                        log.warn(f'Already have a "{attrib_name}" here...')
-                        attrib_name = des.macro
+                        log.info(f'Already have a "{attrib_name}" here...')
+                        attempt = 1
+                        augmented_name = f'{attrib_name}_{attempt}'
+                        while augmented_name in self._shuttle_index:
+                            attempt += 1
+                            augmented_name = f'{attrib_name}_{attempt}'
+                        
+                        attrib_name = augmented_name
+                        des.name = augmented_name
                     self._shuttle_index[attrib_name] = des
                     setattr(self, attrib_name, des)
                     self._project_count += 1
