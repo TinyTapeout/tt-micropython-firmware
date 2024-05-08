@@ -39,12 +39,10 @@ def prep_block(shaman:Shaman, message_block):
         
 
 def process_message_blocks(shaman:Shaman, message_blocks):
-    
-    #from shaman.testing.purepy import generate_hash
     shaman.start = 1
-    wait_clocks()
-    shaman.start = 1
-    wait_clocks()
+    wait_clocks(10) # uncertain about the requirement for this and subsequent wait
+    shaman.start = 0
+    wait_clocks(10) 
     
     
     for block in message_blocks:
@@ -58,7 +56,7 @@ def process_message_blocks(shaman:Shaman, message_blocks):
         print(f'Processed block in {numBusyTicks} ticks')
         
 
-    print(f'Waiting until done...')
+    print('Waiting until done...')
     numWaitFinalTicks = 0
     while not shaman.result_ready:
         wait_clocks()
