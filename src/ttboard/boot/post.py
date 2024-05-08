@@ -123,7 +123,7 @@ class PowerOnSelfTest:
         auto_clock_freq = 1e3
         self.tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
         
-        self.tt.shuttle.tt_um_test.enable()
+        self.tt.shuttle.factory_test.enable()
         curMode = self.tt.mode 
         self.tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
         self.tt.reset_project(False)
