@@ -35,7 +35,7 @@ class Design:
         if self.name.startswith('tt_um_wokwi') and 'title' in info and len(info['title']):
             new_name = self.SpaceCharsRe.sub('_', self.BadCharsRe.sub('', info['title'])).lower()
             if len(new_name):
-                self.name = f'tt_um_wokwi_{new_name}'
+                self.name = f'wokwi_{new_name}'
         
         self._all = info
         
@@ -84,11 +84,11 @@ class DesignIndex:
                 
     @property 
     def names(self):
-        return self._shuttle_index.keys()
+        return sorted(self._shuttle_index.keys())
     
     @property 
     def all(self):
-        return self._shuttle_index.values()
+        return sorted(self._shuttle_index.values(), key=lambda p: p.name)
     
     def get(self, project_name:str) -> Design:
         if project_name in self._shuttle_index:
@@ -226,6 +226,9 @@ class ProjectMux:
     def get(self, project_name:str) -> Design:
         return getattr(self.projects, project_name)
     
+    def find(self, search:str) -> list:
+        return list(filter(lambda p: p.name.find(search) >= 0,  self.all))
+    
     def __getattr__(self, name):
         if hasattr(self, 'projects') and hasattr(self.projects, name):
             return getattr(self.projects, name)
@@ -236,7 +239,11 @@ class ProjectMux:
             return self.projects[key]
         raise None
     
+    
+    def __str__(self):
+        return f'Shuttle {self.run}\n{self.all}'
+    
     def __repr__(self):
         des_idx = self.projects
-        return f'<ProjectMux with {len(des_idx)} projects>'
+        return f'<ProjectMux for {self.run} with {len(des_idx)} projects>'
         
