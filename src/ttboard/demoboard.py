@@ -14,6 +14,7 @@ entry point to all the RP2040 demo pcb functionality, including
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
+import ttboard
 import ttboard.util.time as time
 from ttboard.globals import Globals
 from ttboard.mode import RPMode
@@ -126,7 +127,10 @@ class DemoBoard:
             else:
                 log.warn(f'Default project is unknown "{self.user_config.default_project}"')
                 
-        
+    @property 
+    def version(self) -> str:
+        return ttboard.VERSION
+    
     @property 
     def chip_ROM(self):
         return self.shuttle.chip_ROM
