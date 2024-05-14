@@ -252,7 +252,7 @@ wokwi_traffic_light
 The currently enabled project, if any, is accessible in
 
 ```
->>> ttt.shuttle.tt_um_factory_test.enable()
+>>> tt.shuttle.tt_um_factory_test.enable()
 
 >>> tt.shuttle.enabled
 <Design 1: tt_um_factory_test>
