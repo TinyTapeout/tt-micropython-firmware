@@ -115,7 +115,39 @@ def factory_test_clocking(tt:DemoBoard, read_bidirs:bool, max_idx:int=128, delay
     tt.clock_project_stop()
     tt.reset_project(False)
     
-    return clock_and_compare_output(tt, read_bidirs, max_idx, delay_interval_ms)
+    err =  clock_and_compare_output(tt, read_bidirs, max_idx, delay_interval_ms)
+    if err is not None:
+        # error encountered, we're done here
+        return err 
+    
+    
+    # test that reset actually resets
+    log.info('RP2040 test project reset')
+    
+    # make sure we're not exactly on 
+    if tt.output_byte == 0:
+        for _i in range(5):
+            tt.clock_project_once()
+            
+        if tt.output_byte == 0:
+            log.warn("Something is off: clocked a few times, still reporting 0")
+            
+            
+    tt.reset_project(True)
+    time.sleep_ms(10)
+    tt.reset_project(False)
+    err =  clock_and_compare_output(tt, read_bidirs, 0xf, delay_interval_ms)
+    if err is not None:
+        log.error(f'Problem with clocking test post-reset: {err}')
+        return err 
+    
+    log.info('RP2040: reset well behaved!')
+    return None 
+        
+    
+    
+    
+    
 
 
 
