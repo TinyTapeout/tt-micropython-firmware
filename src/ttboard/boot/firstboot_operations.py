@@ -119,22 +119,21 @@ def say_hello(delay_interval_ms:int=200, times:int=1):
     tt.clock_project_PWM(1e3) # clock it real good
     
     log.info('First boot: saying hello')
-    # for bp in tt.bidirs:
-    #    bp.mode = Pins.OUT
-    #    bp(0) # start low
+    tt.bidir_mode = [Pins.OUT] * 8 # set as outputs
     for _i in range(times):
         for v in hello_values:
-            tt.input_byte = v
+            tt.bidir_byte = v
             time.sleep_ms(delay_interval_ms)
             
-            tt.input_byte = 0
+            tt.bidir_byte = 0
             time.sleep_ms(int(delay_interval_ms/10))
         
-        tt.input_byte = 0
+        tt.bidir_byte = 0
         time.sleep_ms(int(delay_interval_ms/2))
-        
+    
     tt.clock_project_stop()
     
+    tt.bidir_mode = [Pins.IN] * 8 # reset to inputs, optional but polite
     return True
 
 
