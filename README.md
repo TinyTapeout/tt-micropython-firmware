@@ -80,6 +80,8 @@ tt.shuttle.<TAB><TAB>
 
 will show you all the projects that might be enabled, etc.
 
+
+
 Here's a sample REPL interaction with an overview of things to do
 
 ```
@@ -211,21 +213,53 @@ tt.shuttle.tt_um_gatecat_fpga_top.enable()
 
 This does all the control signal twiddling needed to select and enable the project using the snazzy TinyTapeout MUX.
 
+
+
+
+If you know the specific project's official name, great, you can use that
+```
+tt.shuttle.tt_um_urish_usb_cdc.enable()
+```
+
+If you don't, you can get a list of matching projects using `find()`, and call enable on any of the returned elements:
+
+```
+>>> tt.shuttle.find('traffic')
+[<Design 71: wokwi_german_traffic_light>, <Design 180: wokwi_traffic_light>, <Design 115: wokwi_traffic_light_1>]
+>>>
+>>> tt.shuttle.find('traffic')[0].enable()
+ttboard.project_mux: Enable design wokwi_german_traffic_light
+
+```
+
+Wokwi projects have horrible names like *tt_um_wokwi_375288605206694913* by default, which makes it pretty tough to peruse.  Instead, they get aliases based on their name in the shuttle, prefixed by wokwi:
+
+```
+>>> tt.shuttle.wokwi_<TAB>
+wokwi_uart_character_tx
+wokwi_customizable_uart_string_tx               
+wokwi_padlock
+wokwi_7seg_tiny_tapeout_display
+wokwi_test_4x4_memory
+wokwi_8_bit_4_data_sorting_network
+wokwi_multichannel_pulse_counter_with_serial_output_v01a
+wokwi_traffic_light             
+# etc...
+```
+
+
+
 The currently enabled project, if any, is accessible in
 
 ```
->>> tt.shuttle.tt_um_test.enable()
+>>> ttt.shuttle.tt_um_factory_test.enable()
 
 >>> tt.shuttle.enabled
-<Design 54: tt_um_test>
+<Design 1: tt_um_factory_test>
+
 
 >>> tt
-<DemoBoard as ASIC_RP_CONTROL, auto-clocking @ 10, project 'tt_um_test' (in RESET)>
-
->>> tt.reset_project(False)
-
->>> tt
-<DemoBoard as ASIC_RP_CONTROL, auto-clocking @ 10, project 'tt_um_test'>
+<DemoBoard in ASIC_RP_CONTROL tt04 project 'tt_um_factory_test (1) @ https://github.com/TinyTapeout/tt04-factory-test'>
 
 ```
 
@@ -449,11 +483,20 @@ Just note that the MUX stuff needs to be handled for those pins.
 ### Available pins
 The pins available on the tt object include
 
-  * out0 - out7
-  * in0 - in7
-  * uio0 - uio7
-  * project_clk
-  * project_nrst
+  * out0 - out7 # outputs, available as output_byte as well
+  * in0 - in7 # inputs, available as input_byte
+  * uio0 - uio7 # bidirectional pins, available as bidir_byte
+  * project_clk # the clock for synch projects
+  * project_nrst # the reset pin
+
+
+Though you can play with these two last to your heart's content, the easiest way to interact with these functions is through the utility methods:
+
+  * clock_project_PWM(FREQHz) / clock_project_stop()
+  * clock_project_once()
+  * tt.reset_project(BOOL) (True puts project in reset)
+  
+
 
 
 
