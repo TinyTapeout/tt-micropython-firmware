@@ -54,10 +54,10 @@ def firstboot_completed():
     tt = get_demoboard()
     if tt.chip_ROM.shuttle == 'tt03p5':
         print("CHIPROM shuttle is 03p5, saying hello")
-        say_hello_03p5(180, times=2)
+        say_hello_03p5(350, times=2)
     else:
         print(f"CHIPROM shuttle {tt.chip_ROM.shuttle}, saying hello")
-        say_hello(180, times=2)
+        say_hello(350, times=2)
         
     return True
 
@@ -120,16 +120,20 @@ def say_hello(delay_interval_ms:int=200, times:int=1):
     
     log.info('First boot: saying hello')
     tt.bidir_mode = [Pins.OUT] * 8 # set as outputs
+    
+    short_delay_ms = int(delay_interval_ms/10)
+    if short_delay_ms < 10:
+        short_delay_ms = 10
     for _i in range(times):
         for v in hello_values:
             tt.bidir_byte = v
-            time.sleep_ms(delay_interval_ms)
+            time.sleep_ms(delay_interval_ms - short_delay_ms)
             
             tt.bidir_byte = 0
-            time.sleep_ms(int(delay_interval_ms/10))
+            time.sleep_ms(short_delay_ms)
         
         tt.bidir_byte = 0
-        time.sleep_ms(int(delay_interval_ms/2))
+        time.sleep_ms(short_delay_ms * 3)
     
     tt.clock_project_stop()
     
