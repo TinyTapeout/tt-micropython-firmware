@@ -310,7 +310,7 @@ class Pins:
             log.error(f'Following pins have not be set as outputs owing to contention: {",".join(unconfigured_pins)}')
         self._begin_muxPins()
         # needs to be after mux because reset now muxed
-        self.project_clk_nrst_driven_by_RP2040(True)
+        self.project_clk_driven_by_RP2040(True)
         
     def begin_asic_manual_inputs(self):
         log.debug('begin: ASIC + MANUAL INPUTS')
@@ -320,7 +320,7 @@ class Pins:
         self._begin_muxPins()
         # leave clk and reset as inputs, for manual operation
         # needs to be after mux, because reset now muxed
-        self.project_clk_nrst_driven_by_RP2040(False)
+        self.project_clk_driven_by_RP2040(False)
         
         
     
@@ -340,12 +340,10 @@ class Pins:
                 
         self._begin_muxPins()
         # needs to be after mux, because reset now muxed
-        self.project_clk_nrst_driven_by_RP2040(True)
+        self.project_clk_driven_by_RP2040(True)
         
-    def project_clk_nrst_driven_by_RP2040(self, rpControlled:bool):
-    
-        # for pname in ['nprojectrst', 'rp_projclk']:
-        for pname in ['rp_projclk', 'nprojectrst']:
+    def project_clk_driven_by_RP2040(self, rpControlled:bool):
+        for pname in ['rp_projclk']:
             p = getattr(self, pname)
             if rpControlled:
                 p.mode = Pin.OUT

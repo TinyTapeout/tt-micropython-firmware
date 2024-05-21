@@ -205,15 +205,19 @@ class DemoBoard:
         cur_mode = self.project_nrst.mode
         if putInReset:
             if cur_mode != Pins.OUT:
-                self.project_nrst.mode = Pins.OUT
                 log.info("Changing reset to output mode")
+                self.project_nrst.mode = Pins.OUT
             self.project_nrst(0) # inverted logic
         else:
-            if cur_mode != Pins.OUT:
-                log.debug("Project not currently controled by RP--should not be reset anyway")
-            else:
-                self.project_nrst.mode = Pins.IN
-            self.project_nrst(1)
+            # we don't want it in reset.
+            # demoboard has MOM switch and pull-ups to default 
+            # it in this way, so we just need to make it an input
+            # since this pin is on the MUX, we make certain that 
+            # the correct bank is selected by writing to it first
+            if cur_mode == Pins.OUT:
+                log.debug('Taking out of reset')
+                self.project_nrst(1) 
+            self.project_nrst.mode = Pins.IN
             
     def clock_project_once(self, msDelay:int=0):
         '''
@@ -350,7 +354,7 @@ class DemoBoard:
         if projConfig.has('clock_frequency'):
             if self.mode == RPMode.ASIC_MANUAL_INPUTS:
                 log.info('In "manual inputs" mode but clock freq set--setting up for CLK/RST RP ctrl')
-                self.pins.project_clk_nrst_driven_by_RP2040(True)
+                self.pins.project_clk_driven_by_RP2040(True)
             self.clock_project_PWM(projConfig.clock_frequency)
         else:
             self.clock_project_stop()

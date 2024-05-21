@@ -70,7 +70,7 @@ class GPIOMap:
     def muxed_pinmode_map(cls, rpmode:int):
         
         pinModeMap = {
-            'nprojectrst': Pin.OUT,
+            'nprojectrst': Pin.IN, # "special" pin -- In == pulled-up, NOT reset
             'sdi': Pin.OUT,
             'cena': Pin.OUT, 
             'out1': Pin.IN,
