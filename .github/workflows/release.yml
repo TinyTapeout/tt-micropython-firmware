@@ -9,7 +9,7 @@ jobs:
     # ubuntu
     env:
       RPOS_UF2FILE: RPI_PICO-20240222-v1.22.2.uf2
-      TT_RUNS_SUPPORTED: "tt03p5 tt04"
+      TT_RUNS_SUPPORTED: "tt03p5 tt04 tt05"
     runs-on: ubuntu-latest
     steps:
     # need the repo checked out
