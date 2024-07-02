@@ -114,6 +114,7 @@ class DemoBoard:
         self.shuttle.design_enabled_callback = self.apply_user_config
         self._clock_pwm = None
         
+        self._project_previously_loaded = {}
         self.load_default_project() 
         
         if DemoBoard._DemoBoardSingleton_Instance is None:
@@ -225,6 +226,7 @@ class DemoBoard:
             pin twice, optionally with a delay
             between the changes (in ms)
         '''
+        self.pins.project_clk_driven_by_RP2040(True)
         self.project_clk.toggle()
         if msDelay > 0:
             time.sleep_ms(msDelay)
@@ -238,6 +240,8 @@ class DemoBoard:
             @param freqHz: The frequency of the clocking, in Hz, or 0 to disable PWM
             @param duty_u16: Optional duty cycle (0-0xffff), defaults to 50%  
         '''
+        if freqHz > 0:
+            self.pins.project_clk_driven_by_RP2040(True)
         try:
             self._clock_pwm = self.pins.rp_projclk.pwm(freqHz, duty_u16)
         except  Exception as e:
@@ -249,11 +253,10 @@ class DemoBoard:
             Stop any started automatic project clocking.  No effect 
             if no clocking started.
         '''
-        if self._clock_pwm is None:
-            return 
-        
-        self.clock_project_PWM(0)
-        self.project_clk(0) # make certain we are low
+        if self._clock_pwm is not None:
+            self.clock_project_PWM(0)
+            self.project_clk(0) # make certain we are low
+        self.pins.project_clk_driven_by_RP2040(False)
     
     
     def apply_user_config(self, design:Design):
@@ -293,7 +296,9 @@ class DemoBoard:
         startInReset = projConfig.start_in_reset
         if startInReset is None:
             startInReset = self.user_config.default_start_in_reset
-            
+        
+        
+        
         if startInReset is not None:
             self.reset_project(startInReset)
         
@@ -304,7 +309,10 @@ class DemoBoard:
             log.debug(f'Setting input byte to {btVal}')
             self.pins.input_byte = btVal
             
-        if projConfig.bidir_direction is not None:
+        if projConfig.bidir_direction is None:
+            # no bidir direction set, ensure all are inputs
+            self.bidir_mode = [Pins.IN]*8
+        else:
             dirBits = projConfig.bidir_direction
             log.debug(f'Setting bidir pin direction to {hex(dirBits)}')
             bidirs = self.pins.bidirs 
@@ -349,7 +357,7 @@ class DemoBoard:
                     platform.set_RP_system_clock(def_sys_clock)
                 except ValueError:
                     log.error(f'Default sys clock setting {def_sys_clock} is invalid?')
-                    
+        
                     
         if projConfig.has('clock_frequency'):
             if self.mode == RPMode.ASIC_MANUAL_INPUTS:
@@ -358,6 +366,15 @@ class DemoBoard:
             self.clock_project_PWM(projConfig.clock_frequency)
         else:
             self.clock_project_stop()
+            
+        
+        if not startInReset:
+            if design.name not in self._project_previously_loaded:
+                self._project_previously_loaded[design.name] = True
+                log.info('First time loading: Toggling project reset')
+                self.reset_project(True)
+                time.sleep_ms(2)
+                self.reset_project(False)
             
             
     def dump(self):
