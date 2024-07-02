@@ -100,7 +100,8 @@ class MuxedSelection:
     def gpio_num(self):
         return self._parent.gpio_num 
     
-    
+    def value(self, value:int=None):
+        return self(value)
     
     
     def __call__(self, value:int=None):
