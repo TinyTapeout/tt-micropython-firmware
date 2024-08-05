@@ -122,8 +122,8 @@ class UserConfig(ConfigFile):
             # connected to the demoboard.  If you want to bypass this step and
             # manually set the shuttle, uncomment this and set the option to
             # a valid shuttle
-            # force_shuttle = 'tt05'
-            force_shuttle = 'tt04'
+            # force_shuttle = tt05
+            force_shuttle = tt04
             
             
         Each project section is named [SHUTTLE_PROJECT_NAME]
