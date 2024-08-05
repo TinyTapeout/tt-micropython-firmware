@@ -5,13 +5,16 @@ Created on Apr 26, 2024
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 
+import ttboard.util.time as time
+from ttboard.boot.shuttle_properties import ShuttleProperties
+
+
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
-import ttboard.util.time as time
 
-
-class ChipROM:
+class ChipROM(ShuttleProperties):
     def __init__(self, project_mux):
+        super().__init__()
         self.project_mux = project_mux 
         self._contents = None 
         self._pins = project_mux.pins
@@ -29,7 +32,7 @@ class ChipROM:
         except:
             log.error("ROM has no 'shuttle'")
             return ''
-    
+        
     @property 
     def repo(self):
         try:

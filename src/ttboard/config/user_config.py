@@ -114,6 +114,18 @@ class UserConfig(ConfigFile):
             #  - WARN
             #  - ERROR
             log_level = INFO
+            
+            
+            # force_shuttle
+            # by default, system attempts to figure out which ASIC is on board
+            # using the chip ROM.  This can be a problem if you have something
+            # connected to the demoboard.  If you want to bypass this step and
+            # manually set the shuttle, uncomment this and set the option to
+            # a valid shuttle
+            # force_shuttle = 'tt05'
+            force_shuttle = 'tt04'
+            
+            
         Each project section is named [SHUTTLE_PROJECT_NAME]
         and will be an instance of, and described by, UserProjectConfig
     '''
@@ -145,6 +157,10 @@ class UserConfig(ConfigFile):
     @property 
     def default_rp_clock(self):
         return self._get_default_option('rp_clock_frequency')
+    
+    @property 
+    def force_shuttle(self):
+        return self._get_default_option('force_shuttle')
         
     
     def has_project(self, name:str):

@@ -24,10 +24,14 @@ class Globals:
             
         return cls.Pins_Singleton
     
+    
     @classmethod
-    def project_mux(cls) -> ProjectMux:
+    def project_mux(cls, for_shuttle_run:str=None) -> ProjectMux:
+            
         if cls.ProjectMux_Singleton is None:
-            cls.ProjectMux_Singleton = ProjectMux(cls.pins())
+            cls.ProjectMux_Singleton = ProjectMux(cls.pins(), for_shuttle_run)
+        elif for_shuttle_run is not None:
+            raise RuntimeError('Only expecting a shuttle on first call of Globals.project_mux')
             
         return cls.ProjectMux_Singleton
     

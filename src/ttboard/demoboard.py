@@ -104,8 +104,9 @@ class DemoBoard:
             
         log.info(f'Demoboard starting up in mode {RPMode.to_string(mode)}')
         
+        
         self.pins = Globals.pins(mode=mode)
-        self.shuttle = Globals.project_mux()
+        self.shuttle = Globals.project_mux(self.user_config.force_shuttle)
         
         # config
         self.apply_configs = apply_user_config

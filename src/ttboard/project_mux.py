@@ -10,6 +10,7 @@ import re
 import ttboard.util.time as time
 from ttboard.pins import Pins
 from ttboard.boot.rom import ChipROM
+from ttboard.boot.shuttle_properties import HardcodedShuttle
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
 
@@ -115,13 +116,32 @@ class DesignIndex:
         return f'<DesignIndex {len(self)} projects>'
         
 class ProjectMux:
-    def __init__(self, pins:Pins, shuttle_index_file:str=None):
+    '''
+        Interface to list and load projects, appears as 
+        tt.shuttle
+        
+        Can do 
+            tt.shuttle.tt_um_whatevername.enable()
+            tt.shuttle[projectindex].enable()
+        and 
+            tt.shuttle.enabled
+            to see which project is currently enabled.
+    
+    '''
+    @classmethod 
+    def indexfile_for_shuttle(cls, shuttle_name:str):
+        return f'/shuttles/{shuttle_name}.json'
+    
+    
+    def __init__(self, pins:Pins, shuttle_run:str=None):
         self.p = pins 
         self._design_index = None
         self.enabled = None
         self.design_enabled_callback = None
-        self.shuttle_index_file = shuttle_index_file
-        self._chip_rom = None
+        self._shuttle_props = None
+        if shuttle_run is not None:
+            log.info(f'shuttle run hardcoded to "{shuttle_run}"')
+            self._shuttle_props = HardcodedShuttle(shuttle_run)
     
     def reset(self):
         log.debug('Resetting project mux')
@@ -177,10 +197,11 @@ class ProjectMux:
     
     @property 
     def chip_ROM(self) -> ChipROM:
-        if self._chip_rom is None:
-            self._chip_rom = ChipROM(self)
+        if self._shuttle_props is None:
+            log.debug('No shuttle specified, loading rom')
+            self._shuttle_props = ChipROM(self)
         
-        return self._chip_rom
+        return self._shuttle_props
     
     @property 
     def run(self) -> str:
@@ -205,20 +226,12 @@ class ProjectMux:
     @property
     def projects(self):
         if self._design_index is None:
-            if self.shuttle_index_file is None:
-                log.debug('No shuttle index file specified, loading rom')
-                rom = self.chip_ROM
-                log.info(f'Chip reported by ROM is {rom.shuttle} commit {rom.commit}')
-                shuttle_file = f'/shuttles/{rom.shuttle}.json'
-                self.shuttle_index_file = shuttle_file
-                
-            
+            self.shuttle_index_file = self.indexfile_for_shuttle(self.run)
             log.info(f'Loading shuttle file {self.shuttle_index_file}')
                 
             self._design_index = DesignIndex(self, src_JSON_file=self.shuttle_index_file)
 
         return self._design_index
-    
     
     def has(self, project_name:str):
         return hasattr(self.projects, project_name)
