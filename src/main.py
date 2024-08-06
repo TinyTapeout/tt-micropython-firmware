@@ -33,7 +33,7 @@ import ttboard.util.time as time
 from ttboard.mode import RPMode
 from ttboard.demoboard import DemoBoard, Pins
 from ttboard.boot.post import PowerOnSelfTest
-
+import ttboard.util.colors as colors
 
 tt = None
 def startup():
@@ -42,17 +42,18 @@ def startup():
     # either pass an appropriate RPMode, e.g. RPMode.ASIC_RP_CONTROL
     # or have "mode = ASIC_RP_CONTROL" in ini DEFAULT section
     ttdemoboard = DemoBoard()
-
-    
     print("\n\n")
-    print("The 'tt' object is available.")
+    print(f"The '{colors.color('tt', 'red')}' object is available.")
     print()
-    print("Projects may be enabled with tt.shuttle.PROJECT_NAME.enable(), e.g.")
+    print(f"Projects may be enabled with {colors.bold('tt.shuttle.PROJECT_NAME.enable()')}, e.g.")
     print("tt.shuttle.tt_um_urish_simon.enable()")
     print()
-    print("Pins may be accessed by name, e.g. tt.out3() to read or tt.in5(1) to write.")
+    print(f"Pins may be accessed by name, e.g. {colors.bold('tt.out3()')} to read or {colors.bold('tt.in5(1)')} to write.")
+    print(f"Whole port bytes may be used as well: {colors.bold('tt.output_byte = 0xAA')} or {colors.bold('print tt.input_byte')} ")
     print("Config of pins may be done using mode attribute, e.g. ")
-    print("tt.uio3.mode = Pins.OUT")
+    print(f"{colors.bold('tt.uio3.mode = Pins.OUT')}")
+    print("\n")
+    print(f"{colors.color('TT SDK v' + ttdemoboard.version, 'cyan')}")
     print("\n\n")
     
     return ttdemoboard
@@ -88,15 +89,6 @@ def test_design_tnt_counter():
         tt.clock_project_stop()
         
     
-
-def test_neptune():
-    tt.shuttle.tt_um_psychogenic_neptuneproportional.enable()
-    for i in range(20, 340, 10):
-        tt.in5.pwm(i)
-        time.sleep_ms(1000)
-        print(f'Input at {i}Hz, outputs are {hex(tt.output_byte)}')
-    
-    tt.in5.pwm(0) # disable pwm
 
 
 # check if this is the first boot, if so, 
