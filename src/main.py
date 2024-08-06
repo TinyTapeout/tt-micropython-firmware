@@ -49,7 +49,7 @@ def startup():
     print("tt.shuttle.tt_um_urish_simon.enable()")
     print()
     print(f"Pins may be accessed by name, e.g. {colors.bold('tt.out3()')} to read or {colors.bold('tt.in5(1)')} to write.")
-    print(f"Whole port bytes may be used as well: {colors.bold('tt.output_byte = 0xAA')} or {colors.bold('print tt.input_byte')} ")
+    print(f"Whole port bytes may be used as well: {colors.bold('tt.output_byte = 0xAA')} or {colors.bold('print(tt.input_byte)')} ")
     print("Config of pins may be done using mode attribute, e.g. ")
     print(f"{colors.bold('tt.uio3.mode = Pins.OUT')}")
     print("\n")
