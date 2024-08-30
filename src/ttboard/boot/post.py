@@ -42,19 +42,7 @@ class PowerOnSelfTest:
             pin_states[name] = p() 
             
         return pin_states
-    @classmethod 
-    def _get_pin(cls, pin:str, direction:int) -> Pin:
-        
-        pin_ionum = None
-        if isinstance(pin, int):
-            pin_ionum = pin 
-        else:
-            pin_name_to_io = GPIOMap.all()
-            if pin not in pin_name_to_io:
-                return None
-            pin_ionum = pin_name_to_io[pin]
-            
-        return Pin(pin_ionum, direction)
+
     @classmethod 
     def read_pin(cls, pin:str) -> int:
         '''
@@ -66,14 +54,14 @@ class PowerOnSelfTest:
             @return: the value read
         '''
         
-        p = cls._get_pin(pin, Pin.IN)
+        p = GPIOMap.get_raw_pin(pin, Pin.IN)
         if p is None:
             raise KeyError(f'No pin named {pin} found')
         return p()
     
     @classmethod 
     def write_pin(cls, pin:str, value:int):
-        p = cls._get_pin(pin, Pin.OUT)
+        p = GPIOMap.get_raw_pin(pin, Pin.OUT)
         if p is None:
             raise KeyError(f'No pin named {pin} found')
         p(value)
@@ -82,7 +70,7 @@ class PowerOnSelfTest:
     
     @classmethod 
     def dotest_buttons_held(cls):
-        mux_selectpin = cls._get_pin('hk_csb', Pin.OUT)
+        mux_selectpin = GPIOMap.get_raw_pin('hk_csb', Pin.OUT)
         if mux_selectpin is not None:
             mux_selectpin(1) # have mux, make sure it's is pointed right way
         if cls.read_pin(GPIOMap.project_clock()) and not cls.read_pin(GPIOMap.project_reset()):

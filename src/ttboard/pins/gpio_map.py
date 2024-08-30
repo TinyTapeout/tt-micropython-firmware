@@ -66,6 +66,21 @@ class GPIOMapBase:
         return Pin.PULL_DOWN
     
     @classmethod 
+    def get_raw_pin(cls, pin:str, direction:int) -> Pin:
+        
+        pin_ionum = None
+        if isinstance(pin, int):
+            pin_ionum = pin 
+        else:
+            pin_name_to_io = cls.all()
+            if pin not in pin_name_to_io:
+                return None
+            pin_ionum = pin_name_to_io[pin]
+            
+        return Pin(pin_ionum, direction)
+    
+    
+    @classmethod 
     def all_common(cls):
         retDict = {
             "rp_projclk": cls.RP_PROJCLK,
@@ -144,7 +159,7 @@ class GPIOMapTT04(GPIOMapBase):
     
     @classmethod 
     def project_reset(cls):
-        raise cls.SDI_nPROJECT_RST
+        return cls.SDI_nPROJECT_RST
     
     @classmethod 
     def ctrl_increment(cls):
@@ -152,11 +167,11 @@ class GPIOMapTT04(GPIOMapBase):
     
     @classmethod 
     def ctrl_enable(cls):
-        raise cls.CTRL_ENA_OUT1
+        return cls.CTRL_ENA_OUT1
     
     @classmethod 
     def ctrl_reset(cls):
-        raise cls.nCRST_OUT2
+        return cls.nCRST_OUT2
     
     
     @classmethod 
@@ -272,11 +287,11 @@ class GPIOMapTT06(GPIOMapBase):
     
     @classmethod 
     def ctrl_enable(cls):
-        raise cls.CTRL_SEL_ENA
+        return cls.CTRL_SEL_ENA
     
     @classmethod 
     def ctrl_reset(cls):
-        raise cls.CTRL_SEL_nRST
+        return cls.CTRL_SEL_nRST
     
     @classmethod 
     def all(cls):
@@ -290,5 +305,4 @@ class GPIOMapTT06(GPIOMapBase):
         })
         return retDict
 
-class GPIOMap(GPIOMapTT06):
-    pass
+GPIOMap = GPIOMapTT04
