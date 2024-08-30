@@ -5,7 +5,7 @@ Created on Jan 22, 2024
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 from ttboard.util.platform import IsRP2040
-
+import ttboard.util.colors as colors 
 RPLoggers = dict()
 DefaultLogLevel = 20 # info by default
 if IsRP2040:
@@ -15,13 +15,18 @@ if IsRP2040:
     WARN = 30
     ERROR = 40
     class Logger:
-        
+        colorMap = {
+                10: 'yellow',
+                20: 'green',
+                30: 'yellow',
+                40: 'red'
+            }
         def __init__(self, name):
             self.name = name 
             self.loglevel = DefaultLogLevel
         def out(self, s, level:int):
             if self.loglevel <= level:
-                print(f'{self.name}: {s}')
+                print(f'{self.name}: {colors.color(s, self.colorMap[level])}')
             
         def debug(self, s):
             self.out(s, DEBUG)
