@@ -22,6 +22,7 @@ from ttboard.pins import Pins
 from ttboard.project_mux import ProjectMux, Design
 from ttboard.config.user_config import UserConfig
 import ttboard.util.platform as platform 
+from ttboard.boot.demoboard_detect import DemoboardDetect, DemoboardVersion
 
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
@@ -104,7 +105,24 @@ class DemoBoard:
             
         log.info(f'Demoboard starting up in mode {RPMode.to_string(mode)}')
         
-        
+        if self.user_config.force_demoboard:
+            versionMap = {
+                'tt04': DemoboardVersion.TT04,
+                'tt05': DemoboardVersion.TT04,
+                'tt06': DemoboardVersion.TT06,
+                'tt07': DemoboardVersion.TT06,
+                'tt08': DemoboardVersion.TT06,
+                
+                }
+            if self.user_config.force_demoboard in versionMap:
+                log.warn(f'Demoboard detection forced to {self.user_config.force_demoboard}')
+                DemoboardDetect.force_detection(versionMap[self.user_config.force_demoboard])
+            else:
+                log.error(f'Unrecognized force_demoboard setting: {self.user_config.force_demoboard}')
+            
+            
+            
+            
         self.pins = Globals.pins(mode=mode)
         self.shuttle = Globals.project_mux(self.user_config.force_shuttle)
         

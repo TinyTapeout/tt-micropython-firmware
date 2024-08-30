@@ -126,6 +126,13 @@ class UserConfig(ConfigFile):
             force_shuttle = tt04
             
             
+            # force_demoboard
+            # System does its best to determine the version of demoboard 
+            # its running on.  Override this with 
+            # force_demoboard = tt0*
+            force_demoboard = tt06
+            
+            
         Each project section is named [SHUTTLE_PROJECT_NAME]
         and will be an instance of, and described by, UserProjectConfig
     '''
@@ -163,6 +170,10 @@ class UserConfig(ConfigFile):
         return self._get_default_option('force_shuttle')
         
     
+    @property 
+    def force_demoboard(self):
+        return self._get_default_option('force_demoboard')
+        
     def has_project(self, name:str):
         if self.has_section(name):
             return True 

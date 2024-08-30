@@ -33,6 +33,37 @@ class DemoboardVersion:
         return 'N/A'
 
 class DemoboardDetect:
+    '''
+        DemoboardDetect
+        centralizes and implements strategies for detecting
+        the version of the demoboard.
+        
+        Because the TT demoboards have had disruptive changes in the 
+        migration to TT06+ chips, namely in terms of 
+        GPIO mapping and the removal of the demoboard MUX,
+        and because the presence or absence of a carrier board on the
+        db can make a difference, we use a combination of strategies.
+        
+        TT06+ boards have a mix of pull-up/pull-downs on the ASIC mux
+        control lines, which allow detection of both:
+          * the fact this is a TT06+ demoboard; and
+          * the fact that the carrier is present
+        However, this still looks identical to TT04 for a db with 
+        no carrier inserted.
+        
+        TT04 boards have an on-board MUX, so if we play with that, 
+        we should have different values showing on the ASIC mux lines.
+        If it has no impact (this pin is mapped to project reset, so 
+        it shouldn't unless a project is selected--so this is only assured
+        to work on powerup)
+        
+        This class has:
+         a probe() method, to encapsulate all the action,
+         PCB, CarrierPresent class attribs to hold the results
+         
+         
+    
+    '''
     PCB = DemoboardVersion.UNKNOWN
     CarrierPresent = None 
     CarrierVersion = None 

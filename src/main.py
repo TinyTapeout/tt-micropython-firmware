@@ -30,6 +30,7 @@ This code accesses the PowerOnSelfTest functions to:
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 import ttboard.util.time as time
+from ttboard.boot.demoboard_detect import DemoboardDetect
 from ttboard.mode import RPMode
 from ttboard.demoboard import DemoBoard, Pins
 from ttboard.boot.post import PowerOnSelfTest
@@ -89,6 +90,16 @@ def test_design_tnt_counter():
         tt.clock_project_stop()
         
     
+# Detect the demoboard version
+detection_result = '(best guess)'
+detection_color = 'red'
+if DemoboardDetect.probe():
+    # detection was conclusive
+    detection_result = ''
+    detection_color = 'cyan'
+detection_message = 'Detected ' + DemoboardDetect.PCB_str() + ' demoboard ' + detection_result
+print(f"{colors.color(detection_message, detection_color)}")
+
 
 
 # check if this is the first boot, if so, 
