@@ -134,15 +134,20 @@ class Pins:
     def __init__(self, mode:int=RPMode.SAFE):
         self.dieOnInputControlSwitchHigh = True
         self._mode = None
-        self.muxCtrl = MuxControl(self.muxName, GPIOMap.HK_CSB, Pin.OUT)
-        # special case: give access to mux control/HK nCS pin
-        self.hk_csb = self.muxCtrl.ctrlpin
-        self.pin_hk_csb = self.muxCtrl.ctrlpin.raw_pin 
-        
-        self._allpins = {'hk_csb': self.hk_csb}
+        self._allpins = {}
+        if GPIOMap.demoboard_uses_mux():
+            self.muxCtrl = MuxControl(self.muxName, GPIOMap.mux_select(), Pin.OUT)
+            # special case: give access to mux control/HK nCS pin
+            self.hk_csb = self.muxCtrl.ctrlpin
+            self.pin_hk_csb = self.muxCtrl.ctrlpin.raw_pin 
+            self._allpins['hk_csb'] = self.hk_csb
         
         self.mode = mode 
         
+    
+    @property 
+    def demoboard_uses_mux(self):
+        return GPIOMap.demoboard_uses_mux()
     
     @property 
     def all(self):
@@ -374,6 +379,8 @@ class Pins:
             p.mode = Pin.OUT 
             
     def _begin_muxPins(self):
+        if not GPIOMap.demoboard_uses_mux():
+            return 
         muxedPins = GPIOMap.muxed_pairs()
         modeMap = GPIOMap.muxed_pinmode_map(self.mode)
         for pname, muxPair in muxedPins.items():

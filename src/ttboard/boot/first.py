@@ -38,7 +38,6 @@ import ttboard.boot.firstboot_operations as fbops
 
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
-
 def doEval(command:str, loc_vals:dict):
     ret_val = None
     if ttboard.util.platform.IsRP2040:
@@ -99,9 +98,11 @@ class FirstBoot:
     '''
         The system level manager for first boot functionality
     '''
-    
-    FirstBootIniFile = '/first_boot.ini'
-    FirstBootLogFile = '/first_boot.log'
+    pathPrefix = ''
+    if not ttboard.util.platform.IsRP2040:
+        pathPrefix = '/tmp'
+    FirstBootIniFile = f'{pathPrefix}/first_boot.ini'
+    FirstBootLogFile = f'{pathPrefix}/first_boot.log'
     
     @classmethod
     def is_first_boot(cls):

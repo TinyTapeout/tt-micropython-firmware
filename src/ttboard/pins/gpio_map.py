@@ -7,7 +7,93 @@ Created on Jan 23, 2024
 
 from ttboard.pins.upython import Pin
 from ttboard.mode import RPModeDEVELOPMENT
-class GPIOMap:
+class GPIOMapBase:
+    
+    @classmethod 
+    def project_clock(cls):
+        raise RuntimeError('not implemented')
+    
+    @classmethod 
+    def project_reset(cls):
+        raise RuntimeError('not implemented')
+    
+    @classmethod 
+    def ctrl_increment(cls):
+        raise RuntimeError('not implemented')
+    
+    @classmethod 
+    def ctrl_enable(cls):
+        raise RuntimeError('not implemented')
+    
+    @classmethod 
+    def ctrl_reset(cls):
+        raise RuntimeError('not implemented')
+
+    @classmethod 
+    def demoboard_uses_mux(cls):
+        return False
+    
+    @classmethod 
+    def mux_select(cls):
+        raise RuntimeError('not implemented')
+    
+    @classmethod
+    def muxed_pairs(cls):
+        raise RuntimeError('not implemented')
+        
+    @classmethod
+    def muxed_pinmode_map(cls, rpmode:int):
+        raise RuntimeError('not implemented')
+    
+    
+    @classmethod 
+    def always_outputs(cls):
+        return [
+            # 'nproject_rst',
+            # 'rp_projclk', -- don't do this during "safe" operation
+            #'ctrl_ena'
+        ]
+    
+    @classmethod
+    def default_pull(cls, pin):
+        # both of these now go through MUX and 
+        # must therefore rely on external/physical
+        # pull-ups.  the nProject reset has PU in 
+        # switch debounce, cena... may be a problem 
+        # (seems it has a pull down on board?)
+        #if pin in ["nproject_rst", "ctrl_ena"]:
+        #    return Pin.PULL_UP
+        return Pin.PULL_DOWN
+    
+    @classmethod 
+    def all_common(cls):
+        retDict = {
+            "rp_projclk": cls.RP_PROJCLK,
+            "in0": cls.IN0,
+            "in1": cls.IN1,
+            "in2": cls.IN2,
+            "in3": cls.IN3,
+            "out4": cls.OUT4,
+            "out5": cls.OUT5,
+            "out6": cls.OUT6,
+            "out7": cls.OUT7,
+            "in4": cls.IN4,
+            "in5": cls.IN5,
+            "in6": cls.IN6,
+            "in7": cls.IN7,
+            "uio0": cls.UIO0,
+            "uio1": cls.UIO1,
+            "uio2": cls.UIO2,
+            "uio3": cls.UIO3,
+            "uio4": cls.UIO4,
+            "uio5": cls.UIO5,
+            "uio6": cls.UIO6,
+            "uio7": cls.UIO7,
+            "rpio29": cls.RPIO29
+        }
+        return retDict
+        
+class GPIOMapTT04(GPIOMapBase):
     '''
         A place to store 
          name -> GPIO #
@@ -51,6 +137,53 @@ class GPIOMap:
     UIO7 = 28
     RPIO29 = 29
     
+    
+    @classmethod 
+    def project_clock(cls):
+        return cls.RP_PROJCLK
+    
+    @classmethod 
+    def project_reset(cls):
+        raise cls.SDI_nPROJECT_RST
+    
+    @classmethod 
+    def ctrl_increment(cls):
+        return cls.CINC_OUT3
+    
+    @classmethod 
+    def ctrl_enable(cls):
+        raise cls.CTRL_ENA_OUT1
+    
+    @classmethod 
+    def ctrl_reset(cls):
+        raise cls.nCRST_OUT2
+    
+    
+    @classmethod 
+    def demoboard_uses_mux(cls):
+        return True
+    
+    
+    @classmethod 
+    def mux_select(cls):
+        return cls.HK_CSB
+    
+    
+    
+    @classmethod 
+    def all(cls):
+        retDict = cls.all_common()
+        retDict.update({
+            "hk_csb": cls.HK_CSB,
+            "hk_sck": cls.HK_SCK,
+            "sdi_nprojectrst": cls.SDI_nPROJECT_RST, # "sdi_out0": cls.SDI_OUT0,
+            "hk_sdo": cls.HK_SDO, # "sdo_out1": cls.SDO_OUT1,
+            "out0": cls.OUT0,
+            "cena_out1": cls.CTRL_ENA_OUT1, # "ctrl_ena": cls.CTRL_ENA,
+            "ncrst_out2": cls.nCRST_OUT2,
+            "cinc_out3": cls.CINC_OUT3,
+        })
+        return retDict
     @classmethod
     def muxed_pairs(cls):
         mpairnames = [
@@ -89,63 +222,73 @@ class GPIOMap:
             
         
         return pinModeMap
-        
-    @classmethod 
-    def always_outputs(cls):
-        return [
-            # 'nproject_rst',
-            # 'rp_projclk', -- don't do this during "safe" operation
-            #'ctrl_ena'
-        ]
     
-    @classmethod
-    def default_pull(cls, pin):
-        # both of these now go through MUX and 
-        # must therefore rely on external/physical
-        # pull-ups.  the nProject reset has PU in 
-        # switch debounce, cena... may be a problem 
-        # (seems it has a pull down on board?)
-        #if pin in ["nproject_rst", "ctrl_ena"]:
-        #    return Pin.PULL_UP
-        return Pin.PULL_DOWN
+
+
+class GPIOMapTT06(GPIOMapBase):
+    RP_PROJCLK = 0
+    PROJECT_nRST = 1
+    CTRL_SEL_nRST = 2
+    CTRL_SEL_INC = 3
+    CTRL_SEL_ENA = 4
+    OUT0 = 5
+    OUT1 = 6
+    OUT2 = 7
+    OUT3 = 8
+    IN0 = 9
+    IN1 = 10
+    IN2 = 11
+    IN3 = 12
+    OUT4 = 13
+    OUT5 = 14
+    OUT6 = 15 
+    OUT7 = 16
+    IN4  = 17
+    IN5  = 18
+    IN6  = 19
+    IN7  = 20
+    UIO0 = 21
+    UIO1 = 22
+    UIO2 = 23
+    UIO3 = 24
+    UIO4 = 25
+    UIO5 = 26
+    UIO6 = 27
+    UIO7 = 28
+    RPIO29 = 29
+    
+    @classmethod 
+    def project_clock(cls):
+        return cls.RP_PROJCLK
+    
+    @classmethod 
+    def project_reset(cls):
+        return cls.PROJECT_nRST
+    
+    
+    @classmethod 
+    def ctrl_increment(cls):
+        return cls.CTRL_SEL_INC
+    
+    @classmethod 
+    def ctrl_enable(cls):
+        raise cls.CTRL_SEL_ENA
+    
+    @classmethod 
+    def ctrl_reset(cls):
+        raise cls.CTRL_SEL_nRST
     
     @classmethod 
     def all(cls):
-        # mods made to MUX between TT03p5 proto and 
-        # CM assembly run, noted here with comments for now
-        retDict = {
-            "rp_projclk": cls.RP_PROJCLK,
-            "hk_csb": cls.HK_CSB,
-            "hk_sck": cls.HK_SCK,
-            "sdi_nprojectrst": cls.SDI_nPROJECT_RST, # "sdi_out0": cls.SDI_OUT0,
-            "hk_sdo": cls.HK_SDO, # "sdo_out1": cls.SDO_OUT1,
-            "out0": cls.OUT0,
-            "cena_out1": cls.CTRL_ENA_OUT1, # "ctrl_ena": cls.CTRL_ENA,
-            "ncrst_out2": cls.nCRST_OUT2,
-            "cinc_out3": cls.CINC_OUT3,
-            "in0": cls.IN0,
-            "in1": cls.IN1,
-            "in2": cls.IN2,
-            "in3": cls.IN3,
-            "out4": cls.OUT4,
-            "out5": cls.OUT5,
-            "out6": cls.OUT6,
-            "out7": cls.OUT7,
-            "in4": cls.IN4,
-            "in5": cls.IN5,
-            "in6": cls.IN6,
-            "in7": cls.IN7,
-            "uio0": cls.UIO0,
-            "uio1": cls.UIO1,
-            "uio2": cls.UIO2,
-            "uio3": cls.UIO3,
-            "uio4": cls.UIO4,
-            "uio5": cls.UIO5,
-            "uio6": cls.UIO6,
-            "uio7": cls.UIO7,
-            "rpio29": cls.RPIO29
-        }
+        retDict = cls.all_common()
+        #retDict = GPIOMapBase.all(cls)
+        retDict.update({
+            'nprojectrst': cls.PROJECT_nRST,
+            'cinc': cls.CTRL_SEL_INC,
+            'cena': cls.CTRL_SEL_ENA,
+            'ncrst': cls.CTRL_SEL_nRST
+        })
         return retDict
 
-
-
+class GPIOMap(GPIOMapTT06):
+    pass
