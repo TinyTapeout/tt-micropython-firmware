@@ -146,6 +146,7 @@ class DemoboardDetect:
             
             }
         if cls.PCB in mapToUse:
+            log.debug(f'Setting GPIOMap to {mapToUse[cls.PCB]}')
             ttboard.pins.gpio_map.GPIOMap = mapToUse[cls.PCB]
         else:
             raise RuntimeError('Cannot set GPIO map')

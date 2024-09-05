@@ -32,7 +32,7 @@ from ttboard.mode import RPMode, RPModeDEVELOPMENT
 
 import ttboard.util.platform as platform
 from ttboard.pins.upython import Pin
-from ttboard.pins.gpio_map import GPIOMap
+import ttboard.pins.gpio_map as gp
 from ttboard.pins.standard import StandardPin
 from ttboard.pins.muxed import MuxedPin, MuxedPinInfo
 from ttboard.pins.mux_control import MuxControl
@@ -135,8 +135,8 @@ class Pins:
         self.dieOnInputControlSwitchHigh = True
         self._mode = None
         self._allpins = {}
-        if GPIOMap.demoboard_uses_mux():
-            self.muxCtrl = MuxControl(self.muxName, GPIOMap.mux_select(), Pin.OUT)
+        if gp.GPIOMap.demoboard_uses_mux():
+            self.muxCtrl = MuxControl(self.muxName, gp.GPIOMap.mux_select(), Pin.OUT)
             # special case: give access to mux control/HK nCS pin
             self.hk_csb = self.muxCtrl.ctrlpin
             self.pin_hk_csb = self.muxCtrl.ctrlpin.raw_pin 
@@ -147,7 +147,7 @@ class Pins:
     
     @property 
     def demoboard_uses_mux(self):
-        return GPIOMap.demoboard_uses_mux()
+        return gp.GPIOMap.demoboard_uses_mux()
     
     @property 
     def all(self):
@@ -284,10 +284,11 @@ class Pins:
     
     def begin_inputs_all(self):
         
-        for name,gpio in GPIOMap.all().items():
+        log.debug(f'Begin inputs all with {gp.GPIOMap}')
+        for name,gpio in gp.GPIOMap.all().items():
             if name == self.muxName:
                 continue
-            p = StandardPin(name, gpio, Pin.IN, pull=GPIOMap.default_pull(name))
+            p = StandardPin(name, gpio, Pin.IN, pull=gp.GPIOMap.default_pull(name))
             setattr(self, f'pin_{name}', p.raw_pin)
             setattr(self, name, p) # self._pinFunc(p)) 
             self._allpins[name] = p
@@ -300,7 +301,7 @@ class Pins:
             
         '''
         log.debug('Setting bidirs to safe mode (inputs)')
-        for pname in GPIOMap.all().keys():
+        for pname in gp.GPIOMap.all().keys():
             if pname.startswith('uio'):
                 p = getattr(self, pname)
                 p.mode = Pin.IN
@@ -319,7 +320,7 @@ class Pins:
         self.begin_inputs_all()
         self._begin_alwaysOut()
         unconfigured_pins = []
-        for pname in GPIOMap.all().keys():
+        for pname in gp.GPIOMap.all().keys():
             if pname.startswith('in'):
                 p = getattr(self, pname)
                 if self.dieOnInputControlSwitchHigh:
@@ -352,7 +353,7 @@ class Pins:
         self.begin_inputs_all()
         self._begin_alwaysOut()
         
-        for pname in GPIOMap.all().keys():
+        for pname in gp.GPIOMap.all().keys():
             if pname.startswith('out'):
                 p = getattr(self, pname)
                 p.mode = Pin.OUT
@@ -374,15 +375,15 @@ class Pins:
                 p.mode = Pin.IN
             
     def _begin_alwaysOut(self):
-        for pname in GPIOMap.always_outputs():
+        for pname in gp.GPIOMap.always_outputs():
             p = getattr(self, pname)
             p.mode = Pin.OUT 
             
     def _begin_muxPins(self):
-        if not GPIOMap.demoboard_uses_mux():
+        if not gp.GPIOMap.demoboard_uses_mux():
             return 
-        muxedPins = GPIOMap.muxed_pairs()
-        modeMap = GPIOMap.muxed_pinmode_map(self.mode)
+        muxedPins = gp.GPIOMap.muxed_pairs()
+        modeMap = gp.GPIOMap.muxed_pinmode_map(self.mode)
         for pname, muxPair in muxedPins.items():
             mp = MuxedPin(pname, self.muxCtrl, 
                           getattr(self, pname),
@@ -420,7 +421,7 @@ class Pins:
     def dump(self):
         print(f'Pins configured in mode {RPMode.to_string(self.mode)}')
         print(f'Currently:')
-        for pname in sorted(GPIOMap.all().keys()):
+        for pname in sorted(gp.GPIOMap.all().keys()):
             self._dumpPin(getattr(self, pname))
     
     

@@ -8,7 +8,7 @@ Created on Jan 9, 2024
 import json
 import re 
 import ttboard.util.time as time
-from ttboard.pins import Pins
+from ttboard.pins.pins import Pins
 from ttboard.boot.rom import ChipROM
 from ttboard.boot.shuttle_properties import HardcodedShuttle
 import ttboard.logging as logging

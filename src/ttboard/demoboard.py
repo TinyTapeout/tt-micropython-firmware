@@ -18,8 +18,8 @@ import ttboard
 import ttboard.util.time as time
 from ttboard.globals import Globals
 from ttboard.mode import RPMode
-from ttboard.pins import Pins
-from ttboard.project_mux import ProjectMux, Design
+from ttboard.pins.pins import Pins
+from ttboard.project_mux import Design
 from ttboard.config.user_config import UserConfig
 import ttboard.util.platform as platform 
 from ttboard.boot.demoboard_detect import DemoboardDetect, DemoboardVersion
