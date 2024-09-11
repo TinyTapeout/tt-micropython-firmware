@@ -6,7 +6,7 @@ Created on Jan 23, 2024
 '''
 
 from ttboard.pins.upython import Pin
-from ttboard.mode import RPModeDEVELOPMENT
+from ttboard.mode import RPMode, RPModeDEVELOPMENT
 class GPIOMapBase:
     
     @classmethod 
@@ -28,6 +28,7 @@ class GPIOMapBase:
     @classmethod 
     def ctrl_reset(cls):
         raise RuntimeError('not implemented')
+        
 
     @classmethod 
     def demoboard_uses_mux(cls):
@@ -294,6 +295,13 @@ class GPIOMapTT06(GPIOMapBase):
         return cls.CTRL_SEL_nRST
     
     @classmethod 
+    def always_outputs(cls):
+        return [
+            'cinc',
+            'cena',
+            'ncrst'
+        ]
+    @classmethod 
     def all(cls):
         retDict = cls.all_common()
         #retDict = GPIOMapBase.all(cls)
@@ -301,7 +309,11 @@ class GPIOMapTT06(GPIOMapBase):
             'nprojectrst': cls.PROJECT_nRST,
             'cinc': cls.CTRL_SEL_INC,
             'cena': cls.CTRL_SEL_ENA,
-            'ncrst': cls.CTRL_SEL_nRST
+            'ncrst': cls.CTRL_SEL_nRST,
+            'out0': cls.OUT0,
+            'out1': cls.OUT1,
+            'out2': cls.OUT2,
+            'out3': cls.OUT3
         })
         return retDict
 
