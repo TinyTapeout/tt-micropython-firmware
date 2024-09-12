@@ -129,7 +129,7 @@ class StandardPin:
     def __getattr__(self, name):
         if hasattr(self.raw_pin, name):
             return getattr(self.raw_pin, name)
-        raise AttributeError
+        raise AttributeError(f'no attr {name}')
     
     def __repr__(self):
         outval = ''

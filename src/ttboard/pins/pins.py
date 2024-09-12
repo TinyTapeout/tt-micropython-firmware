@@ -389,6 +389,7 @@ class Pins:
         muxedPins = gp.GPIOMap.muxed_pairs()
         modeMap = gp.GPIOMap.muxed_pinmode_map(self.mode)
         for pname, muxPair in muxedPins.items():
+            log.debug(f'Creating muxed pin {pname}')
             mp = MuxedPin(pname, self.muxCtrl, 
                           getattr(self, pname),
                           MuxedPinInfo(muxPair[0],
