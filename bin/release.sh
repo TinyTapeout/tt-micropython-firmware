@@ -63,7 +63,7 @@ wget -O $RPUF2 -c "https://micropython.org/resources/firmware/$RPOS_UF2FILE"
 echo "Download shuttles for $TT_RUNS_SUPPORTED"
 mkdir $BUILDDIR/shuttles
 for chip in $TT_RUNS_SUPPORTED; do wget -O $BUILDDIR/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=repo,address,commit,clock_hz,title"; done
-touch $BUILDDIR/release_$VERSION
+touch $BUILDDIR/release_v$VERSION
 
 echo "Including SDK from $SRCDIR"
 cp -Ra $SRCDIR/* $BUILDDIR
