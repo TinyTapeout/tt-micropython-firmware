@@ -197,12 +197,14 @@ class Pins:
     
     @property 
     def output_byte(self):
+        
         if platform.IsRP2040:
             return platform.read_output_byte()
         return self._read_byte(self.outputs)
     
     @output_byte.setter 
     def output_byte(self, val:int):
+        
         if platform.IsRP2040:
             platform.write_output_byte(val)
         else:
@@ -227,6 +229,7 @@ class Pins:
     
     @property 
     def input_byte(self):
+        
         if platform.IsRP2040:
             return platform.read_input_byte()
         
@@ -235,6 +238,7 @@ class Pins:
     
     @input_byte.setter 
     def input_byte(self, val:int):
+        
         if platform.IsRP2040:
             platform.write_input_byte(val)
         else:
@@ -261,6 +265,8 @@ class Pins:
         
     @property 
     def bidir_byte(self):
+        
+        
         if platform.IsRP2040:
             return platform.read_bidir_byte()
         

@@ -12,7 +12,7 @@ Place to keep regular boot-up sequence related functions.
 from ttboard.pins.upython import Pin
 import ttboard.util.time as time
 from ttboard.boot.first import FirstBoot
-from ttboard.pins.gpio_map import GPIOMap
+import ttboard.pins.gpio_map as gp
 from ttboard.demoboard import DemoBoard
 from ttboard.mode import RPMode
 
@@ -37,7 +37,7 @@ class PowerOnSelfTest:
             to read value.
         '''
         pin_states = dict()
-        for name, io in GPIOMap.all().items():
+        for name, io in gp.GPIOMap.all().items():
             p = Pin(io, Pin.IN)
             pin_states[name] = p() 
             
@@ -54,14 +54,14 @@ class PowerOnSelfTest:
             @return: the value read
         '''
         
-        p = GPIOMap.get_raw_pin(pin, Pin.IN)
+        p = gp.GPIOMap.get_raw_pin(pin, Pin.IN)
         if p is None:
             raise KeyError(f'No pin named {pin} found')
         return p()
     
     @classmethod 
     def write_pin(cls, pin:str, value:int):
-        p = GPIOMap.get_raw_pin(pin, Pin.OUT)
+        p = gp.GPIOMap.get_raw_pin(pin, Pin.OUT)
         if p is None:
             raise KeyError(f'No pin named {pin} found')
         p(value)
@@ -70,16 +70,14 @@ class PowerOnSelfTest:
     
     @classmethod 
     def dotest_buttons_held(cls):
-        mux_selectpin = GPIOMap.get_raw_pin('hk_csb', Pin.OUT)
+        mux_selectpin = gp.GPIOMap.get_raw_pin('hk_csb', Pin.OUT)
         if mux_selectpin is not None:
             mux_selectpin(1) # have mux, make sure it's is pointed right way
-        if cls.read_pin(GPIOMap.project_clock()) and not cls.read_pin(GPIOMap.project_reset()):
+        if cls.read_pin(gp.GPIOMap.project_clock()) and not cls.read_pin(gp.GPIOMap.project_reset()):
             log.info('POST "do test" buttons held')
             return True 
         
         return False
-    
-# could also check
     
     @classmethod 
     def first_boot(cls):

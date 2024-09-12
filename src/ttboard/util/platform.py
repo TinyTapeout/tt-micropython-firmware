@@ -4,6 +4,8 @@ Created on Jan 23, 2024
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
+
+
 RP2040SystemClockDefaultHz = 125000000
 
 IsRP2040 = False 
@@ -12,8 +14,6 @@ try:
     IsRP2040 = True 
 except:
     pass
-
-
 
 
 if IsRP2040:
@@ -34,7 +34,8 @@ if IsRP2040:
         into an output.
         
         NOTE: [muxing] there is a MUX on some pins of the low 
-        output nibble, that could in theory interfere with this.
+        output nibble on TT04/05 demoboards, that could in theory
+        interfere with this.
         If you use the tt.shuttle to select/enable projects, it 
         ensures that the mux is set to let these pins out as you'd 
         expect.  If you're down in the weeds and want to make sure 
@@ -65,6 +66,7 @@ if IsRP2040:
         # low nibble starts at 9 | high nibble at 17 (-4 'cause high nibble)
         val = ((val & 0xF) << 9) | ((val & 0xF0) << 17-4)
         # xor with current GPIO values, and mask to keep only input bits
+        # 0x1E1E00 == 0b111100001111000000000 so GPIO 9-12 and 17-20
         val = (machine.mem32[0xd0000010] ^ val) & 0x1E1E00
         # val is now be all the input bits that have CHANGED:
         # writing to 0xd000001c will flip any GPIO where a 1 is found
@@ -99,10 +101,8 @@ if IsRP2040:
     def write_output_byte(val):
         # low level machine stuff
         # move the value bits to GPIO spots
-        # for bidir, all uio bits are in a line starting 
-        # at GPIO 21
+        
         val = ((val & 0xF) << 5) | ((val & 0xF0) << 13-4)
-        # xor with current GPIO values, and mask to keep only input bits
         val = (machine.mem32[0xd0000010] ^ val) & 0x1E1E0
         # val is now be all the bits that have CHANGED:
         # writing to 0xd000001c will flip any GPIO where a 1 is found,
@@ -111,6 +111,21 @@ if IsRP2040:
     
     @micropython.native
     def read_output_byte():
+        
+        # sample code to deal with differences between 
+        # PCBs, not actually required as we didn't move anything
+        # after all!
+        # global PCBVERSION_TT06
+        # all_io = machine.mem32[0xd0000004]
+        #if PCBVERSION_TT06 is None:
+        #    import ttboard.boot.demoboard_detect as dbdet
+        #    PCBVERSION_TT06 = True if dbdet.DemoboardDetect.PCB == dbdet.DemoboardVersion.TT06 else False
+        
+        #if PCBVERSION_TT06:
+        #    # gpio output bits are
+        #    # 0x1e1e0 == 0b11110000111100000 so GPIO5-8 and GPIO 13-17
+        #    val =  ((all_io & (0xf << 13)) >> (13 - 4)) | ((all_io & (0xf << 5)) >> 5)
+        #else:
         # just read the high and low nibbles from GPIO and combine into a byte
         return ( (machine.mem32[0xd0000004] & (0xf << 13)) >> (13-4)) | ((machine.mem32[0xd0000004] & (0xf << 5)) >> 5)
     
