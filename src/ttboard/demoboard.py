@@ -331,6 +331,8 @@ class DemoBoard:
             self.reset_system_clock()
             self.clock_project_stop()
             self._first_encouter_reset(design)
+            if design.clock_hz:
+                self.clock_project_PWM(design.clock_hz)
             return 
         
         projConfig = self.user_config.project(design.name)
