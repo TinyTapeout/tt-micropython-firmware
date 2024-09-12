@@ -245,6 +245,10 @@ class DemoBoard:
             pin twice, optionally with a delay
             between the changes (in ms)
         '''
+        log.debug('clock project once')
+        if self._clock_pwm is not None:
+            self.clock_project_stop()
+            
         self.pins.project_clk_driven_by_RP2040(True)
         self.project_clk.toggle()
         if msDelay > 0:
@@ -273,10 +277,34 @@ class DemoBoard:
             if no clocking started.
         '''
         if self._clock_pwm is not None:
+            log.debug('PWM auto-clock stop')
             self.clock_project_PWM(0)
             self.project_clk(0) # make certain we are low
         self.pins.project_clk_driven_by_RP2040(False)
     
+    def reset_system_clock(self):
+        # nothing set in project config, assume we want default system clock
+        
+        current_sys_clock = platform.get_RP_system_clock()
+        def_sys_clock = self.user_config.default_rp_clock
+        if def_sys_clock is None:
+            def_sys_clock = platform.RP2040SystemClockDefaultHz 
+        
+        if def_sys_clock != current_sys_clock and def_sys_clock > 0:
+            self.clock_project_stop() # ensure we aren't PWMing
+            log.info(f'Resetting system clock to default {def_sys_clock}Hz')
+            try:
+                platform.set_RP_system_clock(def_sys_clock)
+            except ValueError:
+                log.error(f'Default sys clock setting {def_sys_clock} is invalid?')
+    
+    def _first_encouter_reset(self, design:Design):
+        if design.name not in self._project_previously_loaded:
+            self._project_previously_loaded[design.name] = True
+            log.info('First time loading: Toggling project reset')
+            self.reset_project(True)
+            time.sleep_ms(2)
+            self.reset_project(False)
     
     def apply_user_config(self, design:Design):
         log.debug(f'Design "{design.name}" loaded, apply user conf')
@@ -297,7 +325,12 @@ class DemoBoard:
         
         if not self.user_config.has_project(design.name):
             log.debug(f'apply user conf: no user config for project')
-            # nothing to do
+            # nothing to do for specific project, 
+            # ensure clocks are all behaving nicely
+            
+            self.reset_system_clock()
+            self.clock_project_stop()
+            self._first_encouter_reset(design)
             return 
         
         projConfig = self.user_config.project(design.name)
@@ -365,18 +398,7 @@ class DemoBoard:
                 except ValueError:
                     log.error(f"Could not set system clock to requested {sys_clk_hz}Hz")
         else:
-            # nothing set in project config, assume we want default system clock
-            def_sys_clock = self.user_config.default_rp_clock
-            if def_sys_clock is None:
-                def_sys_clock = platform.RP2040SystemClockDefaultHz 
-            if def_sys_clock != current_sys_clock and def_sys_clock > 0:
-                self.clock_project_stop() # ensure we aren't PWMing
-                log.info(f'Resetting system clock to default {def_sys_clock}Hz')
-                try:
-                    platform.set_RP_system_clock(def_sys_clock)
-                except ValueError:
-                    log.error(f'Default sys clock setting {def_sys_clock} is invalid?')
-        
+            self.reset_system_clock()
                     
         if projConfig.has('clock_frequency'):
             if self.mode == RPMode.ASIC_MANUAL_INPUTS:
@@ -388,12 +410,7 @@ class DemoBoard:
             
         
         if not startInReset:
-            if design.name not in self._project_previously_loaded:
-                self._project_previously_loaded[design.name] = True
-                log.info('First time loading: Toggling project reset')
-                self.reset_project(True)
-                time.sleep_ms(2)
-                self.reset_project(False)
+            self._first_encouter_reset(design)
             
             
     def dump(self):
