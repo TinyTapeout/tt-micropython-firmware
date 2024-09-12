@@ -285,10 +285,14 @@ class Pins:
     def begin_inputs_all(self):
         
         log.debug(f'Begin inputs all with {gp.GPIOMap}')
+        always_out = gp.GPIOMap.always_outputs()
         for name,gpio in gp.GPIOMap.all().items():
             if name == self.muxName:
                 continue
-            p = StandardPin(name, gpio, Pin.IN, pull=gp.GPIOMap.default_pull(name))
+            p_type = Pin.IN
+            if always_out.count(name) > 0:
+                p_type = Pin.OUT
+            p = StandardPin(name, gpio, p_type, pull=gp.GPIOMap.default_pull(name))
             setattr(self, f'pin_{name}', p.raw_pin)
             setattr(self, name, p) # self._pinFunc(p)) 
             self._allpins[name] = p

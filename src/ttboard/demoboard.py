@@ -163,7 +163,7 @@ class DemoBoard:
     def mode(self, setTo:int):
         if self.mode != setTo:
             if self.is_auto_clocking:
-                autoClockFreq = self._clock_pwm.freq()
+                autoClockFreq = self.auto_clocking_freq()
                 self.clock_project_stop()
                 log.warn(f'Was auto-clocking @ {autoClockFreq} but stopping for mode change')
                 
@@ -176,6 +176,12 @@ class DemoBoard:
     @property 
     def is_auto_clocking(self):
         return self._clock_pwm is not None
+    
+    @property 
+    def auto_clocking_freq(self):
+        if not self.is_auto_clocking:
+            return 0
+        return self._clock_pwm.freq()
     @property 
     def project_clk(self):
         '''
@@ -194,7 +200,7 @@ class DemoBoard:
             
             @see: clock_project_once(), clock_project_PWM() and clock_project_stop()
         '''
-        if self._clock_pwm is not None:
+        if self.is_auto_clocking:
             return self._clock_pwm
         return self.pins.rp_projclk
     
@@ -246,7 +252,7 @@ class DemoBoard:
             between the changes (in ms)
         '''
         log.debug('clock project once')
-        if self._clock_pwm is not None:
+        if self.is_auto_clocking:
             self.clock_project_stop()
             
         self.pins.project_clk_driven_by_RP2040(True)
@@ -276,7 +282,7 @@ class DemoBoard:
             Stop any started automatic project clocking.  No effect 
             if no clocking started.
         '''
-        if self._clock_pwm is not None:
+        if self.is_auto_clocking:
             log.debug('PWM auto-clock stop')
             self.clock_project_PWM(0)
             self.project_clk(0) # make certain we are low
@@ -420,8 +426,8 @@ class DemoBoard:
         print(f'Demoboard default mode is {RPMode.to_string(self.default_mode)}')
         print(f'Project nRESET pin is {self.project_nrst.mode_str} {self.project_nrst()}')
         
-        if self._clock_pwm is not None:
-            print(f'Project clock PWM enabled and running at {self._clock_pwm.freq()}')
+        if self.is_auto_clocking:
+            print(f'Project clock PWM enabled and running at {self.auto_clocking_freq}')
         else:
             print('Project clock: no PWM auto-clocking enabled')
             
@@ -437,8 +443,8 @@ class DemoBoard:
         print('\n\n')
         
     def __repr__(self):
-        if self._clock_pwm:
-            autoclocking = f', auto-clocking @ {self._clock_pwm.freq()}'
+        if self.is_auto_clocking:
+            autoclocking = f', auto-clocking @ {self.auto_clocking_freq}'
         else:
             autoclocking = ''
             
