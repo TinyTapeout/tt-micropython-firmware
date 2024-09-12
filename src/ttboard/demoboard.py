@@ -58,6 +58,9 @@ class DemoBoard:
     
     @classmethod 
     def get(cls):
+        '''
+        Get (or create) the TT DemoBoard singleton
+        '''
         if cls._DemoBoardSingleton_Instance is None:
             cls._DemoBoardSingleton_Instance = cls()
             
@@ -149,14 +152,25 @@ class DemoBoard:
                 
     @property 
     def version(self) -> str:
+        '''
+            SDK version
+        '''
         return ttboard.VERSION
     
     @property 
     def chip_ROM(self):
+        '''
+        Chip ROM object, e.g. tt.chip_ROM.shuttle
+        '''
         return self.shuttle.chip_ROM
     
     @property 
     def mode(self):
+        '''
+            Current RPMode, e.g. RPMode.ASIC_RP_CONTROL.
+            An integer.
+            @see: mode_str
+        '''
         return self.pins.mode 
     
     @mode.setter 
@@ -171,6 +185,13 @@ class DemoBoard:
         
     @property 
     def mode_str(self):
+        '''
+        Textual representation of current mode.
+        E.g.
+        >>> tt.mode_str
+        'ASIC_RP_CONTROL'
+        '''
+
         return RPMode.to_string(self.mode)
         
     @property 
@@ -289,6 +310,10 @@ class DemoBoard:
         self.pins.project_clk_driven_by_RP2040(False)
     
     def reset_system_clock(self):
+        '''
+            Reset the RP2040 system clock to value set in config.ini
+            if present, or RP2040SystemClockDefaultHz
+        '''
         # nothing set in project config, assume we want default system clock
         
         current_sys_clock = platform.get_RP_system_clock()
@@ -313,6 +338,12 @@ class DemoBoard:
             self.reset_project(False)
     
     def apply_user_config(self, design:Design):
+        '''
+            Called by shuttle (project mux) when loading a project.
+            Will ensure a sane state and apply any relevant section
+            in the config.ini
+            
+        '''
         log.debug(f'Design "{design.name}" loaded, apply user conf')
         
         applyWhenInModeMap = {
@@ -422,6 +453,9 @@ class DemoBoard:
             
             
     def dump(self):
+        '''
+            Prints out current state of the GPIO
+        '''
         print('\n\nDemoboard status')
         print(f'Demoboard default mode is {RPMode.to_string(self.default_mode)}')
         print(f'Project nRESET pin is {self.project_nrst.mode_str} {self.project_nrst()}')
