@@ -135,6 +135,7 @@ class DemoBoard:
         # internal
         self.shuttle.design_enabled_callback = self.apply_user_config
         self._clock_pwm = None
+        self._clock_pio = None 
         
         self._project_previously_loaded = {}
         self.load_default_project() 
@@ -196,12 +197,15 @@ class DemoBoard:
         
     @property 
     def is_auto_clocking(self):
-        return self._clock_pwm is not None
+        return self._clock_pwm is not None or (self._clock_pio is not None and self._clock_pio.freq)
     
     @property 
     def auto_clocking_freq(self):
         if not self.is_auto_clocking:
             return 0
+        if self._clock_pio is not None and self._clock_pio.freq:
+            return self._clock_pio.freq
+        
         return self._clock_pwm.freq()
     @property 
     def project_clk(self):
@@ -282,8 +286,14 @@ class DemoBoard:
             time.sleep_ms(msDelay)
         self.project_clk.toggle()
         
+    def _clock_pwm_deinit(self):
+        if self._clock_pwm is None:
+            return 
         
-    def clock_project_PWM(self, freqHz:int, duty_u16:int=(0xffff/2)):
+        self._clock_pwm.deinit()
+        self._clock_pwm = None 
+        
+    def clock_project_PWM(self, freqHz:int, duty_u16:int=(0xffff/2), quiet:bool=False):
         '''
             Start an automatic clock for the selected project (using
             PWM).
@@ -292,10 +302,41 @@ class DemoBoard:
         '''
         if freqHz > 0:
             self.pins.project_clk_driven_by_RP2040(True)
-        try:
-            self._clock_pwm = self.pins.rp_projclk.pwm(freqHz, duty_u16)
-        except  Exception as e:
-            log.error(f"Could not set project clock PWM: {e}")
+            
+        
+        if freqHz <= 0:
+            self._clock_pwm_deinit()
+            
+            if self._clock_pio is not None:
+                self._clock_pio.stop()
+            return 
+        
+        if freqHz < 3:
+            # make sure we're not PWMing
+            self._clock_pwm_deinit()
+                
+            if self._clock_pio is None:
+                self._clock_pio = platform.PIOClock(self.rp_projclk.raw_pin)
+            
+            self._clock_pio.start(freqHz)
+            log.info(f"Clocking at {freqHz}Hz using PIO clock")
+        else:
+            # make sure we're not PIOing
+            if self._clock_pio is not None:
+                self._clock_pio.stop()
+            try:
+                rp2040_sys_clock = self._get_best_rp2040_freq(freqHz)
+                platform.set_RP_system_clock(rp2040_sys_clock)
+                self._clock_pwm = self.pins.rp_projclk.pwm(freqHz, duty_u16)
+            except  Exception as e:
+                log.error(f"Could not set project clock PWM: {e}")
+                
+            actual_freq = self._clock_pwm.freq()
+            if abs(actual_freq - freqHz) > 1:
+                log.warn(f"Requested {freqHz}Hz clock, actual: {actual_freq}Hz")
+            else:
+                log.info(f"Clocking at {actual_freq}Hz")
+            
         return self._clock_pwm
     
     def clock_project_stop(self):
@@ -308,7 +349,7 @@ class DemoBoard:
             self.clock_project_PWM(0)
             self.project_clk(0) # make certain we are low
         self.pins.project_clk_driven_by_RP2040(False)
-    
+        
     def reset_system_clock(self):
         '''
             Reset the RP2040 system clock to value set in config.ini
@@ -328,6 +369,57 @@ class DemoBoard:
                 platform.set_RP_system_clock(def_sys_clock)
             except ValueError:
                 log.error(f'Default sys clock setting {def_sys_clock} is invalid?')
+    
+    
+    def _get_best_rp2040_freq(self, freq:int, max_rp2040_freq:int=133_000_000):
+        # Scan the allowed RP2040 frequency range for a frequency
+        # that will divide to the target frequency well
+        min_rp2040_freq = 48_000_000
+    
+        if freq > max_rp2040_freq // 2:
+            raise ValueError("Requested frequency too high")
+        if freq <= min_rp2040_freq // (2**24 - 1):
+            raise ValueError("Requested frequency too low")
+    
+        best_freq = 0
+        best_fracdiv = 2000000000
+        best_div = 0
+    
+        rp2040_freq = min(max_rp2040_freq, freq * (2**24 - 1))
+        if rp2040_freq > 136_000_000:
+            rp2040_freq = (rp2040_freq // 2_000_000) * 2_000_000
+        else:
+            rp2040_freq = (rp2040_freq // 1_000_000) * 1_000_000
+    
+        while rp2040_freq >= 48_000_000 and rp2040_freq >= 1.9 * freq:
+            next_rp2040_freq = rp2040_freq - 1_000_000
+            if next_rp2040_freq > 136_000_000:
+                next_rp2040_freq = rp2040_freq - 2_000_000
+    
+            # Work out the closest multiple of 2 divisor that could be used
+            pwm_divisor = max((rp2040_freq // (2 * freq)) * 2, 2)
+            if abs(int(rp2040_freq / pwm_divisor + 0.5) - freq) > abs(
+                int(rp2040_freq / (pwm_divisor + 2) + 0.5) - freq
+            ):
+                pwm_divisor += 2
+    
+            # Check if the target freq will be acheived
+            fracdiv = abs(rp2040_freq / freq - pwm_divisor)
+            if freq == rp2040_freq // pwm_divisor:
+                return rp2040_freq
+            elif fracdiv < best_fracdiv:
+                best_fracdiv = fracdiv
+                best_freq = rp2040_freq
+                best_div = pwm_divisor
+    
+            rp2040_freq = next_rp2040_freq
+    
+        if best_fracdiv >= 1.0 / 256:
+            print(f"freq_jitter_free={best_freq // best_div}")
+    
+        return best_freq
+    
+    
     
     def _first_encouter_reset(self, design:Design):
         if design.name not in self._project_previously_loaded:

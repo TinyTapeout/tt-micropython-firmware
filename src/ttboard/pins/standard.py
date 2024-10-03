@@ -105,13 +105,13 @@ class StandardPin:
             return None
         
         log.debug(f"Setting PWM on {self.name} to {freq}Hz")
-        if self._pwm is None:
-            if IsRP2040:
-                self._pwm = machine.PWM(self.raw_pin)
-            else:
-                log.warn('Not on RP2040--no PWM')
-                return None
         
+        if IsRP2040:
+            self._pwm = machine.PWM(self.raw_pin)
+        else:
+            log.warn('Not on RP2040--no PWM')
+            return None
+    
         if freq is not None and freq > 0:
                 self._pwm.freq(int(freq))
             

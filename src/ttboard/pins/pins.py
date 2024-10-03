@@ -383,6 +383,7 @@ class Pins:
                 p.mode = Pin.OUT
             else:
                 p.mode = Pin.IN
+                
             
     def _begin_alwaysOut(self):
         for pname in gp.GPIOMap.always_outputs():
