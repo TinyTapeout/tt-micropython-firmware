@@ -8,8 +8,8 @@ jobs:
   create-release:
     # ubuntu
     env:
-      RPOS_UF2FILE: RPI_PICO-20240222-v1.22.2.uf2
-      TT_RUNS_SUPPORTED: "tt03p5 tt04 tt05"
+      RPOS_UF2FILE: RPI_PICO-20241025-v1.24.0.uf2
+      TT_RUNS_SUPPORTED: "tt04 tt05 tt06"
     runs-on: ubuntu-latest
     steps:
     # need the repo checked out
