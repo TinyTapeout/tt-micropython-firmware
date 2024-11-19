@@ -7,12 +7,14 @@ Created on Jan 9, 2024
 
 import json
 import re 
+import gc
 import ttboard.util.time as time
 from ttboard.pins.pins import Pins
 from ttboard.boot.rom import ChipROM
 from ttboard.boot.shuttle_properties import HardcodedShuttle
 import ttboard.logging as logging
 log = logging.getLogger(__name__)
+
 
 '''
 Fetched with
@@ -21,25 +23,25 @@ https://index.tinytapeout.com/tt04.json?fields=repo,address,commit,clock_hz,titl
 
 '''
 class Design:
-    BadCharsRe = re.compile(r'[^\w\d\s]+')
-    SpaceCharsRe = re.compile(r'\s+')
-    def __init__(self, projectMux, projindex:int, info:dict):
+    def __init__(self, projectMux, projname:str, projindex:int, info:dict):
         self.mux = projectMux
-        self.project_index = projindex
         self.count = int(projindex)
+        self.name = projname
         self.macro = info['macro']
-        self.name = info['macro']
-        self.repo = info['repo']
-        self.commit = info['commit']
+        self.repo = ''
+        if 'repo' in info:
+            self.repo = info['repo']
+            
+        self.commit = ''
+        if 'commit' in info:
+            self.commit = info['commit']
         self.clock_hz = info['clock_hz']
-        # special cleanup for wokwi gen'ed names
-        if self.name.startswith('tt_um_wokwi') and 'title' in info and len(info['title']):
-            new_name = self.SpaceCharsRe.sub('_', self.BadCharsRe.sub('', info['title'])).lower()
-            if len(new_name):
-                self.name = f'wokwi_{new_name}'
-        
         self._all = info
         
+    @property 
+    def project_index(self):
+        return self.count 
+    
     def enable(self):
         self.mux.enable(self)
         
@@ -47,70 +49,179 @@ class Design:
         self.mux.disable()
         
     def __str__(self):
-        return f'{self.name} ({self.project_index}) @ {self.repo}'
+        return f'{self.name} ({self.count}) @ {self.repo}'
     
     def __repr__(self):
-        return f'<Design {self.project_index}: {self.name}>'
+        return f'<Design {self.count}: {self.name}>'
         
+
+class DesignStub:
+    '''
+        A yet-to-be-loaded design, just a pointer that will 
+        auto-load the design if accessed.
+        Has a side effect of replacing itself as an attribute
+        in the design index so this only happens once.
+    '''
+    def __init__(self, design_index, projname):
+        self.design_index = design_index 
+        self.name = projname 
+        self._des = None
+    
+    def _lazy_load(self):
+        des = self.design_index.load_project(self.name)
+        setattr(self.design_index, self.name, des)
+        self._des = des
+        return des
+    
+    def __getattr__(self, name:str):
+        if hasattr(self, '_des') and self._des is not None:
+            des = self._des
+        else:
+            des = self._lazy_load()
+        return getattr(des, name)
+    
+    def __dir__(self):
+        des = self._lazy_load()
+        return dir(des)
+    
+    def __repr__(self):
+        return f'<Design {self.name} (uninit)>'
+    
 class DesignIndex:
+    
+    BadCharsRe = re.compile(r'[^\w\d\s]+')
+    SpaceCharsRe = re.compile(r'\s+')
+    
     def __init__(self, projectMux,  src_JSON_file:str='shuttle_index.json'):
-        self._shuttle_index = dict()
+        self._src_json = src_JSON_file
+        self._project_mux = projectMux
         self._project_count = 0
+        self.load_available(src_JSON_file)
+        
+    def load_available(self, src_JSON_file:str=None):
+        if src_JSON_file is None:
+            src_JSON_file = self._src_json
+            
+        self._shuttle_index = dict()
+        self._available_projects = dict()
         try:
             with open(src_JSON_file) as fh:
                 index = json.load(fh)
-                for project in index["projects"]:
-                    des = Design(projectMux, project["address"], project)
-                    attrib_name = des.name
-                    if attrib_name in self._shuttle_index:
+                for project in index['projects']:
+                    attrib_name = project['macro']
+                    project_address = int(project['address'])
+                    
+                    if attrib_name in self._available_projects:
                         log.info(f'Already have a "{attrib_name}" here...')
                         attempt = 1
                         augmented_name = f'{attrib_name}_{attempt}'
-                        while augmented_name in self._shuttle_index:
+                        while augmented_name in self._available_projects:
                             attempt += 1
                             augmented_name = f'{attrib_name}_{attempt}'
                         
                         attrib_name = augmented_name
-                        des.name = augmented_name
-                    self._shuttle_index[attrib_name] = des
-                    setattr(self, attrib_name, des)
+                        
+                    attrib_name = self._wokwi_name_cleanup(attrib_name, project)
+                    self._available_projects[attrib_name] = int(project_address)
+                    setattr(self, attrib_name, DesignStub(self, attrib_name))
                     self._project_count += 1
+
         except OSError:
             log.error(f'Could not open shuttle index {src_JSON_file}')
+            
+        gc.collect()
+            
              
     
+                
+    def _wokwi_name_cleanup(self, name:str, info:dict):
+        
+        # special cleanup for wokwi gen'ed names
+        if name.startswith('tt_um_wokwi') and 'title' in info and len(info['title']):
+            new_name = self.SpaceCharsRe.sub('_', self.BadCharsRe.sub('', info['title'])).lower()
+            if len(new_name):
+                name = f'wokwi_{new_name}'
+        
+        return name 
     @property
     def count(self):
         return self._project_count
                 
     @property 
     def names(self):
-        return sorted(self._shuttle_index.keys())
-    
+        return sorted(self._available_projects.keys())
     @property 
     def all(self):
+        '''
+            all available projects in the shuttle, whether loaded or not 
+        '''
+        return list(map(lambda p: getattr(self, p), sorted(self._available_projects.keys())))
+    @property 
+    def all_loaded(self):
+        '''
+            all the projects that have been lazy-loaded, basically
+            anything you've actually enabled or accessed in any way.
+        '''
         return sorted(self._shuttle_index.values(), key=lambda p: p.name)
     
+    
     def get(self, project_name:str) -> Design:
+        if not self.is_available(project_name):
+            # not in list of available, maybe it's an integer?
+            try: 
+                des_idx = int(project_name)
+                for des in self._available_projects.items():
+                    if des[1] == des_idx:
+                        return self.get(des[0]) 
+            except ValueError:
+                pass
+            raise AttributeError(f'Unknown project "{project_name}"') 
+        
+        if hasattr(self, project_name):
+            return getattr(self, project_name)
+        
         if project_name in self._shuttle_index:
             return self._shuttle_index[project_name]
         
-        # maybe it's an integer?
-        try: 
-            des_idx = int(project_name)
-            for des in self.all:
-                if des.count == des_idx:
-                    return des 
-        except ValueError:
-            pass 
+        return self.load_project(project_name)
         
-        raise ValueError(f'Unknown project "{project_name}"')
+    def load_project(self, project_name:str) -> Design:
         
+        # neither a know integer nor a loaded project, but is avail
+        project_address = self._available_projects[project_name]
+        try:
+            with open(self._src_json) as fh:
+                index = json.load(fh)
+                for project in index['projects']:
+                    if int(project['address']) == project_address:
+                        # this is our guy
+                        des = Design(self._project_mux, project_name, project["address"], project)
+                        self._shuttle_index[des.name] = des
+                        gc.collect()
+                        return des
+                        
+                    
+        except OSError:
+            log.error(f'Could not open shuttle index {self._src_json}')
+        
+        raise AttributeError(f'Unknown project "{project_name}"') 
+        
+    def is_available(self, project_name:str):
+        return project_name in self._available_projects
+    
     def __len__(self):
-        return len(self._shuttle_index)
+        return len(self._available_projects)
+    def __getattr__(self, name:str):
+        if hasattr(self, '_shuttle_index') and name in self._shuttle_index:
+            return self._shuttle_index[name]
+        
+        return self.get(name)
     
     def __getitem__(self, idx:int) -> Design:
         return self.get(idx)
+    
+    def __dir__(self):
+        return list(self._available_projects.keys())
                 
     def __repr__(self):
         return f'<DesignIndex {len(self)} projects>'
@@ -248,8 +359,9 @@ class ProjectMux:
         return list(filter(lambda p: p.name.find(search) >= 0,  self.all))
     
     def __getattr__(self, name):
-        if hasattr(self, 'projects') and hasattr(self.projects, name):
-            return getattr(self.projects, name)
+        if hasattr(self, 'projects'):
+            if self.projects.is_available(name) or hasattr(self.projects, name):
+                return getattr(self.projects, name)
         raise AttributeError(f"What is '{name}'?")
     
     def __getitem__(self, key) -> Design:
@@ -257,9 +369,18 @@ class ProjectMux:
             return self.projects[key]
         raise None
     
+    def __dir__(self):
+        # this doesn't seem to do what I want in uPython?
+        if hasattr(self, 'projects'):
+            return self.projects.names
+        return []
+    
+    
+    def __len__(self):
+        return len(self.projects)
     
     def __str__(self):
-        return f'Shuttle {self.run}\n{self.all}'
+        return f'Shuttle {self.run}'
     
     def __repr__(self):
         des_idx = self.projects
