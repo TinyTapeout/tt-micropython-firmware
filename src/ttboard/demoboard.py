@@ -178,7 +178,7 @@ class DemoBoard:
     def mode(self, setTo:int):
         if self.mode != setTo:
             if self.is_auto_clocking:
-                autoClockFreq = self.auto_clocking_freq()
+                autoClockFreq = self.auto_clocking_freq
                 self.clock_project_stop()
                 log.warn(f'Was auto-clocking @ {autoClockFreq} but stopping for mode change')
                 
