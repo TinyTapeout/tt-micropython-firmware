@@ -6,48 +6,47 @@ on:
       - '*'
 jobs:
   create-release:
-    # ubuntu
     env:
       RPOS_UF2FILE: RPI_PICO-20241025-v1.24.0.uf2
       TT_RUNS_SUPPORTED: "tt04 tt05 tt06"
     runs-on: ubuntu-latest
     steps:
-    # need the repo checked out
+
     - name: checkout repo
       uses: actions/checkout@v4
       with:
         submodules: recursive
         path: sdk
-    # get the RPI UF2
-    - name: get the os
+
+    - name: Download stock MicroPython UF2
       run: wget -O /tmp/rp2-pico.uf2 "https://micropython.org/resources/firmware/$RPOS_UF2FILE"
-    # get python setup
-    - name: build the merged UF2
+    
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
         cache: 'pip'
-    # build it
-    - name: get the os
+    
+    - name: Get shuttle indices
       run: |
            mkdir $GITHUB_WORKSPACE/sdk/src/shuttles
            for chip in $TT_RUNS_SUPPORTED; do wget -O $GITHUB_WORKSPACE/sdk/src/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=repo,address,commit,clock_hz,title"; done
-    # build it
-    - run: |
+    
+    - name: Build the final UF2
+      run: |
            pip install uf2utils
            touch $GITHUB_WORKSPACE/sdk/src/release_${{  github.ref_name }}
            python -m uf2utils.examples.custom_pico --fs_root $GITHUB_WORKSPACE/sdk/src --upython /tmp/rp2-pico.uf2 --out /tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2
+    
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: tt-demo-board-firmware
         path: /tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2
+    
     - name: Upload Release
       uses: ncipollo/release-action@v1
       with:
           artifacts: "/tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2"
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
-    
-    
-    
