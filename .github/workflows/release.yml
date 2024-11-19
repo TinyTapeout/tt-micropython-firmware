@@ -2,8 +2,6 @@ name: UF2 Generate and Release
 on:
   workflow_dispatch:
   push:
-    tags:
-      - '*'
 jobs:
   create-release:
     env:
@@ -46,6 +44,7 @@ jobs:
     
     - name: Upload Release
       uses: ncipollo/release-action@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
           artifacts: "/tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2"
           token: ${{ secrets.GITHUB_TOKEN }}
