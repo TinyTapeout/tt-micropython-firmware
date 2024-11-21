@@ -36,7 +36,7 @@ from ttboard.config.config_file import ConfigFile
 from ttboard.demoboard import DemoBoard
 import ttboard.boot.firstboot_operations as fbops
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 def doEval(command:str, loc_vals:dict):
     ret_val = None

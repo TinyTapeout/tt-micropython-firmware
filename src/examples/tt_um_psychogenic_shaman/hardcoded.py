@@ -9,7 +9,7 @@ from .message import message_to_blocks, process_message_blocks
 from .shaman import Shaman
 
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 DefaultMessageToEncode = 'you are my very nice friend'

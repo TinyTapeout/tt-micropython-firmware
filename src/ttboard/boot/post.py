@@ -16,7 +16,7 @@ import ttboard.pins.gpio_map as gp
 from ttboard.demoboard import DemoBoard
 from ttboard.mode import RPMode
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 

@@ -17,7 +17,7 @@ from ttboard.demoboard import DemoBoard
 from ttboard.mode import RPMode
 from ttboard.pins.pins import Pins
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 import ttboard.util.time as time

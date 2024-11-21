@@ -53,8 +53,4 @@ if IsRP2040:
             
         
 else:
-    # on desktop, use normal logging
-    import logging
-    #from logging import *
-    logging.basicConfig(level=logging.INFO)
     from logging import *

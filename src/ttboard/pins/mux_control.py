@@ -8,7 +8,7 @@ from ttboard.pins.standard import StandardPin
 from ttboard.pins.upython import Pin
 
 
-import ttboard.logging as logging 
+import ttboard.log as logging 
 log = logging.getLogger(__name__)
 
 class MuxControl:

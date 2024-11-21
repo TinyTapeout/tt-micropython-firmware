@@ -39,7 +39,7 @@ from ttboard.pins.mux_control import MuxControl
 
 
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 
@@ -331,7 +331,7 @@ class Pins:
         self._begin_alwaysOut()
         unconfigured_pins = []
         for pname in gp.GPIOMap.all().keys():
-            if pname.startswith('in'):
+            if pname.startswith('ui_in'):
                 p = getattr(self, pname)
                 if self.dieOnInputControlSwitchHigh:
                     if p():
@@ -364,11 +364,11 @@ class Pins:
         self._begin_alwaysOut()
         
         for pname in gp.GPIOMap.all().keys():
-            if pname.startswith('out'):
+            if pname.startswith('uo_out'):
                 p = getattr(self, pname)
                 p.mode = Pin.OUT
                 
-            if pname.startswith('in'):
+            if pname.startswith('ui_in'):
                 p = getattr(self, pname)
                 p.pull = Pin.PULL_DOWN
                 

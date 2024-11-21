@@ -9,7 +9,7 @@ from ttboard.demoboard import DemoBoard, Pins
 import ttboard.util.time as time
 from ttboard.mode import RPMode
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 def factory_test_bidirs_03p5(tt:DemoBoard, max_idx:int=255, delay_interval_ms:int=1):

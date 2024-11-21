@@ -8,7 +8,7 @@ Created on Apr 28, 2024
 from examples.tt_um_psychogenic_shaman.util import wait_clocks, die_with_error
 from examples.tt_um_psychogenic_shaman.shaman import Shaman
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 def prep_block(shaman:Shaman, message_block):

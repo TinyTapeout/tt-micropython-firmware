@@ -9,7 +9,7 @@ from ttboard.pins.upython import Pin
 import ttboard.pins.gpio_map
 from ttboard.pins.gpio_map import GPIOMapTT04, GPIOMapTT06
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 class DemoboardVersion:

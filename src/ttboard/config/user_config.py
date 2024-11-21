@@ -8,7 +8,7 @@ from ttboard.config.parser import ConfigParser
 from ttboard.mode import RPMode
 from ttboard.config.config_file import ConfigFile
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 class UserProjectConfig:

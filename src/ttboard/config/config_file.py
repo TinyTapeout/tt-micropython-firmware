@@ -7,7 +7,7 @@ Created on Mar 20, 2024
 
 from ttboard.config.parser import ConfigParser
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 class ConfigFile:

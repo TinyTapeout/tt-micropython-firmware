@@ -24,7 +24,7 @@ from ttboard.config.user_config import UserConfig
 import ttboard.util.platform as platform 
 from ttboard.boot.demoboard_detect import DemoboardDetect, DemoboardVersion
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 class DemoBoard:

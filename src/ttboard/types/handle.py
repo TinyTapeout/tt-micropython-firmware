@@ -25,7 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import ttboard.logging as logging
+import ttboard.log as logging
 from ttboard.types.range import Range
 from ttboard.types.logic import Logic
 from ttboard.types.logic_array import LogicArray

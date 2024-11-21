@@ -11,7 +11,7 @@ from ttboard.pins.upython import Pin
 if IsRP2040:
     import machine
 
-import  ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 class StandardPin:

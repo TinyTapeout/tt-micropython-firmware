@@ -21,7 +21,7 @@ from ttboard.mode import RPMode
 import ttboard.util.shuttle_tests as shut_tests
 
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 

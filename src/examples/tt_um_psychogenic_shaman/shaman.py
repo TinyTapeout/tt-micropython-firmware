@@ -8,7 +8,7 @@ Created on Apr 28, 2024
 from ttboard.demoboard import DemoBoard
 from examples.tt_um_psychogenic_shaman.util import wait_clocks
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 class Shaman:

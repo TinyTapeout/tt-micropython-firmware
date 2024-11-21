@@ -5,7 +5,7 @@ Created on Apr 28, 2024
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 import ttboard.util.time as time

@@ -9,7 +9,7 @@ import ttboard.util.time as time
 from ttboard.boot.shuttle_properties import ShuttleProperties
 
 
-import ttboard.logging as logging
+import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 class ChipROM(ShuttleProperties):
