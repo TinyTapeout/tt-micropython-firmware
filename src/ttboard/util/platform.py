@@ -201,3 +201,34 @@ else:
         return RP2040SystemClockDefaultHz
     def set_RP_system_clock(freqHz:int):
         print(f"Set machine clock to {freqHz}")
+        
+    def write_input_byte(val):
+        print(f'Sim write_input_byte {val}')
+
+    def read_input_byte():
+        print('Sim read_output_byte')
+        return 0
+
+    def write_bidir_byte(val):
+        print(f'Sim write_bidir_byte {val}')
+
+        
+        
+    def read_bidir_byte():
+        print('Sim read_output_byte')
+        return 0
+    
+    _outbyte = 0
+    def write_output_byte(val):
+        global _outbyte 
+        print(f'Sim write_output_byte {val}')
+        _outbyte = val
+    
+    def read_output_byte():
+        global _outbyte 
+        v = _outbyte 
+        #_outbyte += 1
+        print('Sim read_output_byte')
+        return v
+    
+    
