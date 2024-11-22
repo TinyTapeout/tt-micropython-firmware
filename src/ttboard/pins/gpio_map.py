@@ -195,22 +195,22 @@ class GPIOMapTT04(GPIOMapBase):
             "sdi_nprojectrst": cls.SDI_nPROJECT_RST, # "sdi_out0": cls.SDI_UO_OUT0,
             "hk_sdo": cls.HK_SDO, # "sdo_out1": cls.SDO_UO_OUT1,
             "uo_out0": cls.UO_OUT0,
-            "cena_out1": cls.CTRL_ENA_UO_OUT1, # "ctrl_ena": cls.CTRL_ENA,
-            "ncrst_out2": cls.nCRST_UO_OUT2,
-            "cinc_out3": cls.CINC_UO_OUT3,
+            "cena_uo_out1": cls.CTRL_ENA_UO_OUT1, # "ctrl_ena": cls.CTRL_ENA,
+            "ncrst_uo_out2": cls.nCRST_UO_OUT2,
+            "cinc_uo_out3": cls.CINC_UO_OUT3,
         })
         return retDict
     @classmethod
     def muxed_pairs(cls):
         mpairnames = [
             'sdi_nprojectrst',
-            'cena_out1',
-            'ncrst_out2',
-            'cinc_out3'
+            'cena_uo_out1',
+            'ncrst_uo_out2',
+            'cinc_uo_out3'
         ]
         retVals = {}
         for mpair in mpairnames:
-            retVals[mpair] = mpair.split('_')
+            retVals[mpair] = mpair.split('_', 1)
         
         return retVals;
     
