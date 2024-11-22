@@ -92,8 +92,9 @@ class DemoBoard:
         
         '''
         # interfaces 
+        logging.dumpMem('db init')
         self.user_config = UserConfig(iniFile)
-        
+        logging.dumpMem('user conf loaded')
         log_level = self.user_config.log_level
         if log_level is not None:
             logging.basicConfig(level=log_level)
@@ -153,15 +154,15 @@ class DemoBoard:
         port_defs = [
             ('uo_out', platform.read_output_byte, platform.write_output_byte),
             ('ui_in', platform.read_input_byte, platform.write_input_byte),
-            ('uio_in', platform.read_bidir_byte, None),
-            ('uio_out', platform.read_bidir_byte, platform.write_bidir_byte)
+            ('uio_in', None, platform.write_bidir_byte),
+            ('uio_out', platform.read_bidir_byte, None)
             ]
         self._ports = dict()
         for pd in port_defs:
             setattr(self, pd[0], VerilogIOPort(*pd))
             
             
-        self.uio_oe = VerilogOEPort('uio_oe', platform.read_bidir_outputenable, platform.write_bidir_outputenable)
+        self.uio_oe_pico = VerilogOEPort('uio_oe_pico', platform.read_bidir_outputenable, platform.write_bidir_outputenable)
         
         
     def load_default_project(self):
@@ -514,7 +515,7 @@ class DemoBoard:
             
         if projConfig.bidir_direction is None:
             # no bidir direction set, ensure all are inputs
-            self.uio_oe.value = 0 # all in
+            self.uio_oe_pico.value = 0 # all in
         else:
             dirBits = projConfig.bidir_direction
             log.debug(f'Setting bidir pin direction to {hex(dirBits)}')

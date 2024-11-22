@@ -254,15 +254,15 @@ else:
         print('Sim read_output_byte')
         return v
     
-    _uio_oe = 0
+    _uio_oe_pico = 0
     def read_bidir_outputenable():
         print('Sim read_bidir_outputenable')
-        return _uio_oe
+        return _uio_oe_pico
 
     def write_bidir_outputenable(val):
-        global _uio_oe
+        global _uio_oe_pico
         print(f'Sim write_bidir_outputenable {val}')
-        _uio_oe = val
+        _uio_oe_pico = val
         
     
     
