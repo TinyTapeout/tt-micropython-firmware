@@ -18,8 +18,8 @@
 #
 
 
-RPOS_UF2FILE=RPI_PICO-20240222-v1.22.2.uf2
-TT_RUNS_SUPPORTED="tt03p5 tt04 tt05 tt06"
+RPOS_UF2FILE=RPI_PICO-20241025-v1.24.0.uf2
+TT_RUNS_SUPPORTED="tt05 tt06 tt07 tt08"
 
 VERSION=$1
 SRCDIR=$2
@@ -62,7 +62,7 @@ wget -O $RPUF2 -c "https://micropython.org/resources/firmware/$RPOS_UF2FILE"
 
 echo "Download shuttles for $TT_RUNS_SUPPORTED"
 mkdir $BUILDDIR/shuttles
-for chip in $TT_RUNS_SUPPORTED; do wget -O $BUILDDIR/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=repo,address,commit,clock_hz,title"; done
+for chip in $TT_RUNS_SUPPORTED; do wget -O $BUILDDIR/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=address,clock_hz,title"; done
 touch $BUILDDIR/release_v$VERSION
 
 echo "Including SDK from $SRCDIR"
