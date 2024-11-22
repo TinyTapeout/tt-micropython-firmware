@@ -57,7 +57,7 @@ substitutions = [
 
 
 special_cases = [
-    ('individual_pin_attrib', '\.(in|out|uio)(\d+)\.'), # , '.pins.\g<1>\g<2>.'),
+    ('individual_pin_attrib', '\.(in|out|uio)(\d+)'), 
     ('individual_pin_call', '\.(in|out|uio)(\d+)\(([^)]+)\)'),
     
 ]
@@ -94,18 +94,19 @@ class Replacer:
             }
         
         seen = dict()
-        print(self.individual_pin_attrib)
-        for p in self.individual_pin_attrib.findall(contents):
-            subre = f'\.{p[0]}{p[1]}\.'
-            repl =  f'.pins.{set_bitmap[p[0]]}{p[1]}.'
-            print(f"PINATTR '{subre}', '{repl}'")
-            contents = re.sub(subre, repl, contents, 0, re.MULTILINE)
-            
+        
         for p in self.individual_pin_call.findall(contents):
             subre = f'\.{p[0]}{p[1]}\({p[2]}\)'
             repl =  f'.{set_bitmap[p[0]]}[{p[1]}] = {p[2]}'
             print(f"'{subre}', '{repl}'")
             contents = re.sub(subre, repl, contents, 0, re.MULTILINE)
+            
+        for p in self.individual_pin_attrib.findall(contents):
+            subre = f'\.{p[0]}{p[1]}'
+            repl =  f'.pins.{set_bitmap[p[0]]}{p[1]}'
+            print(f"PINATTR '{subre}', '{repl}'")
+            contents = re.sub(subre, repl, contents, 0, re.MULTILINE)
+            
             
             
         
