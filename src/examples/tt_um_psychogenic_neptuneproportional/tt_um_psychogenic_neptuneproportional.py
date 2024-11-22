@@ -91,6 +91,7 @@ def run(loops:int=2, note_delay_ms:int=2000):
     
     pwm.deinit() # shut that PWM down to be nice during future interactions with pin
     tt.in5(0) # bring low
+    tt.out6(1)
     
     print("Done")
     return True # say it all went well
