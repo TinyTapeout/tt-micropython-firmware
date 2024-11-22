@@ -35,7 +35,7 @@ class Design:
         self.commit = ''
         if 'commit' in info:
             self.commit = info['commit']
-        self.clock_hz = info['clock_hz']
+        self.clock_hz = int(info['clock_hz'])
         self._all = info
         
     @property 
@@ -123,7 +123,7 @@ class DesignIndex:
                         
                     attrib_name = self._wokwi_name_cleanup(attrib_name, project)
                     self._available_projects[attrib_name] = int(project_address)
-                    setattr(self, attrib_name, DesignStub(self, attrib_name))
+                    # setattr(self, attrib_name, DesignStub(self, attrib_name))
                     self._project_count += 1
 
         except OSError:
@@ -155,7 +155,7 @@ class DesignIndex:
         '''
             all available projects in the shuttle, whether loaded or not 
         '''
-        return list(map(lambda p: getattr(self, p), sorted(self._available_projects.keys())))
+        return list(map(lambda p: DesignStub(self, p), sorted(self._available_projects.keys())))
     @property 
     def all_loaded(self):
         '''
@@ -177,11 +177,9 @@ class DesignIndex:
                 pass
             raise AttributeError(f'Unknown project "{project_name}"') 
         
-        if hasattr(self, project_name):
-            return getattr(self, project_name)
-        
-        if project_name in self._shuttle_index:
-            return self._shuttle_index[project_name]
+        from_shut = self._get_from_shuttle_index(project_name)
+        if from_shut is not None:
+            return from_shut
         
         return self.load_project(project_name)
         
@@ -209,11 +207,20 @@ class DesignIndex:
     def is_available(self, project_name:str):
         return project_name in self._available_projects
     
+    def _get_from_shuttle_index(self, name:str):
+        if hasattr(self, '_shuttle_index') and name in self._shuttle_index:
+            if self._shuttle_index[name] is None:
+                return DesignStub(self, name)
+            return self._shuttle_index[name]
+        
+        return None
+    
     def __len__(self):
         return len(self._available_projects)
     def __getattr__(self, name:str):
-        if hasattr(self, '_shuttle_index') and name in self._shuttle_index:
-            return self._shuttle_index[name]
+        from_shuttle_idx = self._get_from_shuttle_index(name)
+        if from_shuttle_idx is not None:
+            return from_shuttle_idx
         
         return self.get(name)
     
@@ -350,7 +357,7 @@ class ProjectMux:
         return self._design_index
     
     def has(self, project_name:str):
-        return hasattr(self.projects, project_name)
+        return self.projects.is_available(project_name)
     
     def get(self, project_name:str) -> Design:
         return getattr(self.projects, project_name)
