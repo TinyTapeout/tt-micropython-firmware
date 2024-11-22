@@ -1,37 +1,17 @@
+
 '''
 Created on Nov 21, 2024
 
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
+import gc 
 import ttboard.util.time as time
-import ttboard.log as logging
-log = logging.getLogger(__name__)
-_ClockForSignal = dict()
+gc.collect()
+from ttboard.cocotb.time import TimeValue, SystemTime
+gc.collect()
 
-class TimeConverter:
-    @classmethod 
-    def scale(cls, units:str):
-        vals = {
-                'fs': 1e-15,
-                'ps': 1e-12,
-                'ns': 1e-9,
-                'us': 1e-6,
-                'ms': 1e-3,
-                'sec': 1
-            }
-        if units not in vals:
-            raise ValueError(f"Unknown units {units}")
-        return vals[units]
-    
-    @classmethod 
-    def time_to_clockticks(cls, clock, t:int, units:str):
-        if clock is None:
-            clock = Clock.get()
-            
-        time_secs = t*cls.scale(units)
-        return round(time_secs / clock.period_s)
-            
+_ClockForSignal = dict()     
 class Clock:
     @classmethod 
     def get(cls, signal):
@@ -50,32 +30,52 @@ class Clock:
     
     def __init__(self, signal, period, units):
         self.signal = signal
-        self.period = period 
-        self.units = units
-        self.scale = TimeConverter.scale(units)
         self.running = False
-        self.period_s = self.period * self.scale
         
+        self.half_period =  TimeValue(period/2, units)
+        self.next_toggle = TimeValue(period/2, units)
+        self.current_signal_value = 0
         self.sleep_us = 0
-        sleep_us = (1e6*self.period_s/2.0)
-        if sleep_us >= 500:
-            self.sleep_us = sleep_us
+        half_per_secs = float(self.half_period)
+        if  half_per_secs > 250e-6:
+            self.sleep_us = round(half_per_secs*1e-6)
             
+        self._toggle_count = 0
+        
+    
+    @property 
+    def event_interval(self):
+        return self.half_period
     
     def start(self):
         global _ClockForSignal
         _ClockForSignal[self.signal] = self
         
-    def numticks_in(self, t:int, units:str):
-        return TimeConverter.time_to_clockticks(self, t, units)
+    def num_events_in(self, time_or_timevalue:int, units:str=None):
+        if isinstance(time_or_timevalue, TimeValue):
+            tv = time_or_timevalue 
+        elif units is not None:
+            tv = TimeValue(time_or_timevalue, units)
+        else:
+            raise ValueError
+        return tv / self.half_period
+    
+    def time_has_passed(self):
+        while self.next_toggle <= SystemTime.current():
+            self.toggle()
+            self.next_toggle += self.half_period
+    
+    def toggle(self):
+        # print(f"toggle {self._toggle_count}")
+        new_val = 1 if not self.current_signal_value else 0
+        self.signal.value = new_val 
+        self.current_signal_value = new_val
+        if self.sleep_us:
+            time.sleep_us(self.sleep_us)
     
     def tick(self):
-        self.signal.value = 1
-        if self.sleep_us:
-            time.sleep_us(self.sleep_us)
-            
-        self.signal.value = 0
-        if self.sleep_us:
-            time.sleep_us(self.sleep_us)
+        # clock will go through whole period, end where it started
+        self.toggle()
+        self.toggle()
         
     

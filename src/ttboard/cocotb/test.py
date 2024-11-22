@@ -24,14 +24,18 @@ class DUT(DUTWrapper):
         self.segments = self.new_slice_attribute(self.tt.uo_out, 6, 0)
         
 dut = DUT()
-clk = Clock(dut.clk, 500, 'us')
+clk = Clock(dut.clk, 50, 'us')
 clk.start()
 
 async def yo(dut):
     dut.display_single_select.value = 1
+    print("3 cycles")
     await ClockCycles(dut.clk, 3)
     dut.display_single_select.value = 0
+    print("5 cycles")
     await ClockCycles(dut.clk, 5)
-    await Timer(2, 'ms')
+    
+    print("100 us")
+    await Timer(100, 'us')
     
     

@@ -4,8 +4,8 @@ Created on Nov 21, 2024
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
-from ttboard.cocotb.clock import Clock, TimeConverter
-
+from ttboard.cocotb.clock import Clock
+from ttboard.cocotb.time import TimeValue, SystemTime
 class Awaitable:
     def __init__(self, signal=None):
         self.signal = signal
@@ -20,37 +20,30 @@ class ClockCycles(Awaitable):
     def __init__(self, sig, num_cycles:int):
         super().__init__(sig)
         self.num_cycles = num_cycles
-        self.cycle_count = 0
         
     def __iter__(self):
-        # print(f"Will tick {self.num_cycles} times ")
-        self.cycle_count = self.num_cycles
         return self
 
     def next(self): 
         clk = Clock.get(self.signal)
+        
         if clk is None:
             print("CLK NO CLK")
         else:
-            while self.cycle_count > 0:
-                self.cycle_count -= 1
-                clk.tick()
+            num_transitions = self.num_cycles * 2
+            target_time = SystemTime.current() + (clk.half_period * num_transitions)
+            all_clocks = sorted(Clock.all(), key=lambda x: float(x.half_period))
+            fastest_clock = all_clocks[0]
+            time_increment = fastest_clock.half_period
+            while SystemTime.current() < target_time:
+                SystemTime.advance(time_increment)
+                for clk in all_clocks:
+                    clk.time_has_passed()
         raise StopIteration
     
     def __next__(self):
         return self.next()
     
-    def deadbeef(self):
-        clk = Clock.get(self.signal)
-        if clk is None:
-            print("CLK NO CLK")
-        else:
-            if self.cycle_count > 0:
-                self.cycle_count -= 1
-                clk.tick()
-                yield self.cycle_count
-        raise StopIteration
-            
     
     def __await__(self):
         clk = Clock.get(self.signal)
@@ -64,49 +57,29 @@ class ClockCycles(Awaitable):
 class Timer(Awaitable):
     def __init__(self, time:int, units:str):
         super().__init__()
-        self.time = time 
-        self.units = units 
-        self.time_s = time * TimeConverter.scale(units)
-        self.cycle_count = 0
+        self.time = TimeValue(time, units)
         
     
-    def countdowns(self):
-        all_clocks = Clock.all()
-        countdowns = []
-        max_ticks = 0
-        for clk in all_clocks:
-            nt = clk.numticks_in(self.time, self.units)
-            if nt > max_ticks:
-                max_ticks = nt 
-            #print(f'Want {nt} ticks for {clk}')
-            countdowns.append([nt, clk])
-            
-        #print(f"Set cyclecount {max_ticks}")
-        self.cycle_count = max_ticks
-        
-        return countdowns
-        
-    
+    def run_timer(self):
+        all_clocks = sorted(Clock.all(), key=lambda x: float(x.half_period))
+        fastest_clock = all_clocks[0]
+        time_increment = fastest_clock.half_period
+        target_time = SystemTime.current() + self.time
+        while SystemTime.current() < target_time:
+            SystemTime.advance(time_increment)
+            for clk in all_clocks:
+                clk.time_has_passed()
+                
     def __iter__(self):
-        self._countdowns = self.countdowns()
         return self
     
     def __next__(self): 
-        while self.cycle_count > 0:
-            self.cycle_count -= 1
-            self.tick_all()
+        self.run_timer()
         raise StopIteration
     
-    def tick_all(self):
-        for cidx in range(len(self._countdowns)):
-            if self._countdowns[cidx][0] > 0:
-                self._countdowns[cidx][1].tick()
-                self._countdowns[cidx][0] -= 1
     
     def __await__(self):
-        self._countdowns = self.countdowns()
-        for _i in range(self.cycle_count):
-            self.tick_all()
+        self.run_timer()
         yield
         return self
     
