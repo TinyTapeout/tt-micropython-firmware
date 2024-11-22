@@ -5,9 +5,15 @@ Created on Nov 21, 2024
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 import math
+import gc
 from ttboard.demoboard import DemoBoard
+gc.collect()
+print(f'mf tb: {gc.mem_free()}')
 from ttboard.cocotb.clock import Clock
+print(f'mf tb: {gc.mem_free()}')
 from ttboard.cocotb.triggers import Timer, ClockCycles # RisingEdge, FallingEdge, Timer, ClockCycles
+
+print(f'mf tb: {gc.mem_free()}')
 import ttboard.cocotb as cocotb
 
 displayNotes = {
@@ -76,17 +82,19 @@ async def getDisplayValues(dut):
     # dut._log.info(f'Display Segments: {displayedValues} ( [ {bin(displayedValues[0])} , {bin(displayedValues[1])}])')
     return displayedValues
     
-async def inputPulsesFor(dut, tunerInputFreqHz:int, inputTimeSecs=0.51, sysClkHz=1e3):
-    numPulses = tunerInputFreqHz * inputTimeSecs 
-    pulsePeriod = 1/tunerInputFreqHz
-    pulseHalfCycleUs = round(1e6*pulsePeriod/2.0)
-        
-    for _pidx in range(math.ceil(numPulses)):
-        dut.input_pulse.value = 1
-        await Timer(pulseHalfCycleUs, units='us')
-        dut.input_pulse.value = 0
-        await Timer(pulseHalfCycleUs, units='us')
-        
+async def inputPulsesFor(dut, tunerInputFreqHz:int, inputTimeSecs=0.51):
+    #numPulses = tunerInputFreqHz * inputTimeSecs 
+    #pulsePeriod = 1/tunerInputFreqHz
+    #pulseHalfCycleUs = round(1e6*pulsePeriod/2.0)
+    
+    pulseClock = Clock(dut.input_pulse, 1000*(1.0/tunerInputFreqHz), units='ms')
+    cocotb.start_soon(pulseClock.start())
+    # for _pidx in range(math.ceil(numPulses)):
+    #     dut.input_pulse.value = 1
+    #     await Timer(pulseHalfCycleUs, units='us')
+    #     dut.input_pulse.value = 0
+    #     await Timer(pulseHalfCycleUs, units='us')
+    await Timer(inputTimeSecs, 'sec')
     dispV = await getDisplayValues(dut)
     
     return dispV
@@ -98,7 +106,7 @@ async def setup_tuner(dut):
     await startup(dut)
     
 
-async def note_toggle(dut, freq, delta=0, msg="", toggleTime=4):
+async def note_toggle(dut, freq, delta=0, msg="", toggleTime=1.2):
     dut._log.info(msg)
     await startup(dut)
     dispValues = await inputPulsesFor(dut, freq + delta, toggleTime)  
@@ -109,16 +117,18 @@ async def note_toggle(dut, freq, delta=0, msg="", toggleTime=4):
 async def note_e(dut, eFreq=330, delta=0, msg=""):
     dut._log.info(f"E @ {eFreq} delta {delta}")
     dispValues = await note_toggle(dut, freq=eFreq, delta=delta, msg=msg);
-    assert dispValues[1] == (displayNotes['E'] & SegmentMask), "Note E FAIL"
-    dut._log.info(f"Note E @ {eFreq} pass")
+    note_target = (displayNotes['E'] & SegmentMask)
+    assert dispValues[1] == note_target, f"Note E FAIL: {dispValues[1]} != {note_target}"
+    dut._log.info(f"Note E @ {eFreq} pass ({bin(dispValues[1])})")
     return dispValues
 
 
     
 @cocotb.test()
 async def note_e_highfar(dut):
-    dispValues = await note_e(dut, eFreq=330, delta=20, msg="little E high/far")
-    assert dispValues[0] == (displayProx['hifar'] & ProxSegMask) , "High/far Fail"
+    dispValues = await note_e(dut, eFreq=330, delta=12, msg="little E high/far")
+    target_value =  (displayProx['hifar'] & ProxSegMask)
+    assert dispValues[0] == target_value, f"high/far fail {dispValues[0]} != {target_value}"
     dut._log.info("Note E full pass")
 
 
@@ -128,14 +138,17 @@ async def note_g(dut, delta=0, msg=""):
     
     dut._log.info(f"G delta {delta}")
     dispValues = await note_toggle(dut, freq=gFreq, delta=delta, msg=msg);
-    assert dispValues[1] == (displayNotes['G'] & SegmentMask), "Note G FAIL"
-    dut._log.info("Note G: PASS")
+    
+    note_target = (displayNotes['G'] & SegmentMask)
+    assert dispValues[1] == note_target, f"Note G FAIL: {dispValues[1]} != {note_target}"
+    dut._log.info(f"Note G: PASS ({bin(dispValues[1])})")
     return dispValues
 
 @cocotb.test()
 async def note_g_highclose(dut):
     dispValues = await note_g(dut, delta=3, msg="High/close")
-    assert dispValues[0] == (displayProx['hiclose'] & ProxSegMask) , "High/close fail"
+    target_value =  (displayProx['hiclose'] & ProxSegMask)
+    assert dispValues[0] == target_value, f"High/close fail {dispValues[0]} != {target_value}"
     dut._log.info("Note G full pass")
     
 
@@ -145,14 +158,18 @@ async def note_a(dut, delta=0, msg=""):
     
     dut._log.info(f"A delta {delta}")
     dispValues = await note_toggle(dut, freq=aFreq, delta=delta, msg=msg);
-    assert dispValues[1] == (displayNotes['A'] & SegmentMask), "Note A fail"
-    dut._log.info("Note A pass")
+    
+    note_target = (displayNotes['A'] & SegmentMask)
+    assert dispValues[1] == note_target, f"Note A FAIL: {dispValues[1]} != {note_target}"
+    dut._log.info(f"Note A pass ({bin(dispValues[1])})")
     return dispValues
 
 @cocotb.test()
 async def note_a_exact(dut):
     dispValues = await note_a(dut, delta=0, msg="A exact")
-    assert dispValues[0] == (displayProx['exact'] & ProxSegMask) , "exact fail"
+    
+    target_value =  (displayProx['exact'] & ProxSegMask)
+    assert dispValues[0] == target_value, f"exact fail {dispValues[0]} != {target_value}"
     dut._log.info("Note A full pass")
 
 def main():

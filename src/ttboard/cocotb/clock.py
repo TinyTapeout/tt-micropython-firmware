@@ -33,16 +33,23 @@ class Clock:
         self.running = False
         
         self.half_period =  TimeValue(period/2, units)
-        self.next_toggle = TimeValue(period/2, units)
+        self.next_toggle = TimeValue((period/2) - 1, units)
+        
         self.current_signal_value = 0
         self.sleep_us = 0
         half_per_secs = float(self.half_period)
-        if  half_per_secs > 250e-6:
-            self.sleep_us = round(half_per_secs*1e-6)
+        if  half_per_secs > 1e-3:
+            self.sleep_us = round(half_per_secs*1e6)
             
         self._toggle_count = 0
+        self._period = None 
         
-    
+    @property 
+    def period(self):
+        if self._period is None:
+            self._period = self.half_period * 2
+        
+        return self._period
     @property 
     def event_interval(self):
         return self.half_period
@@ -61,12 +68,18 @@ class Clock:
         return tv / self.half_period
     
     def time_has_passed(self):
-        while self.next_toggle <= SystemTime.current():
+        #print(f"time passed to {SystemTime.current()} next is {self.next_toggle}")
+        while self.next_toggle < SystemTime.current():
             self.toggle()
             self.next_toggle += self.half_period
+            #print(f"SMALL, next toggle {self.next_toggle}")
+            
+        
+        #print(f"increment done {SystemTime.current()} next is {self.next_toggle}")
+        #raise Exception('fuuuuk')
     
     def toggle(self):
-        # print(f"toggle {self._toggle_count}")
+        # print(f"toggle!")
         new_val = 1 if not self.current_signal_value else 0
         self.signal.value = new_val 
         self.current_signal_value = new_val
@@ -77,5 +90,8 @@ class Clock:
         # clock will go through whole period, end where it started
         self.toggle()
         self.toggle()
+        
+    def __repr__(self):
+        return f'<Clock {self.period} on {self.signal}>'
         
     

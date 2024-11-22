@@ -23,19 +23,30 @@ class TimeConverter:
     
     @classmethod 
     def time_to_clockticks(cls, clock, t:int, units:str):
-        time_secs = t*cls.scale(units)
-        return round(time_secs / clock.period_s)
+        tval = TimeValue(t, units)
+        return round(tval / clock.period)
     
     @classmethod 
     def rescale(cls,t:int, units:str, to_units:str):
+        if units == to_units:
+            return t
         return t*(cls.scale(units)/cls.scale(to_units))
     
 class TimeValue:
     def __init__(self, time:int, units:str):
-        self.time = time 
+        self._time = time 
         self._units = units
         self.scale = TimeConverter.scale(units)
+        self._as_float = None
     
+    @property 
+    def time(self):
+        return self._time 
+    
+    @time.setter 
+    def time(self, set_to:int):
+        self._time = set_to 
+        self._as_float = None
     @property 
     def units(self):
         return self._units 
@@ -43,8 +54,11 @@ class TimeValue:
     def units(self, set_to:str):
         self._units = set_to 
         self.scale = TimeConverter.scale(set_to)
+        self._as_float = None
     def __float__(self):
-        return self.time*self.scale
+        if self._as_float is None:
+            self._as_float = self.time*self.scale
+        return self._as_float
     
     def __gt__(self, other):
         if isinstance(other, (TimeValue, float)):

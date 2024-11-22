@@ -32,8 +32,10 @@ class Runner:
         self.tests_to_run[name] = func
         
     def test(self, dut):
+        from ttboard.cocotb.time import SystemTime
         failures = 0
         for nm in self.test_names:
+            SystemTime.reset()
             try:
                 self.tests_to_run[nm](dut)
             except Exception as e:
@@ -64,7 +66,7 @@ def test(func=None, *,
         runner = Runner.get() 
         test_name = func.__name__ if name is None else name
         def wrapper_func(dut):
-            dut._log.info(f"Running {test_name}")   
+            dut._log.info(f"Running Test: {test_name}")   
             asyncio.run(func(dut))
         
         def skipper_func(dut):

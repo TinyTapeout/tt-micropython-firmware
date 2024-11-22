@@ -35,9 +35,12 @@ class ClockCycles(Awaitable):
             all_clocks = sorted(Clock.all(), key=lambda x: float(x.half_period))
             fastest_clock = all_clocks[0]
             time_increment = fastest_clock.half_period
+            #print(f"Is now {SystemTime.current()}, running until {target_time}, increment is {time_increment}")
             while SystemTime.current() < target_time:
+                #print("Advancing time")
                 SystemTime.advance(time_increment)
                 for clk in all_clocks:
+                    #print("telling clocks")
                     clk.time_has_passed()
         raise StopIteration
     
@@ -62,10 +65,16 @@ class Timer(Awaitable):
     
     def run_timer(self):
         all_clocks = sorted(Clock.all(), key=lambda x: float(x.half_period))
+        # print(f"All clocks on timer: {all_clocks}")
         fastest_clock = all_clocks[0]
         time_increment = fastest_clock.half_period
         target_time = SystemTime.current() + self.time
+        increment_count = 0
         while SystemTime.current() < target_time:
+            #if increment_count % 250 == 0:
+                # print(f"Systime: {SystemTime.current()} (target {target_time})")
+            
+            #increment_count += 1
             SystemTime.advance(time_increment)
             for clk in all_clocks:
                 clk.time_has_passed()
