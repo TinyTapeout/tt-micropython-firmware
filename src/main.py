@@ -29,12 +29,18 @@ This code accesses the PowerOnSelfTest functions to:
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
+import gc
 import ttboard.util.time as time
 from ttboard.boot.demoboard_detect import DemoboardDetect
 from ttboard.mode import RPMode
 from ttboard.demoboard import DemoBoard, Pins
 from ttboard.boot.post import PowerOnSelfTest
 import ttboard.util.colors as colors
+
+# import examples.tt_um_psychogenic_neptuneproportional.tb as nc
+
+gc.collect()
+print(f'Main memfree after imports: {gc.mem_free()}')
 
 tt = None
 def startup():
@@ -137,6 +143,26 @@ if run_post_tests:
         tt.load_default_project()
     print('\n\n')
 
-#tt.shuttle.tt_um_psychogenic_neptuneproportional.enable()
 print(tt)
 print()
+
+gc.collect()
+time.sleep_ms(20)
+
+from ttboard.cocotb.clock import Clock
+gc.collect()
+print(gc.mem_free())
+from ttboard.cocotb.triggers import Timer, ClockCycles # RisingEdge, FallingEdge, Timer, ClockCycles
+
+gc.collect()
+print(gc.mem_free())
+import ttboard.cocotb as cocotb
+gc.collect()
+print(gc.mem_free())
+import micropython
+micropython.mem_info()
+
+# import examples.tt_um_factory_test.tt_um_factory_test as ft
+
+
+
