@@ -20,7 +20,8 @@ except:
 if IsRP2040:
     '''
         low-level machine related methods.
-        
+        @note: Register magic is based on "2.3.1.7. List of Registers" 
+        from the rp2040_datasheet.pdf
         
         
         Have some read_ and write_ for in/bidir/out ports
@@ -142,6 +143,19 @@ if IsRP2040:
         machine.mem32[0xd000001c] = val
         
         
+    
+    @micropython.native
+    def read_bidir_outputenable():
+        # GPIO_OE register, masked for our bidir pins
+        return (machine.mem32[0xd0000020] & 0x1FE00000) >> 21
+        
+        
+    @micropython.native
+    def write_bidir_outputenable(val):
+        # GPIO_OE register, clearing bidir pins and setting any enabled
+        val = (val << 21)
+        machine.mem32[0xd0000020] = (machine.mem32[0xd0000020] & ((1 << 21) - 1)) | val
+        
     @micropython.native
     def read_bidir_byte():
         # just read the high and low nibbles from GPIO and combine into a byte
@@ -200,23 +214,32 @@ else:
     def get_RP_system_clock():
         return RP2040SystemClockDefaultHz
     def set_RP_system_clock(freqHz:int):
+        global RP2040SystemClockDefaultHz
         print(f"Set machine clock to {freqHz}")
+        RP2040SystemClockDefaultHz = freqHz
         
+    _inbyte = 0
     def write_input_byte(val):
+        global _inbyte 
         print(f'Sim write_input_byte {val}')
+        _inbyte = val
 
     def read_input_byte():
         print('Sim read_output_byte')
-        return 0
+        return _inbyte
 
+
+    _uio_byte = 0
     def write_bidir_byte(val):
+        global _uio_byte
         print(f'Sim write_bidir_byte {val}')
+        _uio_byte = val
 
         
         
     def read_bidir_byte():
         print('Sim read_output_byte')
-        return 0
+        return _uio_byte
     
     _outbyte = 0
     def write_output_byte(val):
@@ -230,5 +253,16 @@ else:
         #_outbyte += 1
         print('Sim read_output_byte')
         return v
+    
+    _uio_oe = 0
+    def read_bidir_outputenable():
+        print('Sim read_bidir_outputenable')
+        return _uio_oe
+
+    def write_bidir_outputenable(val):
+        global _uio_oe
+        print(f'Sim write_bidir_outputenable {val}')
+        _uio_oe = val
+        
     
     
