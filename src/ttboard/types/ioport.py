@@ -12,6 +12,14 @@ class Port:
         self.name = name 
         self.byte_read = read_byte_fn 
         self.byte_write = write_byte_fn
+    
+    @property 
+    def is_readable(self):
+        return self.byte_read is not None 
+    
+    @property 
+    def is_writeable(self):
+        return self.byte_write is not None 
         
     def set_signal_val_int(self, vint:int):
         if self.byte_write is None:
@@ -50,7 +58,11 @@ class Port:
             return NotImplemented
         return self.byte_read() == other.byte_read()
     
+    
 
 
 class IOPort(Port):
+    pass
+
+class OEPort(Port):
     pass

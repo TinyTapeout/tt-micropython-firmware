@@ -23,6 +23,8 @@ from ttboard.project_mux import Design
 from ttboard.config.user_config import UserConfig
 import ttboard.util.platform as platform 
 from ttboard.boot.demoboard_detect import DemoboardDetect, DemoboardVersion
+from ttboard.ports.io import IO as VerilogIOPort
+from ttboard.ports.oe import OutputEnable as VerilogOEPort
 
 import ttboard.log as logging
 log = logging.getLogger(__name__)
@@ -115,6 +117,8 @@ class DemoBoard:
                 'tt06': DemoboardVersion.TT06,
                 'tt07': DemoboardVersion.TT06,
                 'tt08': DemoboardVersion.TT06,
+                'tt09': DemoboardVersion.TT06,
+                'tt10': DemoboardVersion.TT06,
                 
                 }
             if self.user_config.force_demoboard in versionMap:
@@ -127,6 +131,7 @@ class DemoBoard:
             
             
         self.pins = Globals.pins(mode=mode)
+        self._init_ioports()
         self.shuttle = Globals.project_mux(self.user_config.force_shuttle)
         
         # config
@@ -142,6 +147,21 @@ class DemoBoard:
         
         if DemoBoard._DemoBoardSingleton_Instance is None:
             DemoBoard._DemoBoardSingleton_Instance = self 
+            
+            
+    def _init_ioports(self):
+        port_defs = [
+            ('uo_out', platform.read_output_byte, platform.write_output_byte),
+            ('ui_in', platform.read_input_byte, platform.write_input_byte),
+            ('uio_in', platform.read_bidir_byte, None),
+            ('uio_out', platform.read_bidir_byte, platform.write_bidir_byte)
+            ]
+        self._ports = dict()
+        for pd in port_defs:
+            setattr(self, pd[0], VerilogIOPort(*pd))
+            
+            
+        self.uio_oe = VerilogOEPort('uio_oe', platform.read_bidir_outputenable, platform.write_bidir_outputenable)
         
         
     def load_default_project(self):
@@ -208,13 +228,13 @@ class DemoBoard:
         
         return self._clock_pwm.freq()
     @property 
-    def project_clk(self):
+    def clk(self):
         '''
             Quick access to project clock pin.
             
-            project_clk(1) # write
-            project_clk.on() # same
-            project_clk.toggle()
+            clk(1) # write
+            clk.on() # same
+            clk.toggle()
             
             all the usual pin stuff.
             
@@ -230,13 +250,13 @@ class DemoBoard:
         return self.pins.rp_projclk
     
     @property 
-    def project_nrst(self):
+    def rst_n(self):
         '''
             Quick access to project reset pin.
             
-            project_nrst(1) # write
-            project_nrst.on() # same
-            project_nrst.toggle()
+            rst_n(1) # write
+            rst_n.on() # same
+            rst_n.toggle()
             
             all the usual pin stuff.
             
@@ -253,12 +273,12 @@ class DemoBoard:
             reset_project(True) # project is in reset
             reset_project(False) # now it ain't
         '''
-        cur_mode = self.project_nrst.mode
+        cur_mode = self.rst_n.mode
         if putInReset:
             if cur_mode != Pins.OUT:
                 log.info("Changing reset to output mode")
-                self.project_nrst.mode = Pins.OUT
-            self.project_nrst(0) # inverted logic
+                self.rst_n.mode = Pins.OUT
+            self.rst_n(0) # inverted logic
         else:
             # we don't want it in reset.
             # demoboard has MOM switch and pull-ups to default 
@@ -267,8 +287,8 @@ class DemoBoard:
             # the correct bank is selected by writing to it first
             if cur_mode == Pins.OUT:
                 log.debug('Taking out of reset')
-                self.project_nrst(1) 
-            self.project_nrst.mode = Pins.IN
+                self.rst_n(1) 
+            self.rst_n.mode = Pins.IN
             
     def clock_project_once(self, msDelay:int=0):
         '''
@@ -281,10 +301,10 @@ class DemoBoard:
             self.clock_project_stop()
             
         self.pins.project_clk_driven_by_RP2040(True)
-        self.project_clk.toggle()
+        self.clk.toggle()
         if msDelay > 0:
             time.sleep_ms(msDelay)
-        self.project_clk.toggle()
+        self.clk.toggle()
         
     def _clock_pwm_deinit(self):
         if self._clock_pwm is None:
@@ -347,7 +367,7 @@ class DemoBoard:
         if self.is_auto_clocking:
             log.debug('PWM auto-clock stop')
             self.clock_project_PWM(0)
-            self.project_clk(0) # make certain we are low
+            self.clk(0) # make certain we are low
         self.pins.project_clk_driven_by_RP2040(False)
         
     def reset_system_clock(self):
@@ -494,7 +514,7 @@ class DemoBoard:
             
         if projConfig.bidir_direction is None:
             # no bidir direction set, ensure all are inputs
-            self.bidir_mode = [Pins.IN]*8
+            self.uio_oe.value = 0 # all in
         else:
             dirBits = projConfig.bidir_direction
             log.debug(f'Setting bidir pin direction to {hex(dirBits)}')
@@ -550,7 +570,7 @@ class DemoBoard:
         '''
         print('\n\nDemoboard status')
         print(f'Demoboard default mode is {RPMode.to_string(self.default_mode)}')
-        print(f'Project nRESET pin is {self.project_nrst.mode_str} {self.project_nrst()}')
+        print(f'Project nRESET pin is {self.rst_n.mode_str} {self.rst_n()}')
         
         if self.is_auto_clocking:
             print(f'Project clock PWM enabled and running at {self.auto_clocking_freq}')
@@ -575,30 +595,9 @@ class DemoBoard:
             autoclocking = ''
             
         reset = ''
-        if self.shuttle.enabled is not None and not self.project_nrst(): # works whether is input or output
+        if self.shuttle.enabled is not None and not self.rst_n(): # works whether is input or output
             reset = ' (in RESET)'
             
         shuttle_run = self.shuttle.run
         return f"<DemoBoard in {RPMode.to_string(self.mode)}{autoclocking} {shuttle_run} project '{self.shuttle.enabled}'{reset}>"
-    
-    def __getattr__(self, name):
-        if hasattr(self.pins, name):
-            return getattr(self.pins, name)
-        raise AttributeError
-    
-    def __setattr__(self, name, value):
-        try:
-            pins = getattr(self, 'pins')
-            if pins is not None and hasattr(pins, name):
-                return setattr(pins, name, value)
-        except:
-            pass
-        
-        super().__setattr__(name, value)
-        
-    def __dir__(self):
-        return dir(self.pins)
-
-
-    
 

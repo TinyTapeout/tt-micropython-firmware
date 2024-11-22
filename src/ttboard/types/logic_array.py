@@ -542,7 +542,7 @@ class LogicArray(ArrayLike):
             raise IndexError(f"index {item} out of range") from None
 
     def __repr__(self) -> str:
-        return f"{type(self)}({str(self)!r}, {self.range!r})"
+        return f"<LogicArray({str(self)!r}, {self.range!r})>"
 
     def __str__(self) -> str:
         return self._get_str()
