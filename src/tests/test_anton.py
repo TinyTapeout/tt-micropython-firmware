@@ -29,7 +29,7 @@ OUTPUT_TIMING = False
 # Show the state of the board's 8 uo_outs, and 8 bidir pins (treated also as outputs).
 # Optionally also takes what they are *expected* to be, just for visual comparison.
 def print_tt_outputs(tt:DemoBoard, expect_out:int=None, expect_bidir:int=None, prefix=''):
-    print(f'{prefix} uo_out={tt.output_byte:08b} bidir={tt.bidir_byte:08b}', end='')
+    print(f'{prefix} uo_out= {tt.uo_out.value:08b} bidir= {tt.uio_in.value:08b}', end='')
     if [expect_out,expect_bidir] != [None,None]:
         print('; expected', end='')
         if expect_out is not None:
@@ -113,11 +113,11 @@ for pin in tt.bidirs:
     pin.mode = Pin.IN
 
 # Start with project clock low, and reset NOT asserted:
-tt.project_clk(0)
+tt.clk(0)
 tt.reset_project(False)
 
 # By default all inputs to the ASIC should be low:
-tt.input_byte = 0
+tt.ui_in.value = 0
 
 # Print initial state of all outputs; likely to be somewhat random:
 print_tt_outputs(tt, prefix='Pre-reset state:')
@@ -152,7 +152,7 @@ if BASIC_TEST:
             col0 = 1 if x==0 else 0
             row0 = 1 if y==0 else 0
             expect_out = (row0<<7) | (col0<<6) | (speaker<<5) | (vsync<<4) | (hsync<<3) | color
-            if tt.output_byte != expect_out:
+            if tt.uo_out.value != expect_out:
                 error_count += 1
                 print_tt_outputs(tt, expect_out, prefix=f'[{x},{y}] Error:')
                 bulk_ok = False
@@ -215,7 +215,7 @@ if FRAME_TEST:
         t_start = time.ticks_us()
         for x in range(cols):
             # Increment the count in the bin of the current pixel colour:
-            color = tt.output_byte & 0b111
+            color = tt.uo_out.value & 0b111
             color_stats[color][1] += 1
             # Try to detect the paddle's Y position (i.e. the first line to have a red pixel):
             if paddle_y is None and color == 0b100: # Red.
@@ -228,9 +228,9 @@ if FRAME_TEST:
                 print(f'Detected ball position: ({ball_x},{ball_y})')
             # Make sure vsync is asserted at the right times:
             expected_vsync = 0 if y>=480+10 and y<480+10+2 else 1 # (VSYNC is active low)
-            actual_vsync = (tt.output_byte & 0b10000) >> 4
+            actual_vsync = (tt.uo_out.value & 0b10000) >> 4
             expected_lzc = calc_lzc(x, y)
-            actual_lzc = tt.bidir_byte & 0b111111
+            actual_lzc = tt.uio_in.value & 0b111111
             if actual_vsync != expected_vsync:
                 bulk_ok = False
                 vsync_errors += 1

@@ -45,11 +45,11 @@ def run_test(freq, fast=False):
         print("Clock test... ", end ="")
         sm.put(1)
         sm.get()
-        print(f" done. Value: {tt.output_byte}")
+        print(f" done. Value: {tt.uo_out.value}")
 
         errors = 0
         for _ in range(10):
-            last = tt.output_byte
+            last = tt.uo_out.value
             
             # Run clock for approx 0.25 or 1 second, sending a multiple of 256 clocks plus 1.
             clocks = (freq // 2048) * 256 if fast else (freq // 512) * 256
@@ -60,10 +60,10 @@ def run_test(freq, fast=False):
             print(f"Clocked for {t}us: ", end = "")
                 
             # Check the counter has incremented by 1.
-            if tt.output_byte != (last + 1) & 0xFF:
+            if tt.uo_out.value != (last + 1) & 0xFF:
                 print("Error: ", end="")
                 errors += 1
-            print(tt.output_byte)
+            print(tt.uo_out.value)
             
             if not fast:
                 # Sleep so the 7-seg display can be read

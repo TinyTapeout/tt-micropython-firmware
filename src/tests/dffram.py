@@ -17,8 +17,8 @@ class DFFRAM:
         for p in self.p.bidirs:
             p.mode = Pins.OUT 
             
-        self.p.input_byte = 0
-        self.p.bidir_byte = 0
+        self.p.ui_in.value = 0
+        self.p.uio_out.value = 0
         
     @property 
     def we(self):
@@ -27,29 +27,29 @@ class DFFRAM:
     @we.setter 
     def we(self, v:int):
         if v:
-            self.p.in7(1)
+            self.p.ui_in[7] = 1
         else:
-            self.p.in7(0) 
+            self.p.ui_in[7] = 0 
             
     @property 
     def addr(self):
-        return self.p.input_byte & 0x7f
+        return  self.p.ui_in.value & 0x7f
     
     @addr.setter 
     def addr(self, v:int):
-        self.p.input_byte = (self.p.input_byte & ~0x7f) | (v & 0x7f)
+        self.p.ui_in.value = (self.p.ui_in.value & ~0x7f) | (v & 0x7f)
         
     @property 
     def data_out(self):
-        return self.p.output_byte
+        return  self.p.uo_out.value
     
     @property 
     def data_in(self):
-        return self.p.bidir_byte
+        return  self.p.uio_in.value
     
     @data_in.setter
     def data_in(self, v:int):
-        self.p.bidir_byte = v        
+        self.p.uio_out.value = v        
     
         
         
@@ -74,7 +74,7 @@ def test():
     tt.clock_project_stop()
     
     # Outputs only valid when clock is low, so start clock low
-    tt.project_clk.off()
+    tt.clk.off()
     
     print("Writing RAM")
     for i in range(0,128):

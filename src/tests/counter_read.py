@@ -84,7 +84,7 @@ def run_test(freq):
         start_rx()
         sm.put(63)
         sm.get()
-        print(f" done. Value now: {tt.output_byte}")
+        print(f" done. Value now: {tt.uo_out.value}")
 
         # Print the values read back for inspection
         for j in range(4):
@@ -98,7 +98,7 @@ def run_test(freq):
         total_errors = 0
 
         for _ in range(10):
-            last = tt.output_byte
+            last = tt.uo_out.value
             
             # Setup the read SM and DMA transfer into the verification buffer
             start_rx()
@@ -120,9 +120,9 @@ def run_test(freq):
                     
             # Check the counter has incremented by 1, as we sent a
             # multiple of 256 clocks plus one more
-            if tt.output_byte != (last + 1) & 0xFF:
+            if tt.uo_out.value != (last + 1) & 0xFF:
                 print("Error: ", end="")
-            print(tt.output_byte)
+            print(tt.uo_out.value)
             
             # Check the read data from the counter continuously increases
             def verify(count, expected_val, retry):
