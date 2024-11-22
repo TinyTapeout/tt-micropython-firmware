@@ -8,6 +8,10 @@ from ttboard.demoboard import DemoBoard, Pins
 from ttboard.ports.io import IO
 import ttboard.log as logging
 
+class FakeSignal:
+    def __init__(self, def_value:int=0):
+        self.value = def_value
+
 class SliceWrapper:
     def __init__(self, port, idx_or_start:int, slice_end:int=None):
         self._port = port 
@@ -56,7 +60,11 @@ class DUTWrapper:
         self.tt = DemoBoard.get()
         self.clk = PinWrapper(self.tt.clk)
         self.rst_n = PinWrapper(self.tt.rst_n)
+        ports = ['uo_out', 'ui_in', 'uio_in', 'uio_out', 'uio_oe_pico']
+        for p in ports:
+            setattr(self, p, getattr(self.tt, p))
         self._log = logging.getLogger(name)
+        self.ena = FakeSignal()
         
     @classmethod
     def new_slice_attribute(cls, source:IO, idx_or_start:int, slice_end:int=None):
@@ -65,6 +73,13 @@ class DUTWrapper:
     def add_slice_attribute(self, source:IO, name:str, idx_or_start:int, slice_end:int=None):
         slc = self.new_slice_attribute(source, idx_or_start, slice_end)
         setattr(self, name, slc)
+        
+        
+class DUT(DUTWrapper):
+    
+    def __init__(self, name:str='DUT'):
+        super().__init__(name)
+        
         
     
         

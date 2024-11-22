@@ -51,6 +51,9 @@ class TimeValue:
             return float(self) > float(other)
         raise ValueError
     
+    def __lt__(self, other):
+        return float(self) < float(other)
+    
     def __le__(self, other):
         return not (self > other)
     
@@ -78,7 +81,7 @@ class TimeValue:
             return self.time / other_conv
         raise ValueError
     
-    def __mult__(self, other:int):
+    def __mul__(self, other:int):
         return TimeValue(self.time*other, self.units)
         
 
