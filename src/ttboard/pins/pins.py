@@ -413,7 +413,7 @@ class Pins:
             
     # aliases
     @property 
-    def project_clk(self):
+    def clk(self):
         return self.rp_projclk
     
     @property 
