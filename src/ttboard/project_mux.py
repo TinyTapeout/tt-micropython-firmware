@@ -125,7 +125,7 @@ class DesignIndex:
                     self._available_projects[attrib_name] = int(project_address)
                     # setattr(self, attrib_name, DesignStub(self, attrib_name))
                     self._project_count += 1
-
+                index = None
         except OSError:
             log.error(f'Could not open shuttle index {src_JSON_file}')
             
@@ -195,6 +195,7 @@ class DesignIndex:
                         # this is our guy
                         des = Design(self._project_mux, project_name, project["address"], project)
                         self._shuttle_index[des.name] = des
+                        index = None
                         gc.collect()
                         return des
                         
