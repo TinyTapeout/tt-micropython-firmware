@@ -4,12 +4,14 @@ Created on Jan 22, 2024
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
+import gc
 from ttboard.config.parser import ConfigParser
 from ttboard.mode import RPMode
 from ttboard.config.config_file import ConfigFile
 
 import ttboard.log as logging
 log = logging.getLogger(__name__)
+
 
 class UserProjectConfig:
     '''
@@ -38,36 +40,35 @@ class UserProjectConfig:
         see more info.
 
     '''
-    def __init__(self, section:str, conf:ConfigParser):
-        self.section = section 
-        self._config = conf 
-        
-    @property
-    def config(self):
-        return self._config
-    
-
-    
-    def has(self, name:str):
-        return  self.config.has_option(self.section, name)
-    
-    def get(self, name:str):
-        if not self.has(name):
-            return None 
-        return self.config.get(self.section, name)
-    
-
-    def __getattr__(self, name):
-        return self.get(name)
-    
-    def _properties_dict(self, include_unset:bool=False):
-        ret = dict()
-        known_attribs = ['mode', 'start_in_reset', 'input_byte',
+    opts = ['mode', 'start_in_reset', 'input_byte',
                          'bidir_direction',
                          'bidir_byte',
                          'clock_frequency',
-                         'rp_clock_frequency'
-                         ]
+                         'rp_clock_frequency']
+    
+    
+    def __init__(self, section:str, conf:ConfigParser):
+        self.name = section
+        for opt in self.opts:
+            val = None
+            if conf.has_option(section, opt):
+                val = conf.get(section, opt)
+            
+            setattr(self, opt, val)
+            
+    
+    def has(self, name:str):
+        return self.get(name) is not None
+    
+    def get(self, name:str):
+        if not hasattr(self, name):
+            return None 
+        
+        return getattr(self, name)
+    
+    def _properties_dict(self, include_unset:bool=False):
+        ret = dict()
+        known_attribs = self.opts
         for atr in known_attribs:
             v = self.get(atr)
             if v is not None or include_unset:
@@ -88,7 +89,7 @@ class UserProjectConfig:
         properties = '\n'.join(property_strs)
         return f'{self.section}\n{properties}'
 
-class UserConfig(ConfigFile):
+class UserConfig:
     '''
         Encapsulates the configuration for defaults and all the projects, in sections.
         The DEFAULT section holds system wide defaults and the default project to load
@@ -138,12 +139,35 @@ class UserConfig(ConfigFile):
     '''
     
     def __init__(self, ini_filepath:str='config.ini'):
-        super().__init__(ini_filepath)
+        self.inifile_path = ini_filepath 
+        conf = ConfigParser()
+        conf.read(ini_filepath)
+        self._proj_configs = dict()
+        for section in conf.sections():
+            if section == 'DEFAULT':
+                continue 
+            self._proj_configs[section] = None # UserProjectConfig(section, conf)
+            
+            
+        def_opts = ['mode', 'project', 'start_in_reset', 'rp_clock_frequency', 'force_shuttle', 'force_demoboard']
+        for opt in def_opts:
+            val = None
+            if conf.has_option('DEFAULT', opt):
+                val = conf.get('DEFAULT', opt)
+                print(f'DEFOPT {opt}: {val}')
+            setattr(self, f'_{opt}', val)
+            
+            
+        conf = None 
+        gc.collect()
+    
+    
         
     def _get_default_option(self, name:str, def_value=None):
-        if not self.has_option('DEFAULT', name):
+        v = getattr(self, f'_{name}')
+        if v is None:
             return def_value 
-        return self.get('DEFAULT', name)
+        return v
     
     @property 
     def default_mode(self):
@@ -175,7 +199,7 @@ class UserConfig(ConfigFile):
         return self._get_default_option('force_demoboard')
         
     def has_project(self, name:str):
-        if self.has_section(name):
+        if name in self._proj_configs:
             return True 
         return False 
     
@@ -183,10 +207,16 @@ class UserConfig(ConfigFile):
         if not self.has_project(name):
             return None 
         
-        return UserProjectConfig(name, self.ini_file)
+        if self._proj_configs[name] is None:
+            conf = ConfigParser()
+            conf.read(self.inifile_path)
+            self._proj_configs[name] = UserProjectConfig(name, conf)
+            conf = None 
+            gc.collect()
+        return self._proj_configs[name]
     
     def __getattr__(self, name):
-        if name in self.sections:
+        if self.has_project(name):
             return self.project(name)
     
     def __dir__(self):
