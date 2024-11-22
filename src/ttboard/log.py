@@ -6,6 +6,7 @@ Created on Jan 22, 2024
 '''
 from ttboard.util.platform import IsRP2040
 import ttboard.util.colors as colors 
+import gc 
 RPLoggers = dict()
 DefaultLogLevel = 20 # info by default
 if IsRP2040:
@@ -37,6 +38,8 @@ if IsRP2040:
         def error(self, s):
             self.out(s, ERROR)
             
+    def dumpMem(prefix:str='Free mem'):
+        print(f"{prefix}: {gc.mem_free()}")
         
     def getLogger(name:str):
         global RPLoggers
@@ -54,3 +57,5 @@ if IsRP2040:
         
 else:
     from logging import *
+    def dumpMem(prefix:str='Free mem'):
+        print(f'{prefix}: infinity')
