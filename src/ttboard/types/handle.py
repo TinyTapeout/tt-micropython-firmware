@@ -37,20 +37,6 @@ class _Limits:
     VECTOR_NBIT = 3
 
 class HandleBase:
-    """Base class for all simulation objects.
-
-    All simulation objects are hashable and equatable by identity.
-
-    .. code-block:: python3
-
-        a = dut.clk
-        b = dut.clk
-        assert a == b
-
-    .. versionchanged:: 2.0
-        ``get_definition_name()`` and ``get_definition_file()`` were removed in favor of :meth:`_def_name` and :meth:`_def_file`, respectively.
-    """
-
     def __init__(self, handle, path:str=None) -> None:
         self._handle = handle
         self._path: str = self._name if path is None else path
@@ -149,25 +135,6 @@ class RangeableObjectMixin(HandleBase):
 class LogicObject(
     RangeableObjectMixin,
 ):
-    """A logic or logic array simulation object.
-
-    Verilog types that map to this object:
-        * ``logic``
-        * ``reg``
-        * ``bit``
-        * packed any-dimensional vectors of ``logic``, ``reg``, or ``bit``
-        * packed any-dimensional vectors of packed structures
-
-    VHDL types that map to this object:
-        * ``std_logic`` and ``std_ulogic``
-        * ``std_logic_vector`` and ``std_ulogic_vector``
-        * ``unsigned``
-        * ``signed``
-        * ``ufixed``
-        * ``sfixed``
-        * ``float``
-    """
-
     def __init__(self, handle:HandleBase, path:str=None) -> None:
         super().__init__(handle, path)
 
@@ -234,34 +201,6 @@ class LogicObject(
 
     @property
     def value(self) -> LogicArray:
-        """The value of the simulation object.
-
-        :getter:
-            Returns the current value of the simulation object as a :class:`~cocotb.types.LogicArray`,
-            even when the object is a single logic object and not an array.
-
-        :setter:
-            Assigns a value at the end of the current delta cycle.
-            A :class:`~cocotb.types.LogicArray`, :class:`str`, or :class:`int` can be used to set the value.
-            When a :class:`str` or :class:`int` is given, it is as if it is first converted a :class:`~cocotb.types.LogicArray`.
-
-        Raises:
-            TypeError: If assignment is given a type other than :class:`~cocotb.types.LogicArray`, :class:`int`, or :class:`str`.
-
-            OverflowError:
-                If int value is out of the range that can be represented by the target:
-                ``-2**(len(handle) - 1) <= value <= 2**len(handle) - 1``
-
-        .. versionchanged:: 2.0
-            Using :class:`ctypes.Structure` objects to set values was removed.
-            Convert the struct object to a :class:`~cocotb.types.LogicArray` before assignment using
-            ``LogicArray("".join(format(int(byte), "08b") for byte in bytes(struct_obj)))`` instead.
-
-        .. versionchanged:: 2.0
-            Using :class:`dict` objects to set values was removed.
-            Convert the dictionary to an integer before assignment using
-            ``sum(v << (d['bits'] * i) for i, v in enumerate(d['values']))`` instead.
-        """
         binstr = self._handle.get_signal_val_binstr()
         return LogicArray._from_handle(binstr)
 
@@ -274,22 +213,6 @@ class LogicObject(
         self,
         value# : Union[ValueSetT, Deposit[ValueSetT], Force[ValueSetT], Freeze, Release],
     ) -> None:
-        """Assign the value to this simulation object at the end of the current delta cycle.
-
-        This is known in Verilog as a "non-blocking assignment" and in VHDL as a "signal assignment".
-
-        See :class:`Deposit`, :class:`Force`, :class:`Freeze`, and :class:`Release` for additional actions that can be taken when setting a value.
-        The default behavior is to :class:`Deposit` the value.
-        Use these actions like so:
-
-        .. code-block:: python3
-
-            dut.handle.set(1)  # default Deposit action
-            dut.handle.set(Deposit(2))
-            dut.handle.set(Force(3))
-            dut.handle.set(Freeze())
-            dut.handle.set(Release())
-        """
         if self.is_const:
             raise TypeError(f"{self._path} is constant")
 

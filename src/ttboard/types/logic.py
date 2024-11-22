@@ -46,62 +46,6 @@ _str_literals  = {k for k in _literal_repr.keys() if isinstance(k, str)}
 
 
 class Logic:
-    r"""
-    Model of a 9-value (``U``, ``X``, ``0``, ``1``, ``Z``, ``W``, ``L``, ``H``, ``-``) datatype commonly seen in VHDL.
-
-    .. currentmodule:: cocotb.types
-
-    This is modeled after VHDL's ``std_ulogic`` type.
-    (System)Verilog's 4-value ``logic`` type only utilizes ``X``, ``0``, ``1``, and ``Z`` values.
-
-    :class:`Logic` can be converted to and from :class:`int`, :class:`str`, and :class:`bool`.
-    The list of values convertable to :class:`Logic` includes
-    ``"U"``, ``"X"``, ``"0"``, ``"1"``, ``"Z"``, ``"W"``, ``"L"``, ``"H"``, ``"-"``, ``0``, ``1``, ``True``, and ``False``.
-
-    .. code-block:: python3
-
-        >>> Logic("X")
-        Logic('X')
-        >>> Logic(True)
-        Logic('1')
-        >>> Logic(1)
-        Logic('1')
-
-        >>> Logic()  # default value
-        Logic('X')
-
-        >>> str(Logic("Z"))
-        'Z'
-        >>> bool(Logic(0))
-        False
-        >>> int(Logic(1))
-        1
-
-    .. note::
-
-        The :class:`int` and :class:`bool` conversions will raise :exc:`ValueError` if the value is not ``0`` or ``1``.
-
-    :class:`Logic` values are immutable and therefore hashable and can be placed in :class:`set`\ s and used as keys in :class:`dict`\ s.
-
-    :class:`Logic` supports the common logic operations ``&``, ``|``, ``^``, and ``~``.
-
-    .. code-block:: python3
-
-        >>> def full_adder(a: Logic, b: Logic, carry: Logic) -> Tuple[Logic, Logic]:
-        ...     res = a ^ b ^ carry
-        ...     carry_out = (a & b) | (b & carry) | (a & carry)
-        ...     return res, carry_out
-
-        >>> full_adder(a=Logic('0'), b=Logic('1'), carry=Logic('1'))
-        (Logic('0'), Logic('1'))
-
-    Args:
-        value: value to construct into a :class:`Logic`.
-
-    Raises:
-        ValueError: If the value if of the correct type, but cannot be constructed into a :class:`Logic`.
-        TypeError: If the value is of a type that can't be constructed into a :class:`Logic`.
-    """
 
     _repr: int
 

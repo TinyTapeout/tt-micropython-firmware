@@ -3,63 +3,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 class Range:
-    r"""
-    Variant of :class:`range` with inclusive right bound.
-
-    In Python, :class:`range` and :class:`slice` have a non-inclusive right bound.
-    In both Verilog and VHDL, ranges and arrays have an inclusive right bound.
-    This type mimics Python's :class:`range` type, but implements HDL-like inclusive right bounds,
-    using the names :attr:`left` and :attr:`right` as replacements for ``start`` and ``stop`` to
-    match VHDL.
-    Range directionality can be specified using ``'to'`` or ``'downto'`` between the
-    left and right bounds.
-    Not specifying directionality will cause the directionality to be inferred.
-
-    .. code-block:: python3
-
-        >>> r = Range(-2, 3)
-        >>> r.left, r.right, len(r)
-        (-2, 3, 6)
-
-        >>> s = Range(8, 'downto', 1)
-        >>> s.left, s.right, len(s)
-        (8, 1, 8)
-
-    :meth:`from_range` and :meth:`to_range` can be used to convert from and to :class:`range`.
-
-    .. code-block:: python3
-
-        >>> r = Range(-2, 3)
-        >>> r.to_range()
-        range(-2, 4)
-
-    :class:`Range` supports "null" ranges as seen in VHDL.
-    "null" ranges occur when a left bound cannot reach a right bound with the given direction.
-    They have a length of 0, but the :attr:`left`, :attr:`right`, and :attr:`direction` values remain as given.
-
-    .. code-block:: python3
-
-        >>> r = Range(1, 'to', 0)  # no way to count from 1 'to' 0
-        >>> r.left, r.direction, r.right
-        (1, 'to', 0)
-        >>> len(r)
-        0
-
-    .. note::
-        This is only possible when specifying the direction.
-
-    Ranges also support all the features of :class:`range` including, but not limited to:
-
-    - ``value in range`` to see if a value is in the range,
-    - ``range.index(value)`` to see what position in the range the value is,
-
-    The typical use case of this type is in conjunction with :class:`~cocotb.types.Array`.
-
-    Args:
-        left: leftmost bound of range
-        direction: ``'to'`` if values are ascending, ``'downto'`` if descending
-        right: rightmost bound of range (inclusive)
-    """
     RANGE_DOWN = -1
     RANGE_NO_DIR = 0
     RANGE_UP = 1
