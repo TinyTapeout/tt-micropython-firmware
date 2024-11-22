@@ -105,22 +105,7 @@ class LogicArray(ArrayLike):
         *,
         width = None,
     ) -> "LogicArray":
-        """Construct a :class:`LogicArray` from an :class:`int` by interpreting it as a bit vector with unsigned representation.
-
-        The :class:`int` is treated as an arbitrary-length bit vector with unsigned representation where the left-most bit is the most significant bit.
-        This bit vector is then constructed into a :class:`LogicArray`.
-
-        Args:
-            value: The integer to convert.
-            range: Indexing scheme for the LogicArray.
-            width: Shorthand for passing ``Range(width - 1, "downto", 0)`` to *range*.
-
-        Returns:
-            A :class:`LogicArray` equivalent to the *value* by interpreting it as a bit vector with unsigned representation.
-
-        Raises:
-            OverflowError: When a :class:`LogicArray` of the given *range* can't hold the *value*.
-        """
+        
         range = _make_range(range, width)
         if range is None:
             raise TypeError("Missing required arguments: 'range' or 'width'")
@@ -263,14 +248,6 @@ class LogicArray(ArrayLike):
         return all(bit in (Logic(0), Logic(1)) for bit in self)
 
     def to_unsigned(self) -> int:
-        """Convert the value to an :class:`int` by interpreting it using unsigned representation.
-
-        The :class:`LogicArray` is treated as an arbitrary-length vector of bits
-        with the left-most bit being the most significant bit in the integer value.
-        The bit vector is then interpreted as an integer using unsigned representation.
-
-        Returns: An :class:`int` equivalent to the value by interpreting it using unsigned representation.
-        """
         if len(self) == 0:
             # warnings.warn("Converting a LogicArray of length 0 to integer")
             return 0
