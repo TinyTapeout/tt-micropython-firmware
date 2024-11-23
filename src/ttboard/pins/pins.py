@@ -16,11 +16,11 @@ TLDR
   p = Pins(RPMode.ASIC_RP_CONTROL) # monitor/control ASIC
   
   2) play with pins
-  print(p.out2()) # read
-  p.in3(1) # set
-  p.input_byte = 0x42 # set all INn 
-  p.uio1.mode = Pins.OUT # set mode
-  p.uio1(1) # set output
+  print(p.pins.uo_out2()) # read
+  p.ui_in[3] = 1 # set
+  p.ui_in.value = 0x42 # set all INn 
+  p.pins.uio_in1.mode = Pins.OUT # set mode
+  p.uio_in[1] = 1 # set output
   
   
 
@@ -59,12 +59,12 @@ class Pins:
         a parameter is a write.  E.g.
         
             bp = Pins(...)
-            bp.out1() # reads the value
-            bp.in3(1) # sets the value
+            bp.pins.uo_out1() # reads the value
+            bp.ui_in[3] = 1 # sets the value
             # can also use normal machine.Pin functions like
-            bp.in3.off()
+            bp.pins.ui_in3.off()
             # or
-            bp.in3.irq(...)    
+            bp.pins.ui_in3.irq(...)    
         
         Though you shouldn't need it (the pin objects support everything 
         machine.Pin does), if you want low-level access to the 
@@ -89,9 +89,9 @@ class Pins:
         Finally, the _byte properties allow you to read or set the entire 
         port as a byte
         
-            print(bp.output_byte)
+            print(bp.uo_out.value)
             # or set
-            bp.input_byte = 0xAA
+            bp.ui_in.value = 0xAA
         
         # Pin DIRECTION
         So, from the RP2040's perspective, is out2 configured to read (an 

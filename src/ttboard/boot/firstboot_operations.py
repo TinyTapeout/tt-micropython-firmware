@@ -98,27 +98,27 @@ def say_hello(delay_interval_ms:int=200, times:int=1):
         
     tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
     
-    tt.in0(0) # want this low
+    tt.ui_in[0] = 0 # want this low
     tt.clock_project_PWM(1e3) # clock it real good
     
     log.info('First boot: saying hello')
-    tt.bidir_mode = [Pins.OUT] * 8 # set as outputs
+    tt.uio_oe[:] = [Pins.OUT] * 8 # set as outputs
     
     short_delay_ms = int(delay_interval_ms/10)
     if short_delay_ms < 10:
         short_delay_ms = 10
     for _i in range(times):
         for v in hello_values:
-            tt.bidir_byte = v
+            tt.uio_out.value = v
             time.sleep_ms(delay_interval_ms - short_delay_ms)
             
-            tt.bidir_byte = 0
+            tt.uio_out.value = 0
             time.sleep_ms(short_delay_ms)
         
-        tt.bidir_byte = 0
+        tt.uio_out.value = 0
         time.sleep_ms(short_delay_ms * 3)
     
     tt.clock_project_stop()
     
-    tt.bidir_mode = [Pins.IN] * 8 # reset to inputs, optional but polite
+    tt.uio_oe[:] = [Pins.IN] * 8 # reset to inputs, optional but polite
     return True

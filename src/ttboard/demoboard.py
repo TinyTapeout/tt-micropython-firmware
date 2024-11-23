@@ -33,10 +33,10 @@ class DemoBoard:
     '''
         The DemoBoard object has 
          * named pins, e.g.
-          print(demo.out2()) # read
-          demo.in3(1) # write
-          demo.uio5.mode = machine.Pin.OUT # config
-          demo.uio5(1)
+          print(demo.pins.uo_out2()) # read
+          demo.ui_in[3] = 1 # write
+          demo.pins.uio_in5.mode = machine.Pin.OUT # config
+          demo.uio_in[5] = 1
          * named projects
           demo.shuttle.tt_um_urish_simon.enable()
           print(demo.shuttle.tt_um_urish_simon.repo)
@@ -509,9 +509,9 @@ class DemoBoard:
         
         # input byte
         if projConfig.has('input_byte') and self.mode != RPMode.ASIC_MANUAL_INPUTS:
-            btVal = projConfig.input_byte
+            btVal = projConfig.ui_in.value
             log.debug(f'Setting input byte to {btVal}')
-            self.pins.input_byte = btVal
+            self.pins.ui_in.value = btVal
             
         if projConfig.bidir_direction is None:
             # no bidir direction set, ensure all are inputs
@@ -527,8 +527,8 @@ class DemoBoard:
                 else:
                     bidirs[i].mode = Pins.IN
                     
-            if projConfig.bidir_byte is not None:
-                valBits = projConfig.bidir_byte
+            if projConfig.uio_in.value is not None:
+                valBits = projConfig.uio_in.value
                 log.debug(f'Also setting bidir byte values {hex(valBits)}')
                 for i in range(8):
                     mask = (1 << i) 

@@ -119,25 +119,25 @@ class PowerOnSelfTest:
         curMode = self.tt.mode 
         self.tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
         self.tt.reset_project(False)
-        self.tt.in0(0) # want this low
+        self.tt.ui_in[0] = 0 # want this low
         self.tt.clock_project_PWM(auto_clock_freq) # clock it real good
         
         log.info('POST: starting bidirection pins tests')
-        self.tt.bidir_mode = [Pin.OUT] * 8
+        self.tt.uio_oe[:] = [Pin.OUT] * 8
         for bp in self.tt.bidirs:
             bp(0) # start low
         
         errCount = 0
         for i in range(0xff):
-            self.tt.bidir_byte = i 
+            self.tt.uio_out.value = i 
             time.sleep_ms(update_delay_ms)
-            outbyte = self.tt.output_byte
+            outbyte = self.tt.uo_out.value
             if outbyte !=  i:
                 log.warn(f'MISMATCH between bidir val {i} and output {outbyte}')
                 errCount += 1
         
         # reset everything
-        self.tt.bidir_mode = [Pin.IN] * 8
+        self.tt.uio_oe[:] = [Pin.IN] * 8
             
         self.tt.clock_project_stop()
         self.tt.mode = curMode

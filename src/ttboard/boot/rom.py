@@ -21,9 +21,9 @@ class ChipROM(ShuttleProperties):
     
     
     def _send_and_rcv(self, send:int):
-        self._pins.input_byte = send 
+        self._pins.ui_in.value = send 
         time.sleep_ms(1)
-        return self._pins.output_byte
+        return  self._pins.uo_out.value
         
     @property
     def shuttle(self):
