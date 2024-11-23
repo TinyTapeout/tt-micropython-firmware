@@ -26,6 +26,8 @@ from ttboard.cocotb.clock import Clock
 from ttboard.cocotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
 from ttboard.cocotb.utils import get_sim_time
 
+def time_delta_not(cond:str):
+    return f'sim time delta not {cond}'
 
 @cocotb.test()
 async def test_spi(dut):
@@ -43,11 +45,11 @@ async def test_spi(dut):
     await ClockCycles(dut.tbspi.sclk, 5)
     dut.tbspi.nreset.value = 1
     await ClockCycles(dut.tbspi.sclk, 5)
-
+    
     #after reset the data should be 0
     assert dut.tbspi.data.value == 0
     #without nsel the data_rdy should be 1 (ready)
-    assert dut.tbspi.data_rdy.value == 1
+    assert dut.tbspi.data_rdy.value == 1, "not ready"
 
     await ClockCycles(dut.tbspi.sclk, 10)
     
@@ -106,22 +108,22 @@ async def test_rgbled(dut):
 
     await RisingEdge(dut.tbrgbled.led)
     
-    assert (get_sim_time('us') - tim_start) > 50
+    assert (get_sim_time('us') - tim_start) > 50, time_delta_not("> 50") 
     tim_start = get_sim_time('ns')
 
     await FallingEdge(dut.tbrgbled.led)
 
     tim_mid = get_sim_time('ns')
-    assert (tim_mid - tim_start) > 650
-    assert (tim_mid - tim_start) < 950
+    assert (tim_mid - tim_start) > 650, time_delta_not("> 650")
+    assert (tim_mid - tim_start) < 950, time_delta_not("< 950")
 
     await RisingEdge(dut.tbrgbled.led)
     
-    assert (get_sim_time('ns') - tim_mid) > 300
-    assert (get_sim_time('ns') - tim_mid) < 600
+    assert (get_sim_time('ns') - tim_mid) > 300, time_delta_not("> 300")
+    assert (get_sim_time('ns') - tim_mid) < 600, time_delta_not("< 600")
     
-    assert (get_sim_time('ns') - tim_start) > 650
-    assert (get_sim_time('ns') - tim_start) < 1850
+    assert (get_sim_time('ns') - tim_start) > 650, time_delta_not("> 650")
+    assert (get_sim_time('ns') - tim_start) < 1850, time_delta_not("< 1850")
 
     for i in range(8):
         await RisingEdge(dut.tbrgbled.led)
@@ -131,27 +133,38 @@ async def test_rgbled(dut):
     await FallingEdge(dut.tbrgbled.led)
 
     tim_mid = get_sim_time('ns')
-    assert (tim_mid - tim_start) > 250
-    assert (tim_mid - tim_start) < 550
+    assert (tim_mid - tim_start) > 250, time_delta_not("> 250")
+    assert (tim_mid - tim_start) < 550, time_delta_not("< 550")
 
     await RisingEdge(dut.tbrgbled.led)
     
-    assert (get_sim_time('ns') - tim_mid) > 700
-    assert (get_sim_time('ns') - tim_mid) < 1000
+    assert (get_sim_time('ns') - tim_mid) > 700, time_delta_not("> 700")
+    assert (get_sim_time('ns') - tim_mid) < 1000, time_delta_not("< 1000")
     
-    assert (get_sim_time('ns') - tim_start) > 650
-    assert (get_sim_time('ns') - tim_start) < 1850
+    assert (get_sim_time('ns') - tim_start) > 650, time_delta_not("> 650")
+    assert (get_sim_time('ns') - tim_start) < 1850, time_delta_not("< 1850")
     
-    await RisingEdge(dut.tbrgbled.rgbled_dut.do_res)
+    # problem here: waiting on internal signal dut.tbrgbled.rgbled_dut.do_res
+    # await RisingEdge(dut.tbrgbled.rgbled_dut.do_res)
+    #
+    # tim_start = get_sim_time('us')
+    #
+    # await ClockCycles(dut.tbrgbled.clk, 10)
+    # await RisingEdge(dut.tbrgbled.led)
+    #
+    # assert (get_sim_time('us') - tim_start) > 50
+    #
+    # await ClockCycles(dut.tbrgbled.clk, 10)
     
+    # simplified version
     tim_start = get_sim_time('us')
-    
     await ClockCycles(dut.tbrgbled.clk, 10)
     await RisingEdge(dut.tbrgbled.led)
-
-    assert (get_sim_time('us') - tim_start) > 50
+    assert (get_sim_time('us') - tim_start) > 50, time_delta_not("> 50")
     
     await ClockCycles(dut.tbrgbled.clk, 10)
+    
+    
 
 
 
@@ -181,7 +194,7 @@ class DUT(DUTWrapper):
     def __init__(self):
         super().__init__('RGBDUT')
         self.data = Wire()
-        self.data_rdy = Wire()
+        self.data_rdy = self.new_slice_attribute(self.tt.ui_in, 2)
         self.tbrgbled = RGBLED(self.data, self.data_rdy)
         self.tbspi = TBSPI(self.data, self.data_rdy)
         
@@ -194,7 +207,7 @@ def load_project(tt:DemoBoard):
     
     tt.shuttle.tt_um_rgbled_decoder.enable()
     return True
-    
+
 def main():
     tt = DemoBoard.get()
     
