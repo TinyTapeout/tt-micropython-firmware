@@ -29,7 +29,10 @@ This code accesses the PowerOnSelfTest functions to:
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
+
+import micropython
 import gc
+gc.threshold(10000)
 import ttboard.util.time as time
 from ttboard.boot.demoboard_detect import DemoboardDetect
 from ttboard.mode import RPMode
@@ -40,7 +43,6 @@ import ttboard.util.colors as colors
 # import examples.tt_um_psychogenic_neptuneproportional.tb as nc
 
 gc.collect()
-print(f'Main memfree after imports: {gc.mem_free()}')
 
 tt = None
 def startup():
@@ -55,14 +57,14 @@ def startup():
     print(f"Projects may be enabled with {colors.bold('tt.shuttle.PROJECT_NAME.enable()')}, e.g.")
     print("tt.shuttle.tt_um_urish_simon.enable()")
     print()
-    print(f"Pins may be accessed by name, e.g. {colors.bold('tt.out3()')} to read or {colors.bold('tt.in5(1)')} to write.")
-    print(f"Whole port bytes may be used as well: {colors.bold('tt.output_byte = 0xAA')} or {colors.bold('print(tt.input_byte)')} ")
-    print("Config of pins may be done using mode attribute, e.g. ")
-    print(f"{colors.bold('tt.uio3.mode = Pins.OUT')}")
+    print(f"The io ports are named as in Verilog, {colors.bold('tt.ui_in')}, {colors.bold('tt.uo_out')}...")
+    print(f"and behave as with cocotb, e.g. {colors.bold('tt.uo_out.value = 0xAA')} or {colors.bold('print(tt.ui_in.value)')}")
+    print(f"Bits may be accessed by index, e.g. {colors.bold('tt.uo_out[7]')} (note: that's the {colors.color('high bit!', 'red')}) to read or {colors.bold('tt.ui_in[5] = 1')} to write.")
+    print(f"Direction of the bidir pins is set using {colors.bold('tt.uio_oe_pico')}, used in the same manner as the io ports themselves.")
     print("\n")
     print(f"{colors.color('TT SDK v' + ttdemoboard.version, 'cyan')}")
     print("\n\n")
-    
+    gc.collect()
     return ttdemoboard
 
 def autoClockProject(freqHz:int):
@@ -79,7 +81,7 @@ def test_design_tnt_counter():
     tt.reset_project(True)
 
     # enable the internal counter of test design
-    tt.in0(1)
+    tt.ui_in[1] = 1
 
     # take out of reset
     tt.reset_project(False)
@@ -143,26 +145,19 @@ if run_post_tests:
         tt.load_default_project()
     print('\n\n')
 
+
+gc.collect()
+colors.color_start('magenta', False)
+print("Mem info")
+micropython.mem_info()
+colors.color_end()
+
+
 print(tt)
 print()
 
-gc.collect()
-time.sleep_ms(20)
-
-from ttboard.cocotb.clock import Clock
-gc.collect()
-print(gc.mem_free())
-from ttboard.cocotb.triggers import Timer, ClockCycles # RisingEdge, FallingEdge, Timer, ClockCycles
-
-gc.collect()
-print(gc.mem_free())
-import ttboard.cocotb as cocotb
-gc.collect()
-print(gc.mem_free())
-import micropython
-micropython.mem_info()
 
 # import examples.tt_um_factory_test.tt_um_factory_test as ft
-
-
+# import examples.tt_um_psychogenic_neptuneproportional.tb as np 
+# import examples.tt_um_rgbled_decoder.tt_um_rgbled_decoder as rgb
 
