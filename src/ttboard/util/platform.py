@@ -135,7 +135,6 @@ if IsRP2040:
         # for bidir, all uio bits are in a line starting 
         # at GPIO 21
         val = (val << 21)
-        # xor with current GPIO values, and mask to keep only input bits
         val = (machine.mem32[0xd0000010] ^ val) & 0x1FE00000
         # val is now be all the bits that have CHANGED:
         # writing to 0xd000001c will flip any GPIO where a 1 is found,
@@ -143,6 +142,9 @@ if IsRP2040:
         machine.mem32[0xd000001c] = val
         
         
+    @micropython.native
+    def read_bidir_byte():
+        return (machine.mem32[0xd0000004] & (0xff << 21)) >> 21
     
     @micropython.native
     def read_bidir_outputenable():
@@ -155,11 +157,6 @@ if IsRP2040:
         # GPIO_OE register, clearing bidir pins and setting any enabled
         val = (val << 21)
         machine.mem32[0xd0000020] = (machine.mem32[0xd0000020] & ((1 << 21) - 1)) | val
-        
-    @micropython.native
-    def read_bidir_byte():
-        # just read the high and low nibbles from GPIO and combine into a byte
-        return (machine.mem32[0xd0000004] & (0xff << 21)) >> 21
         
     @micropython.native
     def write_output_byte(val):

@@ -241,6 +241,18 @@ class LogicArray(ArrayLike):
             return self == other
         else:
             return NotImplemented
+        
+    def __gt__(self, other):
+        return int(self) > int(other)
+    
+    def __ge__(self, other):
+        return int(self) >= int(other)
+    
+    def __lt__(self, other):
+        return int(self) < int(other)
+    def __le__(self, other):
+        return int(self) <= int(other)
+        
 
     @property
     def is_resolvable(self) -> bool:

@@ -155,7 +155,7 @@ class Pins:
         port_defs = [
             ('uo_out', platform.read_output_byte, platform.write_output_byte),
             ('ui_in', platform.read_input_byte, platform.write_input_byte),
-            ('uio_in', None, platform.write_bidir_byte),
+            ('uio_in', platform.read_bidir_byte, platform.write_bidir_byte),
             ('uio_out', platform.read_bidir_byte, None)
             ]
         self._ports = dict()
@@ -197,119 +197,6 @@ class Pins:
         beginFunc = startupMap[setTo]
         beginFunc()
         
-    def _setmode_on_pins(self, pinslist:list, modelist:list):
-        max_idx = len(pinslist)
-        if len(modelist) < max_idx:
-            max_idx = len(modelist)
-            
-        for i in range(max_idx):
-            p = pinslist[i]
-            p.mode = modelist[i]
-            
-    def _getmode_for_pins(self, pinslist:list):
-        return list(map(lambda x: x.mode, pinslist))
-            
-    @property 
-    def outputs(self):
-        return self.list_port('out')
-    
-    @property 
-    def output_pins(self):
-        return self.list_port('pin_out')
-    
-    @property 
-    def output_byte(self):
-        
-        if platform.IsRP2040:
-            return platform.read_output_byte()
-        return self._read_byte(self.outputs)
-    
-    @output_byte.setter 
-    def output_byte(self, val:int):
-        
-        if platform.IsRP2040:
-            platform.write_output_byte(val)
-        else:
-            self._write_byte(self.outputs, val)
-        
-    @property 
-    def output_mode(self):
-        return self._getmode_for_pins(self.outputs)
-    
-    @output_mode.setter
-    def output_mode(self, pinmodes:list):
-        self._setmode_on_pins(self.outputs, pinmodes)
-        
-    
-    @property 
-    def inputs(self):
-        return self.list_port('in')
-    
-    @property 
-    def input_pins(self):
-        return self.list_port('pin_in')
-    
-    @property 
-    def input_byte(self):
-        
-        if platform.IsRP2040:
-            return platform.read_input_byte()
-        
-        return self._read_byte(self.inputs)
-    
-    
-    @input_byte.setter 
-    def input_byte(self, val:int):
-        
-        if platform.IsRP2040:
-            platform.write_input_byte(val)
-        else:
-            self._write_byte(self.inputs, val)
-        
-    
-    
-    @property 
-    def input_mode(self):
-        return self._getmode_for_pins(self.inputs)
-    
-    @input_mode.setter
-    def input_mode(self, pinmodes:list):
-        self._setmode_on_pins(self.inputs, pinmodes)
-    
-    
-    @property 
-    def bidirs(self):
-        return self.list_port('uio')
-    
-    @property 
-    def bidir_pins(self):
-        return self.list_port('pin_uio')
-        
-    @property 
-    def bidir_byte(self):
-        
-        
-        if platform.IsRP2040:
-            return platform.read_bidir_byte()
-        
-        return self._read_byte(self.bidirs)
-    
-    @bidir_byte.setter 
-    def bidir_byte(self, val:int):
-        if platform.IsRP2040:
-            platform.write_bidir_byte(val)
-        else:
-            self._write_byte(self.bidirs, val)
-    
-        
-    @property 
-    def bidir_mode(self):
-        return self._getmode_for_pins(self.bidirs)
-    
-    @bidir_mode.setter
-    def bidir_mode(self, pinmodes:list):
-        self._setmode_on_pins(self.bidirs, pinmodes)
-    
     def begin_inputs_all(self):
         
         log.debug(f'Begin inputs all with {gp.GPIOMap}')

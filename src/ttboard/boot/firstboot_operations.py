@@ -102,7 +102,7 @@ def say_hello(delay_interval_ms:int=200, times:int=1):
     tt.clock_project_PWM(1e3) # clock it real good
     
     log.info('First boot: saying hello')
-    tt.uio_oe[:] = [Pins.OUT] * 8 # set as outputs
+    tt.uio_oe_pico[:] = [Pins.OUT] * 8 # set as outputs
     
     short_delay_ms = int(delay_interval_ms/10)
     if short_delay_ms < 10:
