@@ -55,10 +55,19 @@ fi
 
 # create some temp stuff
 BUILDDIR=`mktemp -d -t ttupython-XXXXX`
-RPUF2=`mktemp -t rp2-pico-XXXX.uf2`
+RPEXISTING=`ls /tmp/rp2-pico-????.uf2`
 
 echo "Download $RPOS_UF2FILE"
-wget -O $RPUF2 -c "https://micropython.org/resources/firmware/$RPOS_UF2FILE"
+if [ "x$RPEXISTING" == "x" ]
+then
+	RPUF2=`mktemp -t rp2-pico-XXXX.uf2`
+	echo "Getting $RPOS_UF2FILE"
+	wget -O $RPUF2 -c "https://micropython.org/resources/firmware/$RPOS_UF2FILE"
+else
+	echo "already have $RPOS_UF2FILE (as $RPEXISTING)"
+	RPUF2=$RPEXISTING
+fi
+exit 4
 
 echo "Download shuttles for $TT_RUNS_SUPPORTED"
 mkdir $BUILDDIR/shuttles
@@ -81,7 +90,7 @@ echo
 uf2info $OUTFILE
 
 rm -rf $BUILDDIR
-rm $RPUF2
+#rm $RPUF2
 echo
 echo "Done: $OUTFILE created"
 echo 
