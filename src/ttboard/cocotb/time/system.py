@@ -35,7 +35,7 @@ class SystemTime:
         
         cls._global_time += tstep
         if cls._min_sleep_time < tstep:
-            time.sleep_us(tstep.time_in('us'))
+            time.sleep_us(int(tstep.time_in('us')))
                 
         
         for clk in Clock.all():
