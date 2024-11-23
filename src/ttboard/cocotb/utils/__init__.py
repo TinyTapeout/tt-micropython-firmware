@@ -1,6 +1,6 @@
-
-from ttboard.cocotb.time import SystemTime
+import math
+from ttboard.cocotb.time.system import SystemTime
 
 def get_sim_time(units:str):
     current = SystemTime.current()
-    return current.time_in(units)
+    return math.ceil(current.time_in(units))

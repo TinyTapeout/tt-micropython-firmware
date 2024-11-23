@@ -7,7 +7,8 @@ Created on Nov 23, 2024
 
 from ttboard.cocotb.triggers.awaitable import Awaitable
 from ttboard.cocotb.clock import Clock
-from ttboard.cocotb.time import SystemTime, TimeValue
+from ttboard.cocotb.time.value import TimeValue
+from ttboard.cocotb.time.system import SystemTime
 import ttboard.util.time as tm
 class Timer(Awaitable):
     def __init__(self, time:int, units:str):

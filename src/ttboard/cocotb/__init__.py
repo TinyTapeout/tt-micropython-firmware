@@ -32,7 +32,7 @@ class Runner:
         self.tests_to_run[name] = func
         
     def test(self, dut):
-        from ttboard.cocotb.time import SystemTime
+        from ttboard.cocotb.time.system import SystemTime
         failures = 0
         for nm in self.test_names:
             SystemTime.reset()

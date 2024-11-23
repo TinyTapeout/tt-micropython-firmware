@@ -33,6 +33,9 @@ class SliceWrapper:
         else:
             self._port[self.slice_start] = set_to
         
+        
+    def __int__(self):
+        return int(self.value)
     def __repr__(self):
         if self.slice_end is not None:
             return str(self._port[self.slice_start:self.slice_end])

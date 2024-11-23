@@ -6,7 +6,8 @@ Created on Nov 23, 2024
 '''
 from ttboard.cocotb.triggers.awaitable import Awaitable
 from ttboard.cocotb.clock import Clock
-from ttboard.cocotb.time import SystemTime, TimeValue
+from ttboard.cocotb.time.value import TimeValue
+from ttboard.cocotb.time.system import SystemTime
 
 class Edge(Awaitable):
     def __init__(self, signal):
@@ -16,6 +17,10 @@ class Edge(Awaitable):
         self.initial_state = None
         self.primed = False
         
+        
+    @property 
+    def signal_value(self):
+        return int(self.signal.value)
     
     def prepare_for_wait(self):
         return 
@@ -64,17 +69,19 @@ class RisingEdge(Edge):
         super().__init__(signal)
             
     def prepare_for_wait(self):
-        self.initial_state = int(self.signal)
+        self.initial_state = self.signal_value
         self.primed = False if self.initial_state else True
+        # print(f"Initial state: {self.initial_state} and primed {self.primed}")
         return 
     
     def conditions_met(self):
-        if not self.primed:
-            if int(self.signal) == 0:
-                self.primed = True 
-        else:
-            if int(self.signal):
+        if self.primed:
+            if self.signal_value:
                 return True
+        else:
+            if self.signal_value == 0:
+                self.primed = True 
+            
             
         
 
@@ -83,17 +90,18 @@ class FallingEdge(Edge):
         super().__init__(signal)
             
     def prepare_for_wait(self):
-        self.initial_state = int(self.signal)
+        self.initial_state = self.signal_value
         self.primed = True if self.initial_state else False
         return 
     
     def conditions_met(self):
-        if not self.primed:
-            if int(self.signal):
-                self.primed = True 
-        else:
-            if int(self.signal) == 0:
+        if self.primed:
+            if self.signal_value == 0:
                 return True
+        else:
+            if self.signal_value:
+                self.primed = True
+            
             
         
         

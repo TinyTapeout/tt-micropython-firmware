@@ -6,8 +6,6 @@ Created on Nov 21, 2024
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 import gc 
-import ttboard.util.time as time
-gc.collect()
 from ttboard.cocotb.time import TimeValue
 gc.collect()
 
@@ -42,9 +40,9 @@ class Clock:
     @classmethod 
     def all(cls):
         global _ClockForSignal
-        vals = _ClockForSignal.values()
+        vals = list(_ClockForSignal.values())
         if len(vals) < 2:
-            return list(vals)
+            return vals
         
         return sorted(vals, key=lambda x: float(x.half_period))
     
@@ -95,7 +93,7 @@ class Clock:
         
     def time_has_passed(self):
         #print(f"time passed to {SystemTime.current()} next is {self.next_toggle}")
-        from ttboard.cocotb.time import SystemTime
+        from ttboard.cocotb.time.system import SystemTime
         self.time_is_now(SystemTime.current())
     
     def toggle(self):

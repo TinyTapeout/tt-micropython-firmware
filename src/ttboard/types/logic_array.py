@@ -337,6 +337,9 @@ class LogicArray(ArrayLike):
     def __str__(self) -> str:
         return self._get_str()
 
+    def __bin__(self):
+        return f'0b{str(self)!r}'
+    
     def __int__(self) -> int:
         return self.to_unsigned()
 

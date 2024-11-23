@@ -6,7 +6,7 @@ Created on Nov 23, 2024
 '''
 from ttboard.cocotb.triggers.awaitable import Awaitable
 from ttboard.cocotb.clock import Clock
-from ttboard.cocotb.time import SystemTime
+from ttboard.cocotb.time.system import SystemTime
     
 class ClockCycles(Awaitable):
     def __init__(self, sig, num_cycles:int):
