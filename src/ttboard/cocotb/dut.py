@@ -10,7 +10,15 @@ import ttboard.log as logging
 
 class FakeSignal:
     def __init__(self, def_value:int=0):
-        self.value = def_value
+        self._value = def_value
+        
+    @property 
+    def value(self):
+        return self._value 
+    
+    @value.setter 
+    def value(self, set_to):
+        self._value = set_to
         
 class Wire(FakeSignal):
     pass
@@ -28,7 +36,7 @@ class SliceWrapper:
         if self.slice_end is not None:
             return self._port[self.slice_start:self.slice_end]
         
-        return self._port[self.slice_start]
+        return int(self._port[self.slice_start])
     
     @value.setter 
     def value(self, set_to:int):
