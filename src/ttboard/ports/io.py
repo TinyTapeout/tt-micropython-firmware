@@ -18,3 +18,6 @@ class IO(LogicObject):
     def __repr__(self):
         val = hex(int(self.value)) if self.port.is_readable  else ''
         return f'<IO {self.port.name} {val}>'
+    
+    def __str__(self):
+        return str(self.value)

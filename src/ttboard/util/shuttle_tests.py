@@ -12,54 +12,6 @@ from ttboard.mode import RPMode
 import ttboard.log as logging
 log = logging.getLogger(__name__)
 
-def factory_test_bidirs_03p5(tt:DemoBoard, max_idx:int=255, delay_interval_ms:int=1):
-    '''
-        Tests project comms and bidir pins by using tt_um_test to reflect 
-        bidir to output.
-        
-        @return: error message, or None on all passed
-    
-    '''
-    log.info(f'Testing bidirs up to {max_idx} on {tt}')
-    
-    # select the project from the shuttle
-    update_delay_ms = delay_interval_ms
-    auto_clock_freq = 1e3
-    tt.shuttle.tt_um_test.enable()
-    curMode = tt.mode 
-    tt.mode = RPMode.ASIC_RP_CONTROL # make sure we're controlling everything
-    
-    tt.in0(0) # want this low
-    tt.clock_project_PWM(auto_clock_freq) # clock it real good
-    
-    log.info('First boot: starting bidirection pins tests')
-    for bp in tt.bidirs:
-        bp.mode = Pins.OUT
-        bp(0) # start low
-    
-    err_count = 0
-    for i in range(max_idx):
-        tt.bidir_byte = i 
-        time.sleep_ms(update_delay_ms)
-        outbyte = tt.output_byte
-        if outbyte !=  i:
-            log.warn(f'MISMATCH between bidir val {i} and output {outbyte}')
-            err_count += 1
-    
-    # reset everything
-    for bp in tt.bidirs:
-        bp.mode = Pins.IN
-        
-    tt.clock_project_stop()
-    tt.mode = curMode
-    
-    if err_count:
-        err_message = f'{err_count} mismatches between bidir and output'
-        log.error(err_message)
-        return err_message 
-    
-    log.info('Bi-directional pins acting pretty nicely as inputs!')
-    return None
 
 
 def clock_and_compare_output(tt:DemoBoard, read_bidirs:bool, max_idx:int, delay_interval_ms:int):
@@ -143,17 +95,7 @@ def factory_test_clocking(tt:DemoBoard, read_bidirs:bool, max_idx:int=128, delay
     
     log.info('RP2040: reset well behaved!')
     return None 
-        
-    
-    
-    
-    
 
-
-
-def factory_test_clocking_03p5(tt:DemoBoard, max_idx:int=128, delay_interval_ms:int=1):
-    return factory_test_clocking(tt, False, max_idx, delay_interval_ms)
-    
 def factory_test_clocking_04(tt:DemoBoard, max_idx:int=128, delay_interval_ms:int=1):
     return factory_test_clocking(tt, True, max_idx, delay_interval_ms)
     

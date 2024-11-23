@@ -18,8 +18,7 @@ log = logging.getLogger(__name__)
 
 '''
 Fetched with
-https://index.tinytapeout.com/tt03p5.json?fields=repo,address,commit,clock_hz,title
-https://index.tinytapeout.com/tt04.json?fields=repo,address,commit,clock_hz,title
+https://index.tinytapeout.com/tt04.json?fields=address,clock_hz,title
 
 '''
 class Design:
@@ -338,14 +337,9 @@ class ProjectMux:
     @property 
     def factory_test(self) -> Design:
         try:
-            shuttle = self.chip_ROM.shuttle
-            if  shuttle == 'tt03p5':
-                return self.tt_um_test
             return self.tt_um_factory_test
-        
         except:
-            pass 
-        return None
+            return None
             
     @property
     def projects(self):

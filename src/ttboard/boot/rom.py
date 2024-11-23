@@ -58,7 +58,7 @@ class ChipROM(ShuttleProperties):
         self.project_mux.reset_and_clock_mux(0)
         
         self._contents = {
-                'shuttle': 'tt03p5',
+                'shuttle': 'tt04',
                 'repo': '',
                 'commit': ''
         }
@@ -71,7 +71,7 @@ class ChipROM(ShuttleProperties):
             magic = self._send_and_rcv(magic_pairs[0])
             if magic != magic_pairs[1]:
                 log.warn(f"No chip rom here? Got 'magic' {hex(magic)} @ {magic_pairs[0]}")
-                log.info('Fake reporting at tt03p5 chip')
+                log.info('Fake reporting at tt04 chip')
                 self.project_mux.disable()
                 return self._contents
         
