@@ -67,7 +67,6 @@ else
 	echo "already have $RPOS_UF2FILE (as $RPEXISTING)"
 	RPUF2=$RPEXISTING
 fi
-exit 4
 
 echo "Download shuttles for $TT_RUNS_SUPPORTED"
 mkdir $BUILDDIR/shuttles
