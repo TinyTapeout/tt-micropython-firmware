@@ -4,12 +4,9 @@ Created on Nov 22, 2024
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
-import gc 
-gc.collect()
+from ttboard.cocotb.clock import Clock
 class TimeConverter:
-    @classmethod 
-    def scale(cls, units:str):
-        vals = {
+    UnitScales = {
                 'fs': 1e-15,
                 'ps': 1e-12,
                 'ns': 1e-9,
@@ -17,9 +14,13 @@ class TimeConverter:
                 'ms': 1e-3,
                 'sec': 1
             }
-        if units not in vals:
+    Units = ['fs', 'ps', 'ns', 'us', 'ms', 'sec']
+    
+    @classmethod 
+    def scale(cls, units:str):
+        if units not in cls.UnitScales:
             raise ValueError(f"Unknown units {units}")
-        return vals[units]
+        return cls.UnitScales[units]
     
     @classmethod 
     def time_to_clockticks(cls, clock, t:int, units:str):
@@ -31,6 +32,19 @@ class TimeConverter:
         if units == to_units:
             return t
         return t*(cls.scale(units)/cls.scale(to_units))
+    
+    @classmethod 
+    def units_step_down(cls, units:str):
+        try:
+            idx = cls.Units.index(units)
+        except:
+            return None 
+        
+        if idx < 1:
+            return None 
+        return cls.Units[idx - 1]
+    
+        
     
 class TimeValue:
     def __init__(self, time:int, units:str):
@@ -55,6 +69,18 @@ class TimeValue:
         self._units = set_to 
         self.scale = TimeConverter.scale(set_to)
         self._as_float = None
+        
+    def time_in(self, units:str):
+        if units == self.units:
+            return self.time
+        return TimeConverter.rescale(self.time, self.units, units)
+    
+    def cast_stepdown_units(self):
+        smaller_units = TimeConverter.units_step_down(self.units)
+        if smaller_units is None:
+            return None 
+        return TimeValue(self.time*1000, smaller_units)
+        
     def __float__(self):
         if self._as_float is None:
             self._as_float = self.time*self.scale
@@ -107,7 +133,7 @@ class SystemTime:
         cls._global_time = TimeValue(0, 'ns')
         
     @classmethod 
-    def current(cls):
+    def current(cls) -> TimeValue:
         return cls._global_time
         
     @classmethod 
@@ -122,5 +148,9 @@ class SystemTime:
             cls._global_time += TimeValue(time_or_timevalue, units)
         else:
             raise ValueError
+        
+        for clk in Clock.all():
+            clk.time_is_now(cls._global_time)
+            
         
         

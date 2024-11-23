@@ -8,7 +8,7 @@ Created on Nov 21, 2024
 import gc 
 import ttboard.util.time as time
 gc.collect()
-from ttboard.cocotb.time import TimeValue, SystemTime
+from ttboard.cocotb.time import TimeValue
 gc.collect()
 
 _ClockForSignal = dict()     
@@ -19,26 +19,47 @@ class Clock:
         if signal in _ClockForSignal:
             return _ClockForSignal[signal]
         return None
+    
+    @classmethod 
+    def get_fastest(cls):
+        all_clocks = cls.all()
+        if len(all_clocks) < 1:
+            return None 
+        return all_clocks[0]
+    
+    @classmethod 
+    def get_shortest_event_interval(cls) -> TimeValue:
+        fastest = cls.get_fastest()
+        if fastest is not None:
+            return fastest.half_period
+        return None
+    
     @classmethod
     def clear_all(cls):
         global _ClockForSignal
         _ClockForSignal = dict()
+        
     @classmethod 
     def all(cls):
         global _ClockForSignal
-        return _ClockForSignal.values()
+        vals = _ClockForSignal.values()
+        if len(vals) < 2:
+            return list(vals)
+        
+        return sorted(vals, key=lambda x: float(x.half_period))
     
     def __init__(self, signal, period, units):
         self.signal = signal
         self.running = False
         
         self.half_period =  TimeValue(period/2, units)
-        self.next_toggle = TimeValue((period/2) - 1, units)
+        as_smaller_units = self.half_period.cast_stepdown_units()
+        self.next_toggle = TimeValue(as_smaller_units.time - 5, as_smaller_units.units)
         
         self.current_signal_value = 0
         self.sleep_us = 0
         half_per_secs = float(self.half_period)
-        if  half_per_secs > 1e-3:
+        if  half_per_secs > 200e-6:
             self.sleep_us = round(half_per_secs*1e6)
             
         self._toggle_count = 0
@@ -67,24 +88,20 @@ class Clock:
             raise ValueError
         return tv / self.half_period
     
-    def time_has_passed(self):
-        #print(f"time passed to {SystemTime.current()} next is {self.next_toggle}")
-        while self.next_toggle < SystemTime.current():
+    def time_is_now(self, currentTime:TimeValue):
+        while self.next_toggle < currentTime:
             self.toggle()
             self.next_toggle += self.half_period
-            #print(f"SMALL, next toggle {self.next_toggle}")
-            
         
-        #print(f"increment done {SystemTime.current()} next is {self.next_toggle}")
-        #raise Exception('fuuuuk')
+    def time_has_passed(self):
+        #print(f"time passed to {SystemTime.current()} next is {self.next_toggle}")
+        from ttboard.cocotb.time import SystemTime
+        self.time_is_now(SystemTime.current())
     
     def toggle(self):
-        # print(f"toggle!")
         new_val = 1 if not self.current_signal_value else 0
         self.signal.value = new_val 
         self.current_signal_value = new_val
-        if self.sleep_us:
-            time.sleep_us(self.sleep_us)
     
     def tick(self):
         # clock will go through whole period, end where it started
