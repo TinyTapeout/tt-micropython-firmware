@@ -11,6 +11,10 @@ import ttboard.log as logging
 class FakeSignal:
     def __init__(self, def_value:int=0):
         self.value = def_value
+        
+class Wire(FakeSignal):
+    pass
+
 
 class SliceWrapper:
     def __init__(self, port, idx_or_start:int, slice_end:int=None):
@@ -67,7 +71,7 @@ class DUTWrapper:
         for p in ports:
             setattr(self, p, getattr(self.tt, p))
         self._log = logging.getLogger(name)
-        self.ena = FakeSignal()
+        self.ena = FakeSignal(1)
         
     @classmethod
     def new_slice_attribute(cls, source:IO, idx_or_start:int, slice_end:int=None):
