@@ -21,7 +21,6 @@ class Timer(Awaitable):
         # print(f"All clocks on timer: {all_clocks}")
         fastest_clock = all_clocks[0]
         time_increment = fastest_clock.half_period
-        sleep_us = fastest_clock.sleep_us
         target_time = SystemTime.current() + self.time
         increment_count = 0
         while SystemTime.current() < target_time:
@@ -31,8 +30,6 @@ class Timer(Awaitable):
             increment_count += 1
             SystemTime.advance(time_increment)
                 
-            if sleep_us > 0:
-                tm.sleep_us(sleep_us)
                 
     def __iter__(self):
         return self

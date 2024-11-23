@@ -96,6 +96,9 @@ class TimeValue:
     def __le__(self, other):
         return not (self > other)
     
+    def __ge__(self, other):
+        return float(self) >= float(other)
+    
     def __eq__(self, other):
         return float(self) == float(other)
     
