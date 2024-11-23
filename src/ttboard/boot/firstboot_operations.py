@@ -109,16 +109,16 @@ def say_hello(delay_interval_ms:int=200, times:int=1):
         short_delay_ms = 10
     for _i in range(times):
         for v in hello_values:
-            tt.uio_out.value = v
+            tt.uio_in.value = v
             time.sleep_ms(delay_interval_ms - short_delay_ms)
             
-            tt.uio_out.value = 0
+            tt.uio_in.value = 0
             time.sleep_ms(short_delay_ms)
         
-        tt.uio_out.value = 0
+        tt.uio_in.value = 0
         time.sleep_ms(short_delay_ms * 3)
     
     tt.clock_project_stop()
     
-    tt.uio_oe[:] = [Pins.IN] * 8 # reset to inputs, optional but polite
+    tt.uio_oe_pico[:] = [Pins.IN] * 8 # reset to inputs, optional but polite
     return True

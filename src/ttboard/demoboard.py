@@ -23,8 +23,6 @@ from ttboard.project_mux import Design
 from ttboard.config.user_config import UserConfig
 import ttboard.util.platform as platform 
 from ttboard.boot.demoboard_detect import DemoboardDetect, DemoboardVersion
-from ttboard.ports.io import IO as VerilogIOPort
-from ttboard.ports.oe import OutputEnable as VerilogOEPort
 
 import ttboard.log as logging
 log = logging.getLogger(__name__)
@@ -132,7 +130,11 @@ class DemoBoard:
             
             
         self.pins = Globals.pins(mode=mode)
-        self._init_ioports()
+        
+        ports = ['uo_out', 'ui_in', 'uio_in', 'uio_out', 'uio_oe_pico']
+        for p in ports:
+            setattr(self, p, getattr(self.pins, p))
+            
         self.shuttle = Globals.project_mux(self.user_config.force_shuttle)
         
         # config
@@ -148,21 +150,6 @@ class DemoBoard:
         
         if DemoBoard._DemoBoardSingleton_Instance is None:
             DemoBoard._DemoBoardSingleton_Instance = self 
-            
-            
-    def _init_ioports(self):
-        port_defs = [
-            ('uo_out', platform.read_output_byte, platform.write_output_byte),
-            ('ui_in', platform.read_input_byte, platform.write_input_byte),
-            ('uio_in', None, platform.write_bidir_byte),
-            ('uio_out', platform.read_bidir_byte, None)
-            ]
-        self._ports = dict()
-        for pd in port_defs:
-            setattr(self, pd[0], VerilogIOPort(*pd))
-            
-            
-        self.uio_oe_pico = VerilogOEPort('uio_oe_pico', platform.read_bidir_outputenable, platform.write_bidir_outputenable)
         
         
     def load_default_project(self):
@@ -513,7 +500,7 @@ class DemoBoard:
             log.debug(f'Setting input byte to {btVal}')
             self.pins.ui_in.value = btVal
             
-        if projConfig.bidir_direction is None:
+        if projConfig.uio_oe_pico is None:
             # no bidir direction set, ensure all are inputs
             self.uio_oe_pico.value = 0 # all in
         else:

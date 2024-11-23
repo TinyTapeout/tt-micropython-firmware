@@ -123,13 +123,12 @@ class PowerOnSelfTest:
         self.tt.clock_project_PWM(auto_clock_freq) # clock it real good
         
         log.info('POST: starting bidirection pins tests')
-        self.tt.uio_oe[:] = [Pin.OUT] * 8
-        for bp in self.tt.bidirs:
-            bp(0) # start low
+        self.tt.uio_oe_pico[:] = [Pin.OUT] * 8
+        self.tt.uio_in.value = 0 # start all low
         
         errCount = 0
         for i in range(0xff):
-            self.tt.uio_out.value = i 
+            self.tt.uio_in.value = i 
             time.sleep_ms(update_delay_ms)
             outbyte = self.tt.uo_out.value
             if outbyte !=  i:
@@ -137,7 +136,7 @@ class PowerOnSelfTest:
                 errCount += 1
         
         # reset everything
-        self.tt.uio_oe[:] = [Pin.IN] * 8
+        self.tt.uio_oe_pico[:] = [Pin.IN] * 8
             
         self.tt.clock_project_stop()
         self.tt.mode = curMode

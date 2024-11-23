@@ -18,7 +18,7 @@ class DFFRAM:
             p.mode = Pins.OUT 
             
         self.p.ui_in.value = 0
-        self.p.uio_out.value = 0
+        self.p.uio_in.value = 0
         
     @property 
     def we(self):
@@ -49,7 +49,7 @@ class DFFRAM:
     
     @data_in.setter
     def data_in(self, v:int):
-        self.p.uio_out.value = v        
+        self.p.uio_in.value = v        
     
         
         

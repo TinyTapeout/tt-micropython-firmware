@@ -30,7 +30,7 @@ class SRAM:
             p.mode = Pins.OUT 
             
         self.p.ui_in.value = 0
-        self.p.uio_out.value = 0
+        self.p.uio_in.value = 0
         
     @property 
     def bank_select(self):
@@ -68,7 +68,7 @@ class SRAM:
     
     @addr_high_in.setter 
     def addr_high_in(self, v:int):
-        self.p.uio_out.value = (self.p.uio_in.value & ~0x1f) | (v & 0x1f)
+        self.p.uio_in.value = (self.p.uio_in.value & ~0x1f) | (v & 0x1f)
         
     @property 
     def data_out(self):
@@ -76,11 +76,11 @@ class SRAM:
     
     @property 
     def data_in(self):
-        return  self.p.uio_in.value
+        return  self.p.uio_out.value
     
     @data_in.setter
     def data_in(self, v:int):
-        self.p.uio_out.value = v        
+        self.p.uio_in.value = v        
     
         
         

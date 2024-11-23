@@ -7,7 +7,6 @@ Created on Jan 22, 2024
 import gc
 from ttboard.config.parser import ConfigParser
 from ttboard.mode import RPMode
-from ttboard.config.config_file import ConfigFile
 
 import ttboard.log as logging
 log = logging.getLogger(__name__)
@@ -22,15 +21,15 @@ class UserProjectConfig:
             # set clock to 4kHz
             clock_frequency = 4000
             # clock config 4k, disp single bits
-            input_byte = 0b11001000
+            ui_in = 0b11001000
             mode = ASIC_RP_CONTROL
         
         You can use this to set:
             - mode (str)
             - start_in_reset (bool)
-            - input_byte (int)
-            - bidir_direction (int)
-            - bidir_byte (int)
+            - ui_in (int)
+            - uio_oe_pico (int)
+            - uio_in (int)
             - clock_frequency (int) project clock
             - rp_clock_frequency (int) RP2040 system clock frequency
             
@@ -40,9 +39,9 @@ class UserProjectConfig:
         see more info.
 
     '''
-    opts = ['mode', 'start_in_reset', 'input_byte',
-                         'bidir_direction',
-                         'bidir_byte',
+    opts = ['mode', 'start_in_reset', 'ui_in',
+                         'uio_oe_pico',
+                         'uio_in',
                          'clock_frequency',
                          'rp_clock_frequency']
     
@@ -154,7 +153,6 @@ class UserConfig:
             val = None
             if conf.has_option('DEFAULT', opt):
                 val = conf.get('DEFAULT', opt)
-                print(f'DEFOPT {opt}: {val}')
             setattr(self, f'_{opt}', val)
             
             

@@ -37,6 +37,8 @@ from ttboard.pins.standard import StandardPin
 from ttboard.pins.muxed import MuxedPin, MuxedPinInfo
 from ttboard.pins.mux_control import MuxControl
 
+from ttboard.ports.io import IO as VerilogIOPort
+from ttboard.ports.oe import OutputEnable as VerilogOEPort
 
 
 import ttboard.log as logging
@@ -143,6 +145,26 @@ class Pins:
             self._allpins['hk_csb'] = self.hk_csb
         
         self.mode = mode 
+        self._init_ioports()
+        
+        
+    
+    def _init_ioports(self):
+        # Note: these are named according the the ASICs point of view
+        # we can write ui_in, we read uo_out
+        port_defs = [
+            ('uo_out', platform.read_output_byte, platform.write_output_byte),
+            ('ui_in', platform.read_input_byte, platform.write_input_byte),
+            ('uio_in', None, platform.write_bidir_byte),
+            ('uio_out', platform.read_bidir_byte, None)
+            ]
+        self._ports = dict()
+        for pd in port_defs:
+            setattr(self, pd[0], VerilogIOPort(*pd))
+            
+            
+        self.uio_oe_pico = VerilogOEPort('uio_oe_pico', platform.read_bidir_outputenable, platform.write_bidir_outputenable)
+        
         
     
     @property 

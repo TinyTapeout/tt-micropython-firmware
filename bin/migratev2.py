@@ -46,12 +46,12 @@ substitutions = [
     ('(return\s+|=)\s*([^\s]+)\.output_byte', '\g<1> \g<2>.uo_out.value'),
     ('\.output_byte', '.uo_out.value'),
     # order matters
-    ('\.bidir_byte\s*=', '.uio_out.value ='),
-    ('(return\s+|=)\s*([^\s]+)\.bidir_byte', '\g<1> \g<2>.uio_in.value'),
-    ('([^\s]+)\.bidir_byte', '\g<1>.uio_in.value'),
+    ('\.bidir_byte\s*=', '.uio_in.value ='),
+    ('(return\s+|=)\s*([^\s]+)\.bidir_byte', '\g<1> \g<2>.uio_out.value'),
+    ('([^\s]+)\.bidir_byte', '\g<1>.uio_out.value'),
     ('\.bidir_mode', '.uio_oe[:]'), #
     ('\.project_nrst', '.rst_n'),
-    ('\.project_clk', '.clk')
+    ('\.project_clk([^_]+)', '.clk\g<1>')
 ]
 
 
