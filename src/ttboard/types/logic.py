@@ -152,7 +152,8 @@ class Logic:
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Logic):
-            return self is other
+            return self._repr == other._repr
+                
         elif isinstance(other, (int, str, bool)):
             try:
                 other = Logic(other)
@@ -163,7 +164,7 @@ class Logic:
             return NotImplemented
 
     def __repr__(self) -> str:
-        return f"{type(self)}({str(self)!r})"
+        return f"<Logic ({str(self)!r})>"
 
     def __str__(self) -> str:
         return ("U", "X", "0", "1", "Z", "W", "L", "H", "-")[self._repr]
@@ -181,6 +182,8 @@ class Logic:
         elif self._repr == _1:
             return 1
         raise ValueError(f"Cannot convert {self!r} to int")
+    
+    
 
     def __index__(self) -> int:
         return int(self)
