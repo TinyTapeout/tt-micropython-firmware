@@ -9,9 +9,14 @@ from ttboard.cocotb.clock import Clock
 from ttboard.cocotb.time.system import SystemTime
     
 class ClockCycles(Awaitable):
-    def __init__(self, sig, num_cycles:int):
+    def __init__(self, sig, num_cycles:int, rising:bool=True):
         super().__init__(sig)
-        self.num_cycles = num_cycles
+        self.num_transitions = num_cycles * 2
+        self.rising = rising
+        if (self.rising and self.signal.value == 0 or
+            not self.rising and self.signal.value == 1):
+            self.num_transitions -= 1
+
         
     def __iter__(self):
         return self
@@ -22,8 +27,7 @@ class ClockCycles(Awaitable):
         if clk is None:
             print("CLK NO CLK")
         else:
-            num_transitions = self.num_cycles * 2
-            target_time = SystemTime.current() + (clk.half_period * num_transitions)
+            target_time = SystemTime.current() + (clk.half_period * self.num_transitions)
             time_increment = Clock.get_shortest_event_interval()
             #print(f"Is now {SystemTime.current()}, running until {target_time}, increment is {time_increment}")
             while SystemTime.current() < target_time:
@@ -34,7 +38,6 @@ class ClockCycles(Awaitable):
     
     def __next__(self):
         return self.next()
-    
     
     def __await__(self):
         clk = Clock.get(self.signal)

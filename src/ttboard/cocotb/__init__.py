@@ -1,5 +1,6 @@
 import asyncio
-
+import io 
+import sys
 
 def start_soon(c):
     pass
@@ -39,7 +40,9 @@ class Runner:
             try:
                 self.tests_to_run[nm](dut)
             except Exception as e:
-                dut._log.warn(str(e))
+                buf = io.StringIO()
+                sys.print_exception(e, buf)
+                dut._log.warn(buf.getvalue())
                 failures += 1
                 
         if failures:
