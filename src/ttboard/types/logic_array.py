@@ -29,10 +29,12 @@ class LogicArray(ArrayLike):
         range = None,
         *,
         width = None,
+        on_change = None
     ) -> None:
         self._value_as_array = None
         self._value_as_int = None
         self._value_as_str = None
+        self._on_change_callback = on_change
         range = _make_range(range, width)
         if isinstance(value, str):
             if not (set(value) <= _str_literals):
@@ -155,7 +157,7 @@ class LogicArray(ArrayLike):
         )
 
     @classmethod
-    def _from_handle(cls, value: str) -> "LogicArray":
+    def _from_handle(cls, value: str, on_change=None) -> "LogicArray":
         # Used by cocotb.handle classes to make LogicArray from values gotten from the
         # simulator which we expect to be well-formed.
         # Values are required to be uppercase.
@@ -163,6 +165,7 @@ class LogicArray(ArrayLike):
         self._value_as_array = None
         self._value_as_int = None
         self._value_as_str = value
+        self._on_change_callback = on_change
         self._range = Range(len(value) - 1, "downto", 0)
         return self
 
@@ -298,7 +301,7 @@ class LogicArray(ArrayLike):
                 )
             value = array[start_i : stop_i + 1]
             range = Range(start, self.direction, stop)
-            return LogicArray(value=value, range=range)
+            return LogicArray(value=value, range=range, on_change=self._on_change_callback)
         raise TypeError(f"indexes must be ints or slices, not {type(item).__name__}")
 
     def __setitem__(
@@ -324,10 +327,19 @@ class LogicArray(ArrayLike):
                 raise IndexError(
                     f"slice [{start}:{stop}] direction does not match array direction [{self.left}:{self.right}]"
                 )
-            value_as_logics = [
-                Logic(v) for v in iter(value)
-            ]
-            if len(value_as_logics) != (stop_i - start_i + 1):
+            
+            slice_width = (stop_i - start_i + 1)
+            if isinstance(value, int):
+                if value < 0:
+                    value_as_logics = list(LogicArray.from_signed(value, width=slice_width))
+                else:
+                    value_as_logics = list(LogicArray.from_unsigned(value, width=slice_width))
+            else:
+                value_as_logics = [
+                    Logic(v) for v in iter(value)
+                ]
+                
+            if len(value_as_logics) != slice_width:
                 raise ValueError(
                     f"value of length {len(value_as_logics)!r} will not fit in slice [{start}:{stop}]"
                 )
@@ -336,6 +348,9 @@ class LogicArray(ArrayLike):
             raise TypeError(
                 f"indexes must be ints or slices, not {type(item).__name__}"
             )
+        
+        if self._on_change_callback is not None:
+            self._on_change_callback(self)
 
     def _translate_index(self, item: int) -> int:
         try:
