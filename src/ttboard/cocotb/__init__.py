@@ -35,14 +35,17 @@ class Runner:
     def test(self, dut):
         from ttboard.cocotb.time.system import SystemTime
         failures = 0
-        for nm in self.test_names:
+        num_tests = len(self.test_names)
+        for test_count in range(num_tests):
+            nm = self.test_names[test_count]
             SystemTime.reset()
             try:
+                dut._log.info(f"*** Running Test {test_count+1}/{num_tests}: {nm} ***") 
                 self.tests_to_run[nm](dut)
-                dut._log.warn(f"Test '{nm}': PASS")
+                dut._log.warn(f"*** Test '{nm}' PASS ***")
             except Exception as e:
                 if len(e.args):
-                    dut._log.error(f"FAIL: {e.args[0]}")
+                    dut._log.error(f"T*** Test '{nm}' FAIL: {e.args[0]} ***")
                 else:
                     buf = io.StringIO()
                     sys.print_exception(e, buf)
@@ -73,8 +76,7 @@ def test(func=None, *,
     def my_decorator_func(func):
         runner = Runner.get() 
         test_name = func.__name__ if name is None else name
-        def wrapper_func(dut):
-            dut._log.info(f"Running Test: {test_name}")   
+        def wrapper_func(dut):  
             asyncio.run(func(dut))
         
         def skipper_func(dut):
