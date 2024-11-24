@@ -49,6 +49,9 @@ if IsRP2040:
         
     '''
     
+    def dump_portset(p:str, v:int):
+        print(f'ps {p}: {bin(v)}')
+        return
     @rp2.asm_pio(set_init=rp2.PIO.OUT_HIGH)
     def _pio_toggle_pin():
         wrap_target()
@@ -112,6 +115,7 @@ if IsRP2040:
     
     @micropython.native
     def write_input_byte(val):
+        # dump_portset('ui_in', val)
         # low level machine stuff
         # move the value bits to GPIO spots
         # low nibble starts at 9 | high nibble at 17 (-4 'cause high nibble)
@@ -130,6 +134,7 @@ if IsRP2040:
     
     @micropython.native
     def write_bidir_byte(val):
+        # dump_portset('uio', val)
         # low level machine stuff
         # move the value bits to GPIO spots
         # for bidir, all uio bits are in a line starting 
@@ -154,12 +159,14 @@ if IsRP2040:
         
     @micropython.native
     def write_bidir_outputenable(val):
+        # dump_portset('uio_oe', val)
         # GPIO_OE register, clearing bidir pins and setting any enabled
         val = (val << 21)
         machine.mem32[0xd0000020] = (machine.mem32[0xd0000020] & ((1 << 21) - 1)) | val
         
     @micropython.native
     def write_output_byte(val):
+        # dump_portset('uo_out', val)
         # low level machine stuff
         # move the value bits to GPIO spots
         

@@ -495,35 +495,28 @@ class DemoBoard:
         
         
         # input byte
-        if projConfig.has('input_byte') and self.mode != RPMode.ASIC_MANUAL_INPUTS:
-            btVal = projConfig.ui_in.value
+        if projConfig.has('ui_in') and self.mode != RPMode.ASIC_MANUAL_INPUTS:
+            btVal = projConfig.ui_in
             log.debug(f'Setting input byte to {btVal}')
-            self.pins.ui_in.value = btVal
+            self.ui_in.value = btVal
             
         if projConfig.uio_oe_pico is None:
             # no bidir direction set, ensure all are inputs
             self.uio_oe_pico.value = 0 # all in
         else:
-            dirBits = projConfig.bidir_direction
-            log.debug(f'Setting bidir pin direction to {hex(dirBits)}')
-            bidirs = self.pins.bidirs 
-            
-            for i in range(8):
-                if dirBits & (1 << i):
-                    bidirs[i].mode = Pins.OUT
-                else:
-                    bidirs[i].mode = Pins.IN
+            self.uio_oe_pico.value = projConfig.uio_oe_pico
+            log.debug(f'Setting bidir pin direction to {hex(self.uio_oe_pico.value)}')
                     
-            if projConfig.uio_in.value is not None:
-                valBits = projConfig.uio_in.value
+            if projConfig.uio_in is not None:
+                valBits = projConfig.uio_in
                 log.debug(f'Also setting bidir byte values {hex(valBits)}')
                 for i in range(8):
                     mask = (1 << i) 
-                    if (dirBits & mask): # this is actually an output
+                    if (self.uio_oe_pico.value & mask): # this is actually an output
                         if valBits & mask: # and we want it high
-                            bidirs[i](1)
+                            self.uio_in[i] = 1
                         else: # nah, want it low
-                            bidirs[i](0)
+                            self.uio_in[i] = 1
                             
         
         current_sys_clock = platform.get_RP_system_clock()
