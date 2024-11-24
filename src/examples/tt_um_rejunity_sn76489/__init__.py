@@ -1,0 +1,1 @@
+from .tt_um_rejunity_sn76489 import main as run

@@ -66,7 +66,6 @@ That Demoboard object gives you access to the run of the currently-loaded ASIC (
 
 ```
 version_runners = {
-    'tt03p5': run_03p5,
     'tt04': run_04,
     # ...
 }

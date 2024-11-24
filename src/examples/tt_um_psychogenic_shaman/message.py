@@ -4,7 +4,6 @@ Created on Apr 28, 2024
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
-
 from examples.tt_um_psychogenic_shaman.util import wait_clocks, die_with_error
 from examples.tt_um_psychogenic_shaman.shaman import Shaman
 

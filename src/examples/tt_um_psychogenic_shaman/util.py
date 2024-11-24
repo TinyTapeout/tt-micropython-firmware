@@ -4,7 +4,6 @@ Created on Apr 28, 2024
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
-
 import ttboard.log as logging
 log = logging.getLogger(__name__)
 

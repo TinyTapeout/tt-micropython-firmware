@@ -13,6 +13,10 @@ import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 DefaultMessageToEncode = 'you are my very nice friend'
+
+def result_map(reslist:list):
+    return list(map(lambda x: hex(x), reslist))
+
 def run(msg_to_encode:str=DefaultMessageToEncode):
     tt = DemoBoard.get()
     shaman = Shaman(tt)
@@ -24,13 +28,24 @@ def run(msg_to_encode:str=DefaultMessageToEncode):
     print("Selecting shaman project")
     tt.shuttle.tt_um_psychogenic_shaman.enable()
     
+    tt.reset_project(True)
+    tt.uio_oe_pico.value = 0b11001100
+    
+    tt.reset_project(False)
+    
+    
+
+    
+    
     message_blocks = message_to_blocks(msg_to_encode)
     print(f"Will encode:\n'{msg_to_encode}'")
     print("first: sequential load")
     res_1 = encode_standard(shaman, message_blocks)
-    print(f"Result: {res_1}")
+    print(f"Result: {result_map(res_1)}")
+    tt.reset_project(True)
+    tt.reset_project(False)
     res_2 = encode_parallel(shaman, message_blocks)
-    print(f"Result: {res_2}")
+    print(f"Result: {result_map(res_2)}")
     
     errs = 0
     if len(res_1) == len(res_2):
@@ -45,7 +60,6 @@ def run(msg_to_encode:str=DefaultMessageToEncode):
     
     print("Results Match!")
     return True
-
 
 def encode_standard(shaman:Shaman, message_blocks:list):
     shaman.parallel_load = 0 

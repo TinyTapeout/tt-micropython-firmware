@@ -86,6 +86,12 @@ async def test_edge_triggers(dut):
     
     dut._log.info("test_edge_triggers passed")
         
+@cocotb.test()
+async def test_should_fail(dut):
+    
+    dut._log.info("Will fail with msg")
+
+    assert dut.rst_n.value == 0
         
 def main():
     # import examples.tt_um_factory_test.tt_um_factory_test as ft
