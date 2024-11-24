@@ -39,11 +39,16 @@ class Runner:
             SystemTime.reset()
             try:
                 self.tests_to_run[nm](dut)
+                dut._log.warn(f"Test '{nm}': PASS")
             except Exception as e:
-                buf = io.StringIO()
-                sys.print_exception(e, buf)
-                dut._log.warn(buf.getvalue())
+                if len(e.args):
+                    dut._log.error(f"FAIL: {e.args[0]}")
+                else:
+                    buf = io.StringIO()
+                    sys.print_exception(e, buf)
+                    dut._log.error(buf.getvalue())
                 failures += 1
+            
                 
         if failures:
             dut._log.warn(f"{failures}/{len(self.test_names)} tests failed")
