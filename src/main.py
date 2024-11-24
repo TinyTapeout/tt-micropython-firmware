@@ -132,7 +132,9 @@ colors.color_end()
 print(tt)
 print()
 
-
+from ttboard.cocotb.time.system import SystemTime
+from ttboard.cocotb.triggers import *
+import examples.tt_um_rejunity_sn76489.tt_um_rejunity_sn76489 as rg
 # import examples.tt_um_factory_test.tt_um_factory_test as ft
 # import examples.tt_um_psychogenic_neptuneproportional.tb as np 
 # import examples.tt_um_rgbled_decoder.tt_um_rgbled_decoder as rgb
