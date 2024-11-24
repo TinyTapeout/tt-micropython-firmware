@@ -11,18 +11,20 @@ from ttboard.cocotb.time.system import SystemTime
 class ClockCycles(Awaitable):
     def __init__(self, sig, num_cycles:int, rising:bool=True):
         super().__init__(sig)
-        self.num_transitions = num_cycles * 2
+        self.num_cycles = num_cycles
+        self.num_transitions = 0
         self.rising = rising
-        if (self.rising and self.signal.value == 0 or
-            not self.rising and self.signal.value == 1):
-            self.num_transitions -= 1
-
         
     def __iter__(self):
         return self
 
     def next(self): 
         clk = Clock.get(self.signal)
+        
+        self.num_transitions = self.num_cycles * 2
+        if (self.rising and self.signal.value == 0 or
+            not self.rising and self.signal.value == 1):
+            self.num_transitions -= 1
         
         if clk is None:
             print("CLK NO CLK")
