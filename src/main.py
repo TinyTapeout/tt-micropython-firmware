@@ -132,6 +132,8 @@ colors.color_end()
 print(tt)
 print()
 
+print(f"tt.sdk_version={tt.version}")
+
 from ttboard.cocotb.time.system import SystemTime
 from ttboard.cocotb.triggers import *
 import examples.tt_um_rejunity_sn76489.tt_um_rejunity_sn76489 as rg
