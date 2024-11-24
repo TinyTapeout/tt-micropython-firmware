@@ -40,13 +40,10 @@ from ttboard.demoboard import DemoBoard, Pins
 from ttboard.boot.post import PowerOnSelfTest
 import ttboard.util.colors as colors
 
-# import examples.tt_um_psychogenic_neptuneproportional.tb as nc
-
 gc.collect()
 
 tt = None
 def startup():
-    
     # construct DemoBoard
     # either pass an appropriate RPMode, e.g. RPMode.ASIC_RP_CONTROL
     # or have "mode = ASIC_RP_CONTROL" in ini DEFAULT section
@@ -134,10 +131,12 @@ print()
 
 print(f"tt.sdk_version={tt.version}")
 
-from ttboard.cocotb.time.system import SystemTime
-from ttboard.cocotb.triggers import *
-import examples.tt_um_rejunity_sn76489.tt_um_rejunity_sn76489 as rg
-# import examples.tt_um_factory_test.tt_um_factory_test as ft
-# import examples.tt_um_psychogenic_neptuneproportional.tb as np 
-# import examples.tt_um_rgbled_decoder.tt_um_rgbled_decoder as rgb
+# to run tests easily import the module of interest, as below, and then 
+# test.run()
+
+# import examples.tt_um_psychogenic_shaman as test
+# import examples.tt_um_rejunity_sn76489 as test
+# import examples.tt_um_factory_test as test
+# import examples.tt_um_psychogenic_neptuneproportional as test 
+# import examples.tt_um_rgbled_decoder as test
 
