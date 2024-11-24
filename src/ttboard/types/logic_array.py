@@ -359,6 +359,10 @@ class LogicArray(ArrayLike):
         return int(self)
 
     def __and__(self, other: "LogicArray") -> "LogicArray":
+        if isinstance(other, int):
+            # Allow &= ~x to work
+            other &= (1 << len(self)) - 1
+            return LogicArray(value=(other & self.to_unsigned()), range=self._range)
         if not isinstance(other, LogicArray):
             return NotImplemented
         if len(self) != len(other):
@@ -368,6 +372,8 @@ class LogicArray(ArrayLike):
         return LogicArray(a & b for a, b in zip(self, other))
 
     def __or__(self, other: "LogicArray") -> "LogicArray":
+        if isinstance(other, int):
+            return LogicArray(value=(other | self.to_unsigned()), range=self._range)
         if not isinstance(other, LogicArray):
             return NotImplemented
         if len(self) != len(other):
@@ -377,6 +383,8 @@ class LogicArray(ArrayLike):
         return LogicArray(a | b for a, b in zip(self, other))
 
     def __xor__(self, other: "LogicArray") -> "LogicArray":
+        if isinstance(other, int):
+            return LogicArray(value=(other ^ self.to_unsigned()), range=self._range)
         if not isinstance(other, LogicArray):
             return NotImplemented
         if len(self) != len(other):
