@@ -73,31 +73,7 @@ def autoClockProject(freqHz:int):
 def stopClocking():
     tt.clock_project_stop()
 
-def test_design_tnt_counter():
-    # select the project from the shuttle
-    tt.shuttle.tt_um_test.enable()
-    
-    #reset
-    tt.reset_project(True)
 
-    # enable the internal counter of test design
-    tt.ui_in[1] = 1
-
-    # take out of reset
-    tt.reset_project(False)
-    
-    print('Running tt_um_test, printing output...Ctrl-C to stop')
-    time.sleep_ms(300)
-    
-    tt.clock_project_PWM(10)
-    try:
-        while True:
-            print(hex(tt.output_byte & 0x0f)) # could do ...out0(), out1() etc
-            time.sleep_ms(100)
-    except KeyboardInterrupt:
-        tt.clock_project_stop()
-        
-    
 # Detect the demoboard version
 detection_result = '(best guess)'
 detection_color = 'red'
