@@ -131,7 +131,7 @@ colors.color_end()
 
 print(tt)
 print()
-
+print(f"tt.sdk_version={tt.version}")
 
 # import examples.tt_um_factory_test.tt_um_factory_test as ft
 # import examples.tt_um_psychogenic_neptuneproportional.tb as np 
