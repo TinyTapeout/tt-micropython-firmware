@@ -11,6 +11,7 @@ Created on Oct 28, 2023
 @copyright: Copyright (C) 2023 Pat Deegan, https://psychogenic.com
 '''
 
+from ttboard.cocotb.utils import get_sim_time
 import ttboard.cocotb as cocotb
 from ttboard.cocotb.clock import Clock
 from ttboard.cocotb.triggers import ClockCycles # RisingEdge, FallingEdge, Timer, 
@@ -183,7 +184,7 @@ async def test_synchronous(dut):
     dut._log.info(f'Encoding "{msg}" using spinlock')
     dut.parallelLoading.value = 0
     await ClockCycles(dut.clk, 2)
-    await processMessageBlocks(dut, msg, message_blocks)
+    await processMessageBlocks(dut, msg, message_blocks, mode_parallel=False)
     
 
 @cocotb.test()
@@ -200,15 +201,19 @@ async def testBothSHA(dut):
     await reset(dut)
     
     message_blocks = message_to_blocks(TestMessage)
-    dut._log.info(f'Encoding "{TestMessage}" using spinlock')
+    dut._log.info(f'Encoding {TestMessage} using SPINLOCK')
     dut.parallelLoading.value = 0
-    await processMessageBlocks(dut, TestMessage, message_blocks)
+    start_time = get_sim_time('us')
+    await processMessageBlocks(dut, TestMessage, message_blocks, mode_parallel=False)
+    dut._log.info(f'Took {get_sim_time("us") - start_time}us to do')
     
     await ClockCycles(dut.clk, 20)
     dut.parallelLoading.value = 1
     await ClockCycles(dut.clk, 20)
-    dut._log.info(f'Encoding "{TestMessage}" using parallel loads')
-    await processMessageBlocks(dut, TestMessage, message_blocks)
+    dut._log.info(f'Encoding {TestMessage} using PARALLEL loads')
+    start_time = get_sim_time('us')
+    await processMessageBlocks(dut, TestMessage, message_blocks, mode_parallel=True)
+    dut._log.info(f'Took {get_sim_time("us") - start_time}us to do')
         
 
 @cocotb.test()
@@ -234,10 +239,10 @@ async def test_parallel(dut):
     dut.parallelLoading.value = 1
     await ClockCycles(dut.clk, 2)
     
-    await processMessageBlocks(dut, msg, message_blocks)
+    await processMessageBlocks(dut, msg, message_blocks, mode_parallel=True)
 
 
-@cocotb.test()
+@cocotb.test(skip=not DoLongLongTest)
 async def test_bigtext(dut):
     
     if GateLevelTest:
@@ -261,11 +266,10 @@ async def test_bigtext(dut):
     dut.parallelLoading.value = 1
     await ClockCycles(dut.clk, 2)
     
-    await processMessageBlocks(dut, msg, message_blocks)
+    await processMessageBlocks(dut, msg, message_blocks, mode_parallel=True)
 
 
-        
-@cocotb.test()
+@cocotb.test(skip=not DoEverySizeBlockTest)
 async def test_everysizeblock(dut):
     
     dut._log.info("start")
@@ -288,7 +292,7 @@ async def test_everysizeblock(dut):
         message_blocks = message_to_blocks(msg)
         
         dut._log.info(f'Test {i+1}: {msg}')
-        numTicks = await processMessageBlocks(dut, msg, message_blocks, quietLogging=True)
+        numTicks = await processMessageBlocks(dut, msg, message_blocks, quietLogging=True, mode_parallel=True)
         dut._log.info(f'OK (in {numTicks} ticks)')
 
 
@@ -327,7 +331,18 @@ BoundaryTests = [# "D"
     '0dd8ceed479109f82ef65c3eb51ca9eedf3d013445c8124ce521638f63f520b6'),
 ]
 
+
 @cocotb.test()
+async def test_should_fail(dut):
+    clock = Clock(dut.clk, 1, units="us")
+    cocotb.start_soon(clock.start())
+    
+    await reset(dut)
+    assert dut.rst_n.value == 0, f"rst_n ({dut.rst_n.value}) == 0"
+        
+        
+
+@cocotb.test(skip=DoEverySizeBlockTest)
 async def test_boundaryblocksizes(dut):
     dut._log.info("start")
     clock = Clock(dut.clk, 1, units="us")
@@ -354,7 +369,7 @@ async def test_boundaryblocksizes(dut):
         msg = BoundaryTestString[0:sz]
         dut._log.info(f"Size {sz}: '{msg}'")
         message_blocks = message_to_blocks(msg)
-        await processMessageBlocks(dut, msg, message_blocks, quietLogging=False, hashval=tst[1])
+        await processMessageBlocks(dut, msg, message_blocks, quietLogging=False, hashval=tst[1],  mode_parallel=True)
         
         
 
@@ -443,7 +458,7 @@ def message_to_blocks(message: bytearray) -> bytearray:
     
     
 
-async def loadMessageBlock(dut, message_block, quietLogging:bool = True):
+async def loadMessageBlock(dut, message_block, quietLogging:bool = True, mode_parallel:bool = True):
     # print(f' handle message block (f{message_block}) len {len(message_block)}')
     t = 0
     numSlots = len(message_block)/4
@@ -472,7 +487,11 @@ async def loadMessageBlock(dut, message_block, quietLogging:bool = True):
             dut._log.debug('Setting data byte and clockin')
             dut.databyteIn.value = byteVal 
             dut.clockinData.value = 1
-            await ClockCycles(dut.clk, 2) # in parallel mode, this needs to be 2, 1 ok in sync
+            if mode_parallel:
+                await ClockCycles(dut.clk, 2) # in parallel mode, this needs to be 2, 1 ok in sync
+            else:
+                await ClockCycles(dut.clk, 1) # in parallel mode, this needs to be 2, 1 ok in sync
+                
             dut._log.debug('Setting clockin LOW')
             dut.clockinData.value = 0
             await ClockCycles(dut.clk, 1)
@@ -506,7 +525,8 @@ async def readinResult(dut) -> str:
     calculated = ''.join(map(lambda i: f'{int(i):02x}', results_bytes))
     return calculated
 
-async def processMessageBlocks(dut, encodedMsg, message_blocks, quietLogging=True, hashval:str = None):
+async def processMessageBlocks(dut, encodedMsg, message_blocks, quietLogging=True, hashval:str = None, 
+                               mode_parallel:bool=True):
     dut._log.debug('Start message HIGH')
     dut.start.value = 1
     await ClockCycles(dut.clk, 1)
@@ -526,7 +546,8 @@ async def processMessageBlocks(dut, encodedMsg, message_blocks, quietLogging=Tru
         await ClockCycles(dut.clk, 1)
         
         tickWaitCountTotal += await waitNotBusy(dut)
-        tickWaitCountTotal += await waitOutputReady(dut)
+        if not mode_parallel:
+            tickWaitCountTotal += await waitOutputReady(dut)
     
     avgWaitTickCount = int(tickWaitCountTotal/len(message_blocks))
     if not quietLogging:
