@@ -58,7 +58,8 @@ substitutions = [
 
 special_cases = [
     ('individual_pin_attrib', '\.(in|out|uio)(\d+)'), 
-    ('individual_pin_call', '\.(in|out|uio)(\d+)\(([^)]+)\)'),
+    ('individual_pin_write', '\.(in|out|uio)(\d+)\(([^)]+)\)'),
+    ('individual_pin_read', '\.(in|out|uio)(\d+)\((\s*)\)'),
     
 ]
 
@@ -90,14 +91,26 @@ class Replacer:
             'in': 'ui_in',
             'out': 'uo_out',
             'uio': 'uio_in',
-            
             }
+            
+        read_bitmat = {
+            'in': 'ui_in',
+            'out': 'uo_out',
+            'uio': 'uio_out',
+        
+        }
         
         seen = dict()
         
-        for p in self.individual_pin_call.findall(contents):
+        for p in self.individual_pin_write.findall(contents):
             subre = f'\.{p[0]}{p[1]}\({p[2]}\)'
             repl =  f'.{set_bitmap[p[0]]}[{p[1]}] = {p[2]}'
+            print(f"'{subre}', '{repl}'")
+            contents = re.sub(subre, repl, contents, 0, re.MULTILINE)
+            
+        for p in self.individual_pin_read.findall(contents):
+            subre = f'\.{p[0]}{p[1]}\({p[2]}\)'
+            repl =  f'.{read_bitmap[p[0]]}[{p[1]}]'
             print(f"'{subre}', '{repl}'")
             contents = re.sub(subre, repl, contents, 0, re.MULTILINE)
             
@@ -171,10 +184,5 @@ def main():
                 print(f"Writing {fpath}", file=sys.stderr)
                 with open(fpath, 'w') as f:
                     f.write(contents)
-            
-                
 
 main()
-
-
-            
