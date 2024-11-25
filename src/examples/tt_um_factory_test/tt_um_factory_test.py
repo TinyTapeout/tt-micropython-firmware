@@ -92,15 +92,19 @@ async def test_should_fail(dut):
     
     dut._log.info("Will fail with msg")
 
-    assert dut.rst_n.value == 0
+    assert dut.rst_n.value == 0, f"rst_n ({dut.rst_n.value}) == 0"
     
+@cocotb.test(skip=True)
+async def test_will_skip(dut):
+    dut._log.info("This should not be output!")
+    
+        
 @cocotb.test()
 async def test_timer(dut):
     dut._log.info("Doing nothing but waiting 10ms")
     await Timer(10, units='ms')
     dut._log.info(f"System time is now {get_sim_time('us')}us")
     
-        
 def main():
     # import examples.tt_um_factory_test.tt_um_factory_test as ft
     import ttboard.cocotb.dut
@@ -110,11 +114,10 @@ def main():
             super().__init__('FactoryTest')
             self.tt = DemoBoard.get()
             # inputs
-            self.some_bit = self.new_slice_attribute(self.tt.uo_out, 5)
+            self.some_bit = self.new_bit_attribute(self.tt.uo_out, 5)
 
     tt = DemoBoard.get()
     tt.shuttle.tt_um_factory_test.enable()
-    tt.clock_project_stop()
     tt.uio_oe_pico.value = 0 # all inputs
     
     

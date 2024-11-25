@@ -180,17 +180,16 @@ def main():
             super().__init__('Neptune')
             self.tt = DemoBoard.get()
             # inputs
-            self.display_single_select = self.new_slice_attribute(self.tt.ui_in, 7)
-            self.display_single_enable = self.new_slice_attribute(self.tt.ui_in, 6)
-            self.input_pulse = self.new_slice_attribute(self.tt.ui_in, 5)
-            self.clk_config = self.new_slice_attribute(self.tt.ui_in, 4, 2)
+            self.display_single_select = self.new_bit_attribute(self.tt.ui_in, 7)
+            self.display_single_enable = self.new_bit_attribute(self.tt.ui_in, 6)
+            self.input_pulse = self.new_bit_attribute(self.tt.ui_in, 5)
+            self.clk_config = self.new_slice_attribute(self.tt.ui_in, 4, 2) # tt.ui_in[4:2]
             # outputs
-            self.prox_select = self.new_slice_attribute(self.tt.uo_out, 7)
-            self.segments = self.new_slice_attribute(self.tt.uo_out, 6, 0)
+            self.prox_select = self.new_bit_attribute(self.tt.uo_out, 7)
+            self.segments = self.new_slice_attribute(self.tt.uo_out, 6, 0) # tt.uo_out[6:0]
             
     tt = DemoBoard.get()
     tt.shuttle.tt_um_psychogenic_neptuneproportional.enable()
-    tt.clock_project_stop()
     dut = DUT()
     dut._log.info("enabled neptune project")
     runner = cocotb.get_runner()

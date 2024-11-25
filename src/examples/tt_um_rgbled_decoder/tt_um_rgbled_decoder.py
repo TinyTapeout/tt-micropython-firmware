@@ -187,15 +187,15 @@ class TBSPI(ttboard.cocotb.dut.DUT):
         self.data = data 
         self.data_rdy = data_rdy
         self.nreset = self.rst_n
-        self.mosi = self.new_slice_attribute(self.tt.ui_in, 0)
-        self.sclk = self.new_slice_attribute(self.tt.ui_in, 1)
-        self.nsel = self.new_slice_attribute(self.tt.ui_in, 2)
+        self.mosi = self.new_bit_attribute(self.tt.ui_in, 0)
+        self.sclk = self.new_bit_attribute(self.tt.ui_in, 1)
+        self.nsel = self.new_bit_attribute(self.tt.ui_in, 2)
         
 class DUT(ttboard.cocotb.dut.DUT):
     def __init__(self):
         super().__init__('RGBDUT')
         self.data = Wire()
-        self.data_rdy = self.new_slice_attribute(self.tt.ui_in, 2)
+        self.data_rdy = self.new_bit_attribute(self.tt.ui_in, 2)
         self.tbrgbled = RGBLED(self.data, self.data_rdy)
         self.tbspi = TBSPI(self.data, self.data_rdy)
         
@@ -215,7 +215,6 @@ def main():
     if not load_project(tt):
         return
     
-    tt.clock_project_stop()
     tt.uio_oe_pico.value = 0 # all inputs
     
     
