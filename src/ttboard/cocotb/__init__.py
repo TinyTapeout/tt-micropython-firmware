@@ -25,6 +25,7 @@ class Runner:
     def __init__(self):
         self.tests_to_run = dict()
         self.test_names = []
+        self.skipped_names = []
         
     def add_test(self, func, name:str=None):
         if name is None:
@@ -32,13 +33,18 @@ class Runner:
         self.test_names.append(name)
         self.tests_to_run[name] = func
         
+    def add_skipped(self, name:str):
+        self.skipped_names.append(name)
+        
     def test(self, dut):
         from ttboard.cocotb.time.system import SystemTime
-        failures = 0
+        num_failures = 0
         num_tests = len(self.test_names)
+        failures = dict()
         for test_count in range(num_tests):
             nm = self.test_names[test_count]
             SystemTime.reset()
+            failures[nm] = None
             try:
                 dut._log.info(f"*** Running Test {test_count+1}/{num_tests}: {nm} ***") 
                 self.tests_to_run[nm](dut)
@@ -46,17 +52,34 @@ class Runner:
             except Exception as e:
                 if len(e.args):
                     dut._log.error(f"T*** Test '{nm}' FAIL: {e.args[0]} ***")
+                    if e.args[0] is None or not e.args[0]:
+                        failures[nm] = " "
+                    else:
+                        failures[nm] = e.args[0]
+                        
                 else:
                     buf = io.StringIO()
                     sys.print_exception(e, buf)
                     dut._log.error(buf.getvalue())
-                failures += 1
+                    failures[nm] = " "
+                    
+                num_failures += 1
             
                 
-        if failures:
-            dut._log.warn(f"{failures}/{len(self.test_names)} tests failed")
+        if num_failures:
+            dut._log.warn(f"{num_failures}/{len(self.test_names)} tests failed")
         else:
             dut._log.info(f"All {len(self.test_names)} tests passed")
+        
+        dut._log.info("*** Summary ***")
+        for nm in self.test_names:
+            if failures[nm]:
+                dut._log.error(f"\tFAIL\t{nm}\t{failures[nm]}")
+            else:
+                if nm in self.skipped_names:
+                    dut._log.warn(f"\tSKIP\t{nm}")
+                else:
+                    dut._log.warn(f"\tPASS\t{nm}")
         
         
         
@@ -80,12 +103,13 @@ def test(func=None, *,
             asyncio.run(func(dut))
         
         def skipper_func(dut):
-            dut._log.warn(f"{test_name} skipped")
-            
-        if skip:
-            return skipper_func
+            dut._log.warn(f"{test_name} skip=True")
         
-        runner.add_test(wrapper_func, func.__name__)
+        if skip:
+            runner.add_skipped(test_name)
+            runner.add_test(skipper_func, test_name)
+            return skipper_func
+        runner.add_test(wrapper_func, test_name)
         return wrapper_func
     
     return my_decorator_func
