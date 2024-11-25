@@ -50,6 +50,9 @@ class Runner:
                 self.tests_to_run[nm](dut)
                 dut._log.warn(f"*** Test '{nm}' PASS ***")
             except Exception as e:
+                buf = io.StringIO()
+                sys.print_exception(e, buf)
+                dut._log.error(buf.getvalue())
                 if len(e.args):
                     dut._log.error(f"T*** Test '{nm}' FAIL: {e.args[0]} ***")
                     if e.args[0] is None or not e.args[0]:
@@ -58,9 +61,6 @@ class Runner:
                         failures[nm] = e.args[0]
                         
                 else:
-                    buf = io.StringIO()
-                    sys.print_exception(e, buf)
-                    dut._log.error(buf.getvalue())
                     failures[nm] = " "
                     
                 num_failures += 1
