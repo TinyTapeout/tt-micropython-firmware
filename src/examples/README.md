@@ -119,11 +119,16 @@ In addition, though this is as of yet unsupported in cocotb v2 (I've submitted p
 
 The SDK cocotb implementation supports
 
-  * @cocotb.test() detection, with all optional parameters (though as of name, expect_fail, timeout_* and skip are respected)
+  * @cocotb.test() detection, with all optional parameters (as of now name, expect_fail, timeout_* and skip are respected)
     
   * setting up one or more clocks using Clock() and cocotb.start_soon()
+  
+  * get_sim_time()
     
   * await on Timer, ClockCycles, RisingEdge, and FallingEdge
+  
+  
+
 
 
 ### test runner
@@ -171,8 +176,6 @@ For example, my old neptune testbench looks like this in verilog
 
 
 ```
-
-
 
 // testbench is controlled by test.py
 module tb (
