@@ -183,7 +183,9 @@ True
 
 ```
 
-Though this is not yet supported in cocotb v2, read and writes to bits and slices are supported, both on the port (e.g. ui_in) and its value (ui_in.value)
+Though this is not yet supported in cocotb v2, read and writes to bits and slices are supported, both on the port (e.g. ui_in) and its value (ui_in.value).
+
+Note that a slice acts like in verilog, such that `value[2:0]` is **3** bits wide.
 
 ```
 >>> tt.ui_in.value = 0
@@ -319,17 +321,17 @@ tt.
 and then use the TAB-completion--it's really handy and let's you know what's available.  E.g.
 
 ```
-tt.shuttle.<TAB><TAB>
+tt.u<TAB><TAB>
 ```
 
-will show you all the projects you can enable.
+will show you all the i/o ports you can play with.
 
 
 ## Initialization
 
 When the DemoBoard object is created, you _may_ give it a parameter to indicate how you intend to use it.  
 
-If not specifed, the value in `config.ini` DEFAULT section `mode` will be used.
+If not specifed, the value in [config.ini](src/config.ini) DEFAULT section `mode` will be used.
 
 
 Possible values are:
@@ -352,58 +354,23 @@ tt = DemoBoard(RPMode.ASIC_MANUAL_INPUTS) # ASIC drives only management pins all
 
 ```
 
-If you've played with the pin mode (direction), you've loaded a project that modified the mode or you just want to change modes, you can set the attribute explicitly or call reset() on the Pins container
+If you've played with the pin mode (direction), you've loaded a project that modified the mode or you just want to change modes, you can set the attribute
 
 ```
 
 # simply set the tt mode
 tt.mode = RPMode.ASIC_RP_CONTROL
-
-# or call reset on the pins, to set to whatever the
-# last mode was
-tt.pins.reset()
-
-# or with a parameter, to change modes
-tt.pins.reset(RPMode.SAFE) # make everything* an input
 ```
-
-
-
-
 
 ### Automatic Load and Default Config
 
-The `config.ini` file has a **DEFAULT** section that may be used to specify the demo board mode, and default project to enable.
+The [config.ini](src/config.ini) file has a **DEFAULT** section that may be used to specify the demo board mode, default project to enable and other things.
 
-```
-[DEFAULT]
-# project: project to load by default
-project = tt_um_test
-
-# start in reset (bool)
-start_in_reset = no
-
-# mode can be any of
-#  - SAFE: all RP2040 pins inputs
-#  - ASIC_RP_CONTROL: TT inputs,nrst and clock driven, outputs monitored
-#  - ASIC_MANUAL_INPUTS: basically same as safe, but intent is clear
-mode = ASIC_RP_CONTROL
-
-```
 Each project on the shuttle may have it's own section as well, with additional attributes.  All attributes are optional.
-See the config section, below, for details.
 
+More info on this file and its parameters may be found in [config.md](config.md)
 
-## Projects
-
-## Configuration
-
-A `config.ini` file may be used to setup defaults (e.g. default mode or project to load on boot) as well as specific configuration to apply when loading a project in particular.  See the included `config.ini` for samples with commentary.
-
-Projects may use their own sections in this file to do preliminary setup, like configure clocking, direction and state of bidir pins, etc.
-
-If you're connected to the REPL, the configuration can be probed just by looking at the repr string or printing the object out
-
+When using the SDK, the user config and various sections are exposed through the `tt.user_config` attribute.
 
 ```
 >>> tt.user_config
@@ -437,92 +404,59 @@ UserProjectConfig tt_um_vga_clock
 
 
 
+## uPython Pins
 
-### Sections and Values
-
-This is *similar* to, but not the same (because hand-crufted) as the python config parser.
-
-Sections are simply name `[SECTION]`.
-
-Values are 
-
-```
-key = value
-```
-
-Where the value may be
-
-   * a string
-   * a numerical value (an int, float, 0xnn or 0bnnnnnnnn representation)
-   * a boolean (true, false, yes, no)
-   * a comment (a line beginning with #)
-
-
-### System Defaults
-
-System-wide default settings supported are
-
-project: (string) name of project to load on boot, e.g. *tt_um_loopback*
-
-mode: (string) ASIC_RP_CONTROL, ASIC_MANUAL_INPUTS (to use the on-board switches/buttons), or SAFE 
-
-start_in_reset: (bool) whether projects should have their nRESET pin held low when enabled
-
-rp_clock_frequency: system clock frequency
-
-
-### Project-specific
-
-Some values may be auto-configured when enabling a project, by having them specified in their own section.
-The section name is 
-
-```
-[PROJECT_NAME]
-```
-
-as specified in the shuttle, for instance
-
-```
-[tt_um_psychogenic_neptuneproportional]
-
-```
-
-Values that may be set are
- * clock_frequency: Frequency, in Hz, to auto-clock on project clock pin (ignored if in ASIC_MANUAL_INPUTS)
- * rp_clock_frequency: system clock frequency -- useful if you need precision for your project clock PWM
- * input_byte: value to set for inputs on startup (ignored if in ASIC_MANUAL_INPUTS)
- * bidir_direction: bits set to 1 are driven by RP2040
- * bidir_byte: actual value to set (only applies to outputs)
- * mode: tt mode to set for this project
-
-
-Values unspecified in a configuration are left as-is on project enable().
-
-Project auto-clocking is stopped by default when a project is loaded.  If the clock_frequency is set, then 
-it will be setup accordingly (*after* the rp_clock_frequency has been configured if that's present).
-
-Bi-directional pins (uio*) are reset to inputs when enabling another project.
-
-
-## Pins
-
-Pins may be read by "calling" them:
+Individual pins may be read, either on the port in question
 
 ```
 if tt.uo_out[5]:
     # do something
 ```
 
-and set by calling with a param
+or on the cocotb-like .value
+
+```
+if tt.uio_out.value[3]:
+    # do something else
+```
+
+and set by assigment:
 
 ```
 tt.ui_in[7] = 1
 ```
 
-Mode may be set with the `mode` attrib
+This also works with slices:
 
 ```
-tt.ui03.mode = Pin.OUT
+tt.ui_in[4:2] = 0b101
+```
+
+Again, it's worth noting that this acts as in verilog, so ui_in[4:2] includes bits 4,3 and 2.
+
+
+### RP2040 pin objects
+
+It's recommended that you stick with reading and writing values using the u* ports as described above.
+
+Still, there may be cases where you want to play with micropython pin objects themselves, say to set pull-ups
+
+In those particular cases, the tt.pins object has 
+
+  * ui_inN
+  
+  * uo_outN
+  
+  * uioN
+  
+attributes you can interact with.
+
+```
+>>> tt.pins.uo_out5.pull == Pin.PULL_UP
+False
+>>> tt.pins.uo_out5.pull = Pin.PULL_UP
+>>> tt.pins.uo_out5.pull == Pin.PULL_UP
+True
 ```
 
 
@@ -535,250 +469,5 @@ tt.pins.uio_in3.pwm(FREQUENCY, [DUTY_16])
 If FREQUENCY is 0, PWM will stop and it will revert to simple output.  If duty cycle is not specified, it will be 50% (0xffff/2).
 
 
-The tt ran out of pinnage for all the things it wanted to do, so some of the connections actually go through a multiplexer.
-
-Do you care?  No.  And you shouldn't need to.
-
-All the pins can be read or set by simply calling them:
-
-```
-tt.uio_out[4] # no param: read.  Returns the current value of uio4
-tt.ui_in[7] = 0 # with a param: write.  So here, make in7 low
-```
-
-
-The callable() interface for the pins is available regardless of which pin it is.
-
-Under the hood, these aren't actually *machine.Pin* objects (though you can access that too) but in most instances they behave the same, so you could do things like `tt.pins.ui_in7.irq(...)` etc.  In addition, they have some useful properties that I have no idea why are lacking from machine.Pin most of the time, e.g.
-
-```
-tt.pins.uio_in4.mode = Pin.IN
-tt.pins.uio_in4.pull = Pin.PULL_UP
-
-print(f'{tt.pins.uio_in4.name} is on GPIO {tt.pins.uio_in4.gpio_num} and is an {tt.pins.uio_in4.mode_str}')
-```
-
-
-
-In some instances--those pins that are actually behind the hardware multiplexer--*all* they 
-have is the call() interface and will die if you try to do machine.Pin type things.
-
-This is on purpose, as a reminder that these are special (e.g. `out0` isn't really a pin, here... 
-you want an IRQ? set it explicitly on `tt.sdi_out0`).  See below, in "MUX Stuff" for more info.
-
-Pins that are logically grouped together in our system can be accessed that way:
-
-```
-
-for i in tt.inputs:
-    i(1)
-
-# easier to just
-tt.ui_in.value = 0xff
-
-print(tt.uo_out.value)
-tt.bidirs[2](1)
-
-```
-
-The list (all 8 pins) and XYZ_byte attributes are available for inputs, outputs and bidir.  Finally, these ports also have a XYZ_mode attribute, which is just a list of the pin direction that lets you read them or set them all in one go, mostly useful with the bidir pins.
-
-```
->>> from machine import Pin
->>> # uio pins are currently all inputs
->>> tt.pins.uio_in2.mode == Pin.OUT
-False
->>> tt.pins.uio_in3.mode == Pin.OUT
-False
->>> # change all to outputs, say
->>> tt.uio_oe[:] = [Pin.OUT]*8
->>> tt.pins.uio_in2.mode == Pin.OUT
-True
-```
-
-
-
-If you do not care for all this OO mucking about, you can always do things manual style as well.  The 
-RP GPIO to name mapping is available in the schematic or just use GPIOMap class attribs:
-
-```
-import machine
-from ttboard.pins import GPIOMap
-
-p = machine.Pin(GPIOMap.IN6, machine.Pin.OUT)
-# and all that
-```
-
-Just note that the MUX stuff needs to be handled for those pins.  
-
-
-### Available pins
-The pins available on the tt object include
-
-  * out0 - out7 # outputs, available as output_byte as well
-  * in0 - in7 # inputs, available as input_byte
-  * uio0 - uio7 # bidirectional pins, available as bidir_byte
-  * project_clk # the clock for synch projects
-  * project_nrst # the reset pin
-
-
-Though you can play with these two last to your heart's content, the easiest way to interact with these functions is through the utility methods:
-
-  * clock_project_PWM(FREQHz) / clock_project_stop()
-  * clock_project_once()
-  * tt.reset_project(BOOL) (True puts project in reset)
-  
-
-
-
-
-NOTE that this naming reflect the perspective of the *ASIC*.  The *ASIC* normally be writing to out pins and reading from in pins, and this is how pins are setup when using the `ASIC_RP_CONTROL` mode (you, on the RP2040, read from out5 so it is an Pin.IN, etc).
-
-
-### MUX Stuff
-
-In all instance except where the GPIO pins are MUXed, these behave just like machine.Pin objects.
-
-For the MUXed pins, these are also available, namely
-
-  * sdi_nprojectrst
-  * cena_out1
-  * ncrst_out2
-  * cinc_out3
-  
-You don't normally want to play with these, but you can.  The interesting thing you 
-don't *have* to know is how the MUX is transparently handled, but I'm telling you 
-anyway with an example
-
-```
->>> # look at this muxed bare GPIO pin
->>> tt.sdi_nprojectrst
-<MuxedPin sdi_nprojectrst 3 (HPIN selected, OUT) sdi[OUT]/nprojectrst[OUT]>
-
->>> # act on the transparently muxed pin object
->>> tt.sdi(1)
-
->>> # now the demoboard mux has switched over
->>> tt.sdi_nprojectrst
-<MuxedPin sdi_nprojectrst 3 (LPIN selected, OUT) sdi[OUT]/nprojectrst[OUT]>
-
->>> # use the reset, which is shared with SDI
->>> tt.rst_n(1)
-
->>> # demoboard mux is back to high-side selected
->>> tt.sdi_nprojectrst
-<MuxedPin sdi_nprojectrst 3 (HPIN selected, OUT) sdi[OUT]/nprojectrst[OUT]>
->>> 
-
-
-
-```
-
-## Useful Utils
-
-You may do everything manually, if desired, using the pins.  Some useful utility methods are
-
-```
-
-# reset_project: make it clear
-tt.reset_project(True) # held in reset
-tt.reset_project(False) # not in reset
-
-
-# under normal operation, the project clock is 
-# an output 
->>> tt.clk
-<StandardPin rp_projclk 0 OUT>
-
-
-# clock_project_PWM: enough bit-banging already
-# auto PWM the project_clk
-tt.clock_project_PWM(500e3) # clock at 500kHz
-
-Since it's PWMed, we now have direct access to that
->>> tt.clk
-<PWM slice=0 channel=0 invert=0>
-
->>> tt.project_clk.freq()
-500000
-
-
-# later
-tt.clock_project_stop() # ok, stop that
-# or
-tt.clock_project_PWM(0) # stops it
-
-# back to normal output
->>> tt.clk
-<StandardPin rp_projclk 0 OUT>
-
-```
-
-You may also PWM any other pin, in the usual uPython way, but you'll have to manage it on your own and deinit if you switch projects etc.  
-
-When using project PWM auto-clocking, or any PWM, be sure to set the RP system clock, if required, before engaging the PWM--I've seen bad behaviour otherwise.
-
-Many objects have decent representation so you can inspect them just by entering their references in the console
-
-```
->>> tt
-<DemoBoard as ASIC_RP_CONTROL, auto-clocking @ 10, project 'tt_um_test' (in RESET)>
-
->>> tt.pins.uio_in3
-<StandardPin uio3 24 IN>
-
->>> tt.pins.ui_in0
-<StandardPin in0 9 OUT>
-
-```
-
-And the DemoBoard objects have a *dump()* method to help with debug.
-
-```
->>> tt.dump()
-
-Demoboard status
-Demoboard default mode is ASIC_RP_CONTROL
-Project nRESET pin is OUT 0
-Project clock PWM enabled and running at 10
-Selected design: tt_um_test
-Pins configured in mode ASIC_RP_CONTROL
-Currently:
-  cena_uo_out1 IN 0
-  cinc_uo_out3 IN 0
-  hk_csb OUT 1
-  hk_sck IN 0
-  hk_sdo IN 0
-  ncrst_uo_out2 IN 0
-  rp_projclk IN 0
-  rpio29 IN 0
-  sdi_nprojectrst IN 1
-  ui_in0 OUT 1
-  ui_in1 OUT 0
-  ui_in2 OUT 0
-  ui_in3 OUT 0
-  ui_in4 OUT 0
-  ui_in5 OUT 0
-  ui_in6 OUT 0
-  ui_in7 OUT 0
-  uio0 IN 0
-  uio1 IN 0
-  uio2 IN 0
-  uio3 IN 0
-  uio4 IN 0
-  uio5 IN 0
-  uio6 IN 0
-  uio7 IN 0
-  uo_out0 IN 0
-  uo_out4 IN 0
-  uo_out5 IN 0
-  uo_out6 IN 0
-  uo_out7 IN 0
-
-
-
-
-
-```
 
 

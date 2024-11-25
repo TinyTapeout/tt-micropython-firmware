@@ -1,6 +1,6 @@
 # TT demo board configuration
 
-
+A *config.ini* file, in the filesystem root, specifies default behaviour and, optionally, project-specific settings. 
 
 ### Automatic Load and Default Config
 
