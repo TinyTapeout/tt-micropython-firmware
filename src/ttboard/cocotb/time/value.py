@@ -80,26 +80,38 @@ class TimeValue:
             return None 
         return TimeValue(self.time*1000, smaller_units)
         
+    def _directly_comparable(self, other):
+        return isinstance(other, TimeValue) and other.units == self.units 
+    
     def __float__(self):
         if self._as_float is None:
             self._as_float = self.time*self.scale
         return self._as_float
     
     def __gt__(self, other):
+        if self._directly_comparable(other):
+            return self.time > other.time 
+        
         if isinstance(other, (TimeValue, float)):
             return float(self) > float(other)
         raise ValueError
     
     def __lt__(self, other):
+        if self._directly_comparable(other):
+            return self.time < other.time 
         return float(self) < float(other)
     
     def __le__(self, other):
         return not (self > other)
     
     def __ge__(self, other):
+        if self._directly_comparable(other):
+            return self.time >= other.time 
         return float(self) >= float(other)
     
     def __eq__(self, other):
+        if self._directly_comparable(other):
+            return self.time == other.time 
         return float(self) == float(other)
     
     def __iadd__(self, other):
