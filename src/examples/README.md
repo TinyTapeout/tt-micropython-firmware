@@ -88,6 +88,17 @@ Then, in your test, you would set
 
 ### functionality 
 
+The SDK cocotb implementation supports
+
+  * @cocotb.test() detection, with all optional parameters (as of now name, expect_fail, timeout_* and skip are respected)
+    
+  * setting up one or more clocks using Clock() and cocotb.start_soon()
+  
+  * get_sim_time()
+    
+  * await on Timer, ClockCycles, RisingEdge, and FallingEdge
+  
+
 Within tests, you may read
 
   * dut.uo_out.value
@@ -116,18 +127,6 @@ In addition, though this is as of yet unsupported in cocotb v2 (I've submitted p
 	dut.ui_in.value[3:2] = 0b11 
 	assert dut.uo_out.value[7] == 1, "high bit should be TRUE"
 ```
-
-The SDK cocotb implementation supports
-
-  * @cocotb.test() detection, with all optional parameters (as of now name, expect_fail, timeout_* and skip are respected)
-    
-  * setting up one or more clocks using Clock() and cocotb.start_soon()
-  
-  * get_sim_time()
-    
-  * await on Timer, ClockCycles, RisingEdge, and FallingEdge
-  
-  
 
 
 
