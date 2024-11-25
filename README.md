@@ -1,4 +1,4 @@
-# TT4+ MicroPython SDK
+# TT4+ MicroPython SDK v2
 
 &copy; 2024 Pat Deegan, [psychogenic.com](https://psychogenic.com)
 
@@ -7,11 +7,17 @@ entry point to all the Tiny Tapeout demo pcb's RP2040 functionality.
 
 What the RP2040 and this SDK provides, in addition to a base micropython environment (from crucial to nice-to-have):
 
-  *  It handles the ASIC project mux, and gives you a way to forget the json config and do `tt.shuttle.tt_um_myproject.enable()` to select between projects on the chip
+  *  It provides an interface equivalent to the [Verilog project](https://github.com/TinyTapeout/tt10-verilog-template/blob/main/src/project.v) and compatible with [cocotb v2](https://www.cocotb.org/) DUTs
+  
+  *  Has a [cocotb v2](https://www.cocotb.org/) system to allow desktop @cocotb.test() functions to be used pretty much as-is, on the RP2040 with hardware in the loop, interacting with actual designs (for example, see the [factory test testbench](src/examples/tt_um_factory_test/tt_um_factory_test.py)
+  
+  *  Handles the demoboard pin multiplexing transparently (TT04 and TT05 demoboards)
+  
+  *  Allows you to forget the json config and do `tt.shuttle.tt_um_myproject.enable()` to select between projects on the chip
 
   *  Interfaces with all the project I/O, clocking and reset, lets you control those completely programatically, or clock+reset only (say, if you're connecting a PMOD like the Simon), or to be in full don't-touch mode while still being able to switch between projects
 
-  *  Provides abstractions related to the ASIC, so you don't *have* to use individual pins but can think in terms of *ports* (in/out/bidir) and transparently deals with the demoboard-level MUX we had to put on there because we didn't have as many I/O as needed for all the things we wanted to do
+  *  Provides abstractions related to the ASIC, so you don't *have* to use individual pins but can think in terms of *ports* (inputs, outputs and bidirectionals)
 
   * Gives a system to allow for configuration using a simple config.ini: options for default project loaded on boot, clock speed (both RP2040 and project), settings for bidir pin directions on a per-project level, project load input pin state, etc 
 
@@ -23,7 +29,7 @@ What the RP2040 and this SDK provides, in addition to a base micropython environ
 The RP2040 makes installation really simple:
 
   * get a UF2 file, which includes OS, SDK and configuration, from the [releases](https://github.com/TinyTapeout/tt-micropython-firmware/releases), e.g. 
-  tt-demo-rp2040-v0.9.14.uf2
+  tt-demo-rp2040-v2.0.0
 
   * Hold the boot button on the demo board, and connect to computer via the USB port (top left)
 
@@ -37,50 +43,227 @@ The system will go through a little sequence on first boot and twiddle the 7-seg
 
 
 
-## Quick Start
+# Quick Start
 
-See main.py for some sample usage of scripts.  You can also see example interaction with projects from the SDK in the [examples package](src/examples/).
+See [main.py](src/main.py) to see how things are initialized by default and you can also see example interaction with projects from the SDK in the [examples packages](src/examples/).
 
 A good way to get a feel for the system is to connect via a serial terminal through the USB port and explore the REPL.
 
 
-### Automatic Load and Default Config
+## Selecting and loading projects
 
-The `config.ini` file has a **DEFAULT** section that may be used to specify the demo board mode, and default project to enable.
+The DemoBoard object has a `shuttle` attribute, which is a container with all the project designs (loaded from a JSON file).
 
-```
-[DEFAULT]
-# project: project to load by default
-project = tt_um_test
-
-# start in reset (bool)
-start_in_reset = no
-
-# mode can be any of
-#  - SAFE: all RP2040 pins inputs
-#  - ASIC_RP_CONTROL: TT inputs,nrst and clock driven, outputs monitored
-#  - ASIC_MANUAL_INPUTS: basically same as safe, but intent is clear
-mode = ASIC_RP_CONTROL
+Projects are objects which are accessed by name, e.g.
 
 ```
-Each project on the shuttle may have it's own section as well, with additional attributes.  All attributes are optional.
-See the config section, below, for details.
+>>> tt.shuttle.wokwi_shifty_snakey
+<Design 74: wokwi_shifty_snakey>
+```
+
+or by project address
+
+```
+>>> tt.shuttle[74]
+<Design 74: wokwi_shifty_snakey>
+```
 
 
-### REPL and Scripting
+These can be enabled by calling ... enable()
+
+```
+>>> tt.shuttle.wokwi_shifty_snakey.enable()
+ttboard.project_mux: Enable design wokwi_shifty_snakey
+ttboard.demoboard: Resetting system clock to default 1.25e+08Hz
+>>> 
+```
+
+This does all the control signal twiddling needed to select and enable the project using the snazzy TinyTapeout MUX.
+
+
+If you know the specific project's official name, great, you can use that.  But if you don't, you can get a list of matching projects using `find()`, and call enable on any of the returned elements:
+
+```
+>>> tt.shuttle.find('traffic')
+[<Design 71: wokwi_german_traffic_light>, <Design 180: wokwi_traffic_light>, <Design 115: wokwi_traffic_light_1>]
+>>>
+>>> tt.shuttle.find('traffic')[0].enable()
+ttboard.project_mux: Enable design wokwi_german_traffic_light
+
+```
+
+Wokwi projects have horrible names like *tt_um_wokwi_375288605206694913* by default, which makes it pretty tough to peruse.  Instead, they get aliases based on their name in the shuttle, prefixed by wokwi:
+
+```
+>>> tt.shuttle.find('wokwi')
+[ <Design 298: wokwi_2bit_alu_dice>, <Design 102: wokwi_7_segment_display>, <Design 192: wokwi_7_segment_seconds>, 
+  <Design 32: wokwi_7_segment_seconds_verilog_demo>, <Design 99: wokwi_7segment_display_logic_system_>, 
+  <Design 207: wokwi_agl_corticoneuro1>, <Design 101: wokwi_analog_clock>, <Design 41: wokwi_binary_counter>, 
+  <Design 77: wokwi_blinking_a>, <Design 46: wokwi_character_selector>, <Design 40: wokwi_clock_divider>, 
+# etc...
+```
+
+The currently enabled project, if any, is accessible in an `enabled` attribute on the shuttle
+
+```
+>>> tt.shuttle.tt_um_factory_test.enable()
+
+>>> tt.shuttle.enabled
+<Design 1: tt_um_factory_test>
+
+>>> tt
+<DemoBoard in ASIC_RP_CONTROL tt04 project 'tt_um_factory_test (1) @ https://github.com/TinyTapeout/tt04-factory-test'>
+
+```
+
+
+
+## Interacting with I/O
+
+Through scripts installed on in the [micropython](https://www.micropython.org/) filesystem or with the demoboard plugged into USB and a serial terminal connected, you can load a design using the shuttle
+
+```
+>>> tt.shuttle
+<ProjectMux for tt05 with 173 projects>
+>>> tt.shuttle.tt_um_factory_test
+<Design 1: tt_um_factory_test>
+>>> tt.shuttle.tt_um_factory_test.enable()
+ttboard.project_mux: Enable design tt_um_factory_test
+ttboard.demoboard: Resetting system clock to default 1.25e+08Hz
+ttboard.demoboard: Clocking at 10Hz
+>>> 
+```
+
+With a project loaded, you can interact with the project I/O using the following attributes on the tt (DemoBoard) object
+
+  * ui_in, design inputs
+  
+  * uo_out, design outputs
+  
+  * uio_in, design bidirectionals (as inputs)
+  
+  * uio_out, design bidirectionals (as outputs)
+  
+Note that these are all named from the **ASICs** point of view, i.e. you--from the RP2040 user side--will be *writing* to the inputs (ui_in) and reading from the outputs (uo_out).
+
+```
+>>> tt.ui_in
+<IO ui_in 0x1>
+>>> tt.ui_in.value
+<LogicArray('00000001', Range(7, 'downto', 0))>
+>>> tt.ui_in.value = 0
+>>> tt.ui_in.value = 0b11110000
+>>> tt.ui_in
+<IO ui_in 0xf0>
+>>> tt.ui_in.value
+<LogicArray('11110000', Range(7, 'downto', 0))>
+>>> int(tt.ui_in.value)
+240
+>>> hex(tt.ui_in.value)
+'0xf0'
+
+```
+
+
+The second thing to keep in mind is that these ports are arranged in an order common when using Verilog.  That means that, for an 8-bit value like our ports, index 7 is the MSB and index 0 the LSB
+
+
+```
+>>> print(tt.ui_in.value)
+11110000
+>>> tt.ui_in[7]
+<Logic ('1')>
+>>> tt.ui_in[7] == 1
+True
+>>> tt.ui_in[0]
+<Logic ('0')>
+>>> tt.ui_in.value[0] = 1
+>>> tt.ui_in.value[0] == 1
+True
+
+```
+
+Though this is not yet supported in cocotb v2, read and writes to bits and slices are supported, both on the port (e.g. ui_in) and its value (ui_in.value)
+
+```
+>>> tt.ui_in.value = 0
+>>> tt.ui_in.value
+<LogicArray('00000000', Range(7, 'downto', 0))>
+>>> tt.ui_in.value[5:2]
+<LogicArray('0000', Range(5, 'downto', 2))>
+>>> tt.ui_in.value[5:2] = 0b1010
+>>> tt.ui_in.value
+<LogicArray('00101000', Range(7, 'downto', 0))>
+>>> tt.ui_in.value[5:2] == 0b1010
+True
+```
+
+
+## Project clocking and reset
+
+To put a project in or out of reset, use `project_reset(BOOL)`
+
+```
+# hold in reset
+>>> tt.reset_project(True)
+ttboard.demoboard: Changing reset to output mode
+# ... do things
+>>> tt.reset_project(False)
+# now not in reset
+
+```
+
+When in reset, the `rst_n` pin is held LOW.  The button on the demoboards does the same job.
+
+Clocking can be done manually using the button (assuming you *aren't* auto-clocking), a single tick at a time or the system may be auto-clocked.
+
+```
+# do one clock cycle:
+>>> tt.clock_project_once()
+
+# auto-clock using PWM
+>>> tt.clock_project_PWM(1000)
+ttboard.demoboard: Clocking at 1000Hz
+>>> tt.is_auto_clocking
+True
+>>> tt.auto_clocking_freq
+1000
+>>> tt.clock_project_stop()
+>>> tt.is_auto_clocking
+False
+```
+
+
+## REPL and Scripting
 
 After install, scripts or the REPL may be used.  With micropython, the contents of main.py are executed on boot.
 
-Efforts have been made to make console use easy, so do try out code completion using <TAB>, e.g.
+Efforts have been made to make console use easy, so most things have a terse representation you can see by just typing in the object
 
 ```
-tt.shuttle.<TAB><TAB>
-
+>>> tt.shuttle
+<ProjectMux for tt05 with 173 projects>
+>>> tt.shuttle.enabled
+<Design 1: tt_um_factory_test>
+>>> tt.uo_out
+<IO uo_out 0x0>
 ```
 
-will show you all the projects that might be enabled, etc.
+and many objects also have string representations that provide more and/or prettier information
 
-
+```
+>>> print(tt.shuttle)
+Shuttle tt05
+>>> print(tt.uo_out)
+00000000
+>>> print(tt.shuttle.enabled)
+tt_um_factory_test (1) @ https://github.com/TinyTapeout/tt05-factory-test
+>>> print(tt.user_config.tt_um_vga_clock)
+tt_um_vga_clock
+  clock_frequency: 3.15e+07
+  mode: ASIC_RP_CONTROL
+  rp_clock_frequency: 1.26e+08
+```
 
 Here's a sample REPL interaction with an overview of things to do
 
@@ -93,34 +276,29 @@ from ttboard.demoboard import DemoBoard
 tt = DemoBoard()
 
 # enable a specific project, e.g.
-tt.shuttle.tt_um_test.enable()
+tt.shuttle.tt_um_factory_test.enable()
 
-print(f'Project {tt.shuttle.enabled.name} running ({tt.shuttle.enabled.repo})')
+print(f'Project {tt.shuttle.enabled.name} running')
 
 # play with the inputs
-tt.in0(1)
-tt.in7(1)
+tt.ui_in[0] = 1
+tt.ui_in[7] = 1
 # or as a byte
-tt.input_byte = 0xAA
+tt.ui_in.value = 0xAA
 
 # start automatic project clocking
 tt.clock_project_PWM(2e6) # clocking projects @ 2MHz
 
 
 # observe some outputs
-if tt.out2():
-    print("Aha!")
+if tt.uo_out[2]:
+   print("Aha!")
 
-print(f'Output is now {tt.output_byte}')
+print(f'Output is now {tt.uo_out}')
 
 # play with bidir pins manually (careful)
-tt.uio2.mode = Pin.OUT
-tt.uio2(1) # set high
-
-# or set a PWM on some pin (output to RP2040/input to ASIC)
-tt.uio2.pwm(2000) # set to 2kHz, duty may be specified
-
-tt.uio2.pwm(0) # stop PWMing
+tt.uio_oe_pico.value = 0b100
+tt.uio_in[2] = 1 # set high
 
 # if you changed modes on pins, like bidir, and want 
 # to switch project, reset them to IN or just
@@ -190,79 +368,33 @@ tt.pins.reset(RPMode.SAFE) # make everything* an input
 ```
 
 
+
+
+
+### Automatic Load and Default Config
+
+The `config.ini` file has a **DEFAULT** section that may be used to specify the demo board mode, and default project to enable.
+
+```
+[DEFAULT]
+# project: project to load by default
+project = tt_um_test
+
+# start in reset (bool)
+start_in_reset = no
+
+# mode can be any of
+#  - SAFE: all RP2040 pins inputs
+#  - ASIC_RP_CONTROL: TT inputs,nrst and clock driven, outputs monitored
+#  - ASIC_MANUAL_INPUTS: basically same as safe, but intent is clear
+mode = ASIC_RP_CONTROL
+
+```
+Each project on the shuttle may have it's own section as well, with additional attributes.  All attributes are optional.
+See the config section, below, for details.
+
+
 ## Projects
-
-The DemoBoard object has a `shuttle` attribute, which is a container with all the project designs (loaded from a JSON file).
-
-Projects are objects which are accessed by name, e.g.
-
-```
-tt.shuttle.tt_um_gatecat_fpga_top
-# which has attributes
-tt.shuttle.tt_um_gatecat_fpga_top.repo
-tt.shuttle.tt_um_gatecat_fpga_top.commit
-# ...
-
-```
-
-These can be enabled by calling ... enable()
-
-```
-tt.shuttle.tt_um_gatecat_fpga_top.enable()
-```
-
-This does all the control signal twiddling needed to select and enable the project using the snazzy TinyTapeout MUX.
-
-
-
-
-If you know the specific project's official name, great, you can use that
-```
-tt.shuttle.tt_um_urish_usb_cdc.enable()
-```
-
-If you don't, you can get a list of matching projects using `find()`, and call enable on any of the returned elements:
-
-```
->>> tt.shuttle.find('traffic')
-[<Design 71: wokwi_german_traffic_light>, <Design 180: wokwi_traffic_light>, <Design 115: wokwi_traffic_light_1>]
->>>
->>> tt.shuttle.find('traffic')[0].enable()
-ttboard.project_mux: Enable design wokwi_german_traffic_light
-
-```
-
-Wokwi projects have horrible names like *tt_um_wokwi_375288605206694913* by default, which makes it pretty tough to peruse.  Instead, they get aliases based on their name in the shuttle, prefixed by wokwi:
-
-```
->>> tt.shuttle.wokwi_<TAB>
-wokwi_uart_character_tx
-wokwi_customizable_uart_string_tx               
-wokwi_padlock
-wokwi_7seg_tiny_tapeout_display
-wokwi_test_4x4_memory
-wokwi_8_bit_4_data_sorting_network
-wokwi_multichannel_pulse_counter_with_serial_output_v01a
-wokwi_traffic_light             
-# etc...
-```
-
-
-
-The currently enabled project, if any, is accessible in
-
-```
->>> tt.shuttle.tt_um_factory_test.enable()
-
->>> tt.shuttle.enabled
-<Design 1: tt_um_factory_test>
-
-
->>> tt
-<DemoBoard in ASIC_RP_CONTROL tt04 project 'tt_um_factory_test (1) @ https://github.com/TinyTapeout/tt04-factory-test'>
-
-```
-
 
 ## Configuration
 
@@ -377,14 +509,14 @@ Bi-directional pins (uio*) are reset to inputs when enabling another project.
 Pins may be read by "calling" them:
 
 ```
-if tt.out5():
+if tt.uo_out[5]:
     # do something
 ```
 
 and set by calling with a param
 
 ```
-tt.in7(1)
+tt.ui_in[7] = 1
 ```
 
 Mode may be set with the `mode` attrib
@@ -397,7 +529,7 @@ tt.ui03.mode = Pin.OUT
 Pins that are outputs (depends on tt mode) may be setup to automatically clock using
 
 ```
-tt.uio3.pwm(FREQUENCY, [DUTY_16])
+tt.pins.uio_in3.pwm(FREQUENCY, [DUTY_16])
 ```
 
 If FREQUENCY is 0, PWM will stop and it will revert to simple output.  If duty cycle is not specified, it will be 50% (0xffff/2).
@@ -410,20 +542,20 @@ Do you care?  No.  And you shouldn't need to.
 All the pins can be read or set by simply calling them:
 
 ```
-tt.uio4() # no param: read.  Returns the current value of uio4
-tt.in7(0) # with a param: write.  So here, make in7 low
+tt.uio_out[4] # no param: read.  Returns the current value of uio4
+tt.ui_in[7] = 0 # with a param: write.  So here, make in7 low
 ```
 
 
 The callable() interface for the pins is available regardless of which pin it is.
 
-Under the hood, these aren't actually *machine.Pin* objects (though you can access that too) but in most instances they behave the same, so you could do things like `tt.in7.irq(...)` etc.  In addition, they have some useful properties that I have no idea why are lacking from machine.Pin most of the time, e.g.
+Under the hood, these aren't actually *machine.Pin* objects (though you can access that too) but in most instances they behave the same, so you could do things like `tt.pins.ui_in7.irq(...)` etc.  In addition, they have some useful properties that I have no idea why are lacking from machine.Pin most of the time, e.g.
 
 ```
-tt.uio4.mode = Pin.IN
-tt.uio4.pull = Pin.PULL_UP
+tt.pins.uio_in4.mode = Pin.IN
+tt.pins.uio_in4.pull = Pin.PULL_UP
 
-print(f'{tt.uio4.name} is on GPIO {tt.uio4.gpio_num} and is an {tt.uio4.mode_str}')
+print(f'{tt.pins.uio_in4.name} is on GPIO {tt.pins.uio_in4.gpio_num} and is an {tt.pins.uio_in4.mode_str}')
 ```
 
 
@@ -442,9 +574,9 @@ for i in tt.inputs:
     i(1)
 
 # easier to just
-tt.input_byte = 0xff
+tt.ui_in.value = 0xff
 
-print(tt.output_byte)
+print(tt.uo_out.value)
 tt.bidirs[2](1)
 
 ```
@@ -454,13 +586,13 @@ The list (all 8 pins) and XYZ_byte attributes are available for inputs, outputs 
 ```
 >>> from machine import Pin
 >>> # uio pins are currently all inputs
->>> tt.uio2.mode == Pin.OUT
+>>> tt.pins.uio_in2.mode == Pin.OUT
 False
->>> tt.uio3.mode == Pin.OUT
+>>> tt.pins.uio_in3.mode == Pin.OUT
 False
 >>> # change all to outputs, say
->>> tt.bidir_mode = [Pin.OUT]*8
->>> tt.uio2.mode == Pin.OUT
+>>> tt.uio_oe[:] = [Pin.OUT]*8
+>>> tt.pins.uio_in2.mode == Pin.OUT
 True
 ```
 
@@ -531,7 +663,7 @@ anyway with an example
 <MuxedPin sdi_nprojectrst 3 (LPIN selected, OUT) sdi[OUT]/nprojectrst[OUT]>
 
 >>> # use the reset, which is shared with SDI
->>> tt.project_nrst(1)
+>>> tt.rst_n(1)
 
 >>> # demoboard mux is back to high-side selected
 >>> tt.sdi_nprojectrst
@@ -555,7 +687,7 @@ tt.reset_project(False) # not in reset
 
 # under normal operation, the project clock is 
 # an output 
->>> tt.project_clk
+>>> tt.clk
 <StandardPin rp_projclk 0 OUT>
 
 
@@ -564,7 +696,7 @@ tt.reset_project(False) # not in reset
 tt.clock_project_PWM(500e3) # clock at 500kHz
 
 Since it's PWMed, we now have direct access to that
->>> tt.project_clk
+>>> tt.clk
 <PWM slice=0 channel=0 invert=0>
 
 >>> tt.project_clk.freq()
@@ -577,7 +709,7 @@ tt.clock_project_stop() # ok, stop that
 tt.clock_project_PWM(0) # stops it
 
 # back to normal output
->>> tt.project_clk
+>>> tt.clk
 <StandardPin rp_projclk 0 OUT>
 
 ```
@@ -592,10 +724,10 @@ Many objects have decent representation so you can inspect them just by entering
 >>> tt
 <DemoBoard as ASIC_RP_CONTROL, auto-clocking @ 10, project 'tt_um_test' (in RESET)>
 
->>> tt.uio3
+>>> tt.pins.uio_in3
 <StandardPin uio3 24 IN>
 
->>> tt.in0
+>>> tt.pins.ui_in0
 <StandardPin in0 9 OUT>
 
 ```
@@ -612,28 +744,23 @@ Project clock PWM enabled and running at 10
 Selected design: tt_um_test
 Pins configured in mode ASIC_RP_CONTROL
 Currently:
-  cinc_out3 IN 0
-  ctrl_ena OUT 1
+  cena_uo_out1 IN 0
+  cinc_uo_out3 IN 0
   hk_csb OUT 1
   hk_sck IN 0
-  in0 OUT 0
-  in1 OUT 0
-  in2 OUT 0
-  in3 OUT 0
-  in4 OUT 0
-  in5 OUT 0
-  in6 OUT 0
-  in7 OUT 0
-  ncrst_out2 IN 0
-  nproject_rst OUT 0
-  out4 IN 0
-  out5 IN 0
-  out6 IN 0
-  out7 IN 0
-  rp_projclk OUT 0
+  hk_sdo IN 0
+  ncrst_uo_out2 IN 0
+  rp_projclk IN 0
   rpio29 IN 0
-  sdi_out0 IN 0
-  sdo_out1 IN 0
+  sdi_nprojectrst IN 1
+  ui_in0 OUT 1
+  ui_in1 OUT 0
+  ui_in2 OUT 0
+  ui_in3 OUT 0
+  ui_in4 OUT 0
+  ui_in5 OUT 0
+  ui_in6 OUT 0
+  ui_in7 OUT 0
   uio0 IN 0
   uio1 IN 0
   uio2 IN 0
@@ -642,6 +769,16 @@ Currently:
   uio5 IN 0
   uio6 IN 0
   uio7 IN 0
+  uo_out0 IN 0
+  uo_out4 IN 0
+  uo_out5 IN 0
+  uo_out6 IN 0
+  uo_out7 IN 0
+
+
+
+
 
 ```
+
 
