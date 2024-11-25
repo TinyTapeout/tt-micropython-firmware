@@ -13,7 +13,7 @@ you really need is something like
 
 Then you can 
     # enable test project
-    tt.shuttle.tt_um_test.enable()
+    tt.shuttle.tt_um_factory_test.enable()
 
 and play with i/o as desired.
 
@@ -131,12 +131,14 @@ print()
 
 print(f"tt.sdk_version={tt.version}")
 
-# to run tests easily import the module of interest, as below, and then 
-# test.run()
+# to run tests easily import a module of interest, as below, and then 
+# run() it
 
 # import examples.tt_um_psychogenic_shaman as test
 # import examples.tt_um_rejunity_sn76489 as test
 # import examples.tt_um_factory_test as test
 # import examples.tt_um_psychogenic_neptuneproportional as test 
 # import examples.tt_um_rgbled_decoder as test
+
+# test.run()
 
