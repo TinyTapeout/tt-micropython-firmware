@@ -73,7 +73,8 @@ class PinWrapper:
 class DUTWrapper:
     def __init__(self, name:str='DUT'):
         self.tt = DemoBoard.get()
-        self.clk = PinWrapper(self.tt.clk)
+        # wrap the bare clock pin
+        self.clk = PinWrapper(self.tt.pins.rp_projclk)
         self.rst_n = PinWrapper(self.tt.rst_n)
         ports = ['uo_out', 'ui_in', 'uio_in', 'uio_out', 'uio_oe_pico']
         for p in ports:
@@ -84,6 +85,10 @@ class DUTWrapper:
     @classmethod
     def new_slice_attribute(cls, source:IO, idx_or_start:int, slice_end:int=None):
         return SliceWrapper(source, idx_or_start, slice_end)
+    
+    @classmethod
+    def new_bit_attribute(cls, source:IO, bit_idx:int):
+        return SliceWrapper(source, bit_idx)
     
     def add_slice_attribute(self, source:IO, name:str, idx_or_start:int, slice_end:int=None):
         slc = self.new_slice_attribute(source, idx_or_start, slice_end)

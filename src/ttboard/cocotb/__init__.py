@@ -2,6 +2,8 @@ import asyncio
 import io 
 import sys
 
+from ttboard.demoboard import DemoBoard
+
 def start_soon(c):
     pass
 
@@ -39,6 +41,12 @@ class Runner:
     def test(self, dut):
         from ttboard.cocotb.time.system import SystemTime
         from ttboard.cocotb.clock import Clock
+        
+        ttdb = DemoBoard.get()
+        if ttdb.is_auto_clocking:
+            dut._log.debug("Stopping ttdb auto-clocking")
+            ttdb.clock_project_stop()
+        
         num_failures = 0
         num_tests = len(self.test_names)
         failures = dict()
