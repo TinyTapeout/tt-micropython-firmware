@@ -169,9 +169,10 @@ async def test_rgbled(dut):
 
 
 from ttboard.demoboard import DemoBoard
-from ttboard.cocotb.dut import DUTWrapper, Wire
+import ttboard.cocotb.dut
+from ttboard.cocotb.dut import Wire
 
-class RGBLED(DUTWrapper):
+class RGBLED(ttboard.cocotb.dut.DUT):
     def __init__(self, data:Wire, data_rdy:Wire):
         super().__init__('RGBLED')
         self.data = data 
@@ -179,7 +180,7 @@ class RGBLED(DUTWrapper):
         self.led = self.new_slice_attribute(self.tt.uo_out, 0)
         self.nreset = self.rst_n
 
-class TBSPI(DUTWrapper):
+class TBSPI(ttboard.cocotb.dut.DUT):
     
     def __init__(self, data:Wire, data_rdy:Wire):
         super().__init__('SPI')
@@ -190,7 +191,7 @@ class TBSPI(DUTWrapper):
         self.sclk = self.new_slice_attribute(self.tt.ui_in, 1)
         self.nsel = self.new_slice_attribute(self.tt.ui_in, 2)
         
-class DUT(DUTWrapper):
+class DUT(ttboard.cocotb.dut.DUT):
     def __init__(self):
         super().__init__('RGBDUT')
         self.data = Wire()
@@ -216,7 +217,6 @@ def main():
     
     tt.clock_project_stop()
     tt.uio_oe_pico.value = 0 # all inputs
-    Clock.clear_all()
     
     
     dut = DUT()

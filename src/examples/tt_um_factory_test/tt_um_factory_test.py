@@ -9,9 +9,10 @@ import math
 import gc
 from ttboard.demoboard import DemoBoard
 from ttboard.cocotb.clock import Clock
-from ttboard.cocotb.triggers import RisingEdge, FallingEdge, ClockCycles
+from ttboard.cocotb.triggers import RisingEdge, FallingEdge, ClockCycles, Timer
 import ttboard.cocotb as cocotb
 from ttboard.cocotb.utils import get_sim_time
+
 
 @cocotb.test()
 async def test_loopback(dut):
@@ -92,14 +93,21 @@ async def test_should_fail(dut):
     dut._log.info("Will fail with msg")
 
     assert dut.rst_n.value == 0
+    
+@cocotb.test()
+async def test_timer(dut):
+    dut._log.info("Doing nothing but waiting 10ms")
+    await Timer(10, units='ms')
+    dut._log.info(f"System time is now {get_sim_time('us')}us")
+    
         
 def main():
     # import examples.tt_um_factory_test.tt_um_factory_test as ft
-    from ttboard.cocotb.dut import DUTWrapper
+    import ttboard.cocotb.dut
     
-    class DUT(DUTWrapper):
+    class DUT(ttboard.cocotb.dut.DUT):
         def __init__(self):
-            super().__init__()
+            super().__init__('FactoryTest')
             self.tt = DemoBoard.get()
             # inputs
             self.some_bit = self.new_slice_attribute(self.tt.uo_out, 5)
@@ -108,7 +116,7 @@ def main():
     tt.shuttle.tt_um_factory_test.enable()
     tt.clock_project_stop()
     tt.uio_oe_pico.value = 0 # all inputs
-    Clock.clear_all()
+    
     
     
     dut = DUT()

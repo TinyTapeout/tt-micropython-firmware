@@ -582,9 +582,9 @@ async def processMessageBlocks(dut, encodedMsg, message_blocks, quietLogging=Tru
     return  tickWaitCountTotal
     
     
-from ttboard.cocotb.dut import DUTWrapper
+import ttboard.cocotb.dut
 
-class DUT(DUTWrapper):
+class DUT(ttboard.cocotb.dut.DUT):
     def __init__(self):
         super().__init__('SHAMAN')
         self.databyteIn = self.tt.ui_in
@@ -611,7 +611,6 @@ def main():
         return
     tt.shuttle.tt_um_psychogenic_shaman.enable()
     tt.clock_project_stop()
-    Clock.clear_all()
     dut = DUT()
     tt.uio_oe_pico.value = dut.oe_pico_setting
     

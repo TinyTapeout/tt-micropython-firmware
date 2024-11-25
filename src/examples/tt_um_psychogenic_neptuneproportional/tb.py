@@ -173,11 +173,11 @@ async def note_a_exact(dut):
     dut._log.info("Note A full pass")
 
 def main():
-    from ttboard.cocotb.dut import DUTWrapper
+    import ttboard.cocotb.dut
     
-    class DUT(DUTWrapper):
+    class DUT(ttboard.cocotb.dut.DUT):
         def __init__(self):
-            super().__init__()
+            super().__init__('Neptune')
             self.tt = DemoBoard.get()
             # inputs
             self.display_single_select = self.new_slice_attribute(self.tt.ui_in, 7)
@@ -191,7 +191,6 @@ def main():
     tt = DemoBoard.get()
     tt.shuttle.tt_um_psychogenic_neptuneproportional.enable()
     tt.clock_project_stop()
-    Clock.clear_all()
     dut = DUT()
     dut._log.info("enabled neptune project")
     runner = cocotb.get_runner()

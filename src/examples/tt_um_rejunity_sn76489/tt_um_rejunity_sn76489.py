@@ -600,7 +600,6 @@ def main(selection=None, master_clock=None, internal_clock_div = None):
     tt.shuttle.tt_um_rejunity_sn76489.enable()
     tt.clock_project_stop()
     tt.uio_oe_pico.value = 0b00000111
-    Clock.clear_all()
     
     dut = DUT()
     dut._log.info("enabled factory test project, running")
