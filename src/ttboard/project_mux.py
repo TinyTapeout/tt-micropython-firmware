@@ -228,7 +228,7 @@ class DesignIndex:
         return self.get(idx)
     
     def __dir__(self):
-        return list(self._available_projects.keys())
+        return self.names
                 
     def __repr__(self):
         return f'<DesignIndex {len(self)} projects>'
