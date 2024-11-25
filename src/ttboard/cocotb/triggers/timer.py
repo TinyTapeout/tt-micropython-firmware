@@ -19,17 +19,20 @@ class Timer(Awaitable):
     def run_timer(self):
         all_clocks = Clock.all()
         # print(f"All clocks on timer: {all_clocks}")
-        fastest_clock = all_clocks[0]
-        time_increment = fastest_clock.half_period
-        target_time = SystemTime.current() + self.time
-        increment_count = 0
-        while SystemTime.current() < target_time:
-            if increment_count % 1000 == 0:
-                print(f"Systime: {SystemTime.current()} (target {target_time})")
-            
-            increment_count += 1
-            SystemTime.advance(time_increment)
+        if all_clocks:
+            fastest_clock = all_clocks[0]
+            time_increment = fastest_clock.half_period
+            target_time = SystemTime.current() + self.time
+            increment_count = 0
+            while SystemTime.current() < target_time:
+                if increment_count % 1000 == 0:
+                    print(f"Systime: {SystemTime.current()} (target {target_time})")
                 
+                increment_count += 1
+                SystemTime.advance(time_increment)
+        else:
+            SystemTime.advance(self.time)
+
                 
     def __iter__(self):
         return self
