@@ -77,7 +77,7 @@ class UserProjectConfig:
 
     def __repr__(self):
         props = self._properties_dict(True)
-        return f'<UserProjectConfig {self.section}, {props["clock_frequency"]}Hz, mode: {props["mode"]}>'
+        return f'<UserProjectConfig {self.name}, {props["clock_frequency"]}Hz, mode: {props["mode"]}>'
     
     def __str__(self):
         property_strs = []
@@ -86,7 +86,7 @@ class UserProjectConfig:
             property_strs.append(f'  {k}: {pdict[k]}')
         
         properties = '\n'.join(property_strs)
-        return f'{self.section}\n{properties}'
+        return f'{self.name}\n{properties}'
 
 class UserConfig:
     '''
@@ -166,7 +166,9 @@ class UserConfig:
         if v is None:
             return def_value 
         return v
-    
+    @property 
+    def filepath(self):
+        return self.inifile_path
     @property 
     def default_mode(self):
         mode_str = self._get_default_option('mode')
@@ -217,8 +219,13 @@ class UserConfig:
         if self.has_project(name):
             return self.project(name)
     
+    @property 
+    def sections(self):
+        return list(self._proj_configs.keys())
+    
     def __dir__(self):
         return self.sections
+    
     def __repr__(self):
         return f'<UserConfig {self.filepath}, default project: {self.default_project}>'
     
