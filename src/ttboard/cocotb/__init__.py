@@ -38,12 +38,14 @@ class Runner:
         
     def test(self, dut):
         from ttboard.cocotb.time.system import SystemTime
+        from ttboard.cocotb.clock import Clock
         num_failures = 0
         num_tests = len(self.test_names)
         failures = dict()
         for test_count in range(num_tests):
             nm = self.test_names[test_count]
             SystemTime.reset()
+            Clock.clear_all()
             failures[nm] = None
             try:
                 dut._log.info(f"*** Running Test {test_count+1}/{num_tests}: {nm} ***") 
