@@ -2,11 +2,54 @@ import asyncio
 import io 
 import sys
 
+from ttboard.cocotb.time.value import TimeValue
 from ttboard.demoboard import DemoBoard
 
 def start_soon(c):
     pass
 
+class TestCase:
+    def __init__(self, 
+                name:str, 
+                func,
+                timeout_time: float = None,
+                timeout_unit: str = '',
+                expect_fail: bool = False,
+                expect_error:Exception = None,
+                skip: bool = False,
+                stage: int = 0):
+        self.name = name 
+        self.function = func
+        self.timeout = None
+        if timeout_time is not None:
+            if not len(timeout_unit):
+                raise ValueError('Must specify a timeout_unit when using timeouts')
+            self.timeout = TimeValue(timeout_time, timeout_unit)
+        
+        self.expect_fail = expect_fail
+        self.expect_error = expect_error
+        self.skip = skip
+        self.stage = stage
+        self.failed = False
+        self.failed_msg = ''
+        
+    def run(self, dut):
+        if self.skip:
+            dut._log.warn(f"{self.name} skip=True")
+            return 
+        func = self.function
+        try:
+            asyncio.run(func(dut))
+        except Exception as e:
+            self.failed = True
+            if not self.expect_fail:
+                raise e
+            
+            buf = io.StringIO()
+            sys.print_exception(e, buf)
+            dut._log.error(buf.getvalue())
+            dut._log.warn("Failure was expected")
+            
 _RunnerSingleton = None 
 class Runner:
     
@@ -27,16 +70,13 @@ class Runner:
     def __init__(self):
         self.tests_to_run = dict()
         self.test_names = []
-        self.skipped_names = []
         
-    def add_test(self, func, name:str=None):
-        if name is None:
-            name = f'test_{func.__name__}'
-        self.test_names.append(name)
-        self.tests_to_run[name] = func
+    def add_test(self, test:TestCase):
+        if test.name is None:
+            test.name = f'test_{test.function.__name__}'
+        self.test_names.append(test.name)
+        self.tests_to_run[test.name] = test
         
-    def add_skipped(self, name:str):
-        self.skipped_names.append(name)
         
     def test(self, dut):
         from ttboard.cocotb.time.system import SystemTime
@@ -49,29 +89,40 @@ class Runner:
         
         num_failures = 0
         num_tests = len(self.test_names)
-        failures = dict()
+        #failures = dict()
         for test_count in range(num_tests):
             nm = self.test_names[test_count]
             SystemTime.reset()
             Clock.clear_all()
-            failures[nm] = None
+            test = self.tests_to_run[nm]
+            
+            if test.timeout is None:
+                SystemTime.clear_timeout()
+            else:
+                SystemTime.set_timeout(test.timeout)
+            
+            
+            test.failed = False
             try:
                 dut._log.info(f"*** Running Test {test_count+1}/{num_tests}: {nm} ***") 
-                self.tests_to_run[nm](dut)
-                dut._log.warn(f"*** Test '{nm}' PASS ***")
+                test.run(dut)
+                if test.expect_fail: 
+                    num_failures += 1
+                    dut._log.error(f"*** {nm} expected fail, so PASS ***")
+                else:
+                    dut._log.warn(f"*** Test '{nm}' PASS ***")
             except Exception as e:
+                
+                test.failed = True
                 buf = io.StringIO()
                 sys.print_exception(e, buf)
                 dut._log.error(buf.getvalue())
                 if len(e.args):
                     dut._log.error(f"T*** Test '{nm}' FAIL: {e.args[0]} ***")
                     if e.args[0] is None or not e.args[0]:
-                        failures[nm] = " "
+                        test.failed_msg = ''
                     else:
-                        failures[nm] = e.args[0]
-                        
-                else:
-                    failures[nm] = " "
+                        test.failed_msg = e.args[0]
                     
                 num_failures += 1
             
@@ -83,19 +134,28 @@ class Runner:
         
         dut._log.info("*** Summary ***")
         for nm in self.test_names:
-            if failures[nm]:
-                dut._log.error(f"\tFAIL\t{nm}\t{failures[nm]}")
+            test = self.tests_to_run[nm]
+            if test.failed:
+                if test.expect_fail:
+                    dut._log.warn(f"\tPASS\t{nm}\tFailed as expected {test.failed_msg}")
+                else:
+                    dut._log.error(f"\tFAIL\t{nm}\t{test.failed_msg}")
             else:
-                if nm in self.skipped_names:
+                if self.tests_to_run[nm].skip:
                     dut._log.warn(f"\tSKIP\t{nm}")
                 else:
-                    dut._log.warn(f"\tPASS\t{nm}")
+                    if test.expect_fail:
+                        dut._log.error(f"\tFAIL\t{nm}\tpassed but expect_fail = True")
+                    else:
+                        dut._log.warn(f"\tPASS\t{nm}")
         
         
         
 def get_runner(sim=None):
     return Runner.get()
 
+
+        
 
 def test(func=None, *,
     timeout_time: float = None,
@@ -109,17 +169,18 @@ def test(func=None, *,
     def my_decorator_func(func):
         runner = Runner.get() 
         test_name = func.__name__ if name is None else name
+        test_case = TestCase(test_name, func, 
+                                timeout_time,
+                                timeout_unit,
+                                expect_fail,
+                                expect_error,
+                                skip,
+                                stage)
+        
         def wrapper_func(dut):  
-            asyncio.run(func(dut))
-        
-        def skipper_func(dut):
-            dut._log.warn(f"{test_name} skip=True")
-        
-        if skip:
-            runner.add_skipped(test_name)
-            runner.add_test(skipper_func, test_name)
-            return skipper_func
-        runner.add_test(wrapper_func, test_name)
+            test_case.run(dut)
+            
+        runner.add_test(test_case)
         return wrapper_func
     
     return my_decorator_func
