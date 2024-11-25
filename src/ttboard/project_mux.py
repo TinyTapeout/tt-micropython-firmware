@@ -154,7 +154,7 @@ class DesignIndex:
         '''
             all available projects in the shuttle, whether loaded or not 
         '''
-        return list(map(lambda p: DesignStub(self, p), sorted(self._available_projects.keys())))
+        return list(map(lambda p: self._shuttle_index[p] if p in self._shuttle_index else DesignStub(self, p), sorted(self._available_projects.keys())))
     @property 
     def all_loaded(self):
         '''
@@ -372,10 +372,14 @@ class ProjectMux:
         raise None
     
     def __dir__(self):
-        # this doesn't seem to do what I want in uPython?
+        names = []
         if hasattr(self, 'projects'):
-            return self.projects.names
-        return []
+            names = self.projects.names
+            
+        return sorted(set(
+                list(dir(type(self))) + \
+                list(self.__dict__.keys()) + names))
+
     
     
     def __len__(self):

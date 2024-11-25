@@ -237,6 +237,8 @@ class DemoBoard:
             return self._clock_pwm
         return self.pins.rp_projclk
     
+    
+    
     @property 
     def rst_n(self):
         '''
@@ -324,7 +326,7 @@ class DemoBoard:
             self._clock_pwm_deinit()
                 
             if self._clock_pio is None:
-                self._clock_pio = platform.PIOClock(self.rp_projclk.raw_pin)
+                self._clock_pio = platform.PIOClock(self.pins.rp_projclk.raw_pin)
             
             self._clock_pio.start(freqHz)
             log.info(f"Clocking at {freqHz}Hz using PIO clock")
