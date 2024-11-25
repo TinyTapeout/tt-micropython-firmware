@@ -87,7 +87,7 @@ async def test_edge_triggers(dut):
     
     dut._log.info("test_edge_triggers passed")
         
-@cocotb.test()
+@cocotb.test(expect_fail=True)
 async def test_should_fail(dut):
     
     dut._log.info("Will fail with msg")
@@ -97,8 +97,14 @@ async def test_should_fail(dut):
 @cocotb.test(skip=True)
 async def test_will_skip(dut):
     dut._log.info("This should not be output!")
+
+# DISABLED cocotb.test(timeout_time=100, timeout_unit='us', expect_fail=True)
+async def test_timeout(dut):
+    clock = Clock(dut.clk, 10, units="us")
+    cocotb.start_soon(clock.start())
     
-        
+    await Timer(200, 'us')
+    
 @cocotb.test()
 async def test_timer(dut):
     dut._log.info("Doing nothing but waiting 10ms")

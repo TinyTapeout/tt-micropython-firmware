@@ -82,7 +82,7 @@ If, for example, the project verilog sets
 Then, in your test, you would set
 
 ```
-	dut.uio_oe_pico = 0x0f # 0b00001111 high nibble in, low nibble out
+    dut.uio_oe_pico = 0x0f # 0b00001111 high nibble in, low nibble out
 ```
 
 
@@ -119,7 +119,7 @@ In addition, though this is as of yet unsupported in cocotb v2 (I've submitted p
 
 The SDK cocotb implementation supports
 
-  * @cocotb.test() detection, with all optional parameters (though as of now only name, and skip are respected)
+  * @cocotb.test() detection, with all optional parameters (though as of name, expect_fail, timeout_* and skip are respected)
     
   * setting up one or more clocks using Clock() and cocotb.start_soon()
     
