@@ -10,6 +10,7 @@ from ttboard.cocotb.clock import Clock
 from ttboard.cocotb.time.value import TimeValue
 from ttboard.cocotb.time.system import SystemTime
 class Timer(Awaitable):
+    DebugTraceLoopCount = 1000
     def __init__(self, time:int, units:str):
         super().__init__()
         self.time = TimeValue(time, units)
@@ -27,7 +28,7 @@ class Timer(Awaitable):
         target_time = SystemTime.current() + self.time
         increment_count = 0
         while SystemTime.current() < target_time:
-            if increment_count % 1000 == 0:
+            if self.DebugTraceLoopCount and increment_count % self.DebugTraceLoopCount == 0:
                 print(f"Systime: {SystemTime.current()} (target {target_time})")
             
             increment_count += 1
