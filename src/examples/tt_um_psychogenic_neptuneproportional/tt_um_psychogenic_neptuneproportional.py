@@ -1,101 +1,201 @@
 '''
-Created on Apr 28, 2024
-
-This sample shows some interaction with a project I know well, my neptune 
-guitar tuner extreme.
-
-Normally, there's a section with the name of the project in config.ini
-
-
-[tt_um_psychogenic_neptuneproportional]
+Created on Nov 21, 2024
 
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
-
+import math
+import gc
 from ttboard.demoboard import DemoBoard
-from ttboard.mode import RPMode
-from ttboard.pins.pins import Pins
+gc.collect()
+print(f'mf tb: {gc.mem_free()}')
+from ttboard.cocotb.clock import Clock
+print(f'mf tb: {gc.mem_free()}')
+from ttboard.cocotb.triggers import Timer, ClockCycles # RisingEdge, FallingEdge, Timer, ClockCycles
 
-import ttboard.log as logging
-log = logging.getLogger(__name__)
+print(f'mf tb: {gc.mem_free()}')
+import ttboard.cocotb as cocotb
 
-import ttboard.util.time as time
+displayNotes = {
+            'NA':     0b00000010, # -
+            'A':      0b11101110, # A
+            'B':      0b00111110, # b
+            'C':      0b10011100, # C
+            'D':      0b01111010, # d
+            'E':      0b10011110, # E
+            'F':      0b10001110, # F
+            'G':      0b11110110, # g
+            }
+            
+displayProx = {
+            'lowfar':       0b00111000,
+            'lowclose':     0b00101010,
+            'exact':        0b00000001,
+            'hiclose':      0b01000110,
+            'hifar':        0b11000100
+
+}
+
+SegmentMask = 0xFF
+ProxSegMask = 0xFE
+
+    
+        
+# os.environ['COCOTB_RESOLVE_X'] = 'RANDOM'
+async def reset(dut):
+    dut._log.info(f"reset(dut)")
+    dut.display_single_enable.value = 0
+    dut.display_single_select.value = 0
+    dut.rst_n.value = 1
+    dut.clk_config.value = 1 # 2khz clock
+    dut._log.info("hold in reset")
+    await ClockCycles(dut.clk, 5)
+    dut._log.info("reset done")
+    dut.input_pulse.value = 1
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.input_pulse.value = 0
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+   
+    
+async def startup(dut):
+    dut._log.info("starting clock")
+    clock = Clock(dut.clk, 500, units="us")
+    cocotb.start_soon(clock.start())
+    await reset(dut)
+    dut.input_pulse.value = 0
+            
+async def getDisplayValues(dut):
+    displayedValues = [None, None]
+    attemptCount = 0
+    while None in displayedValues or attemptCount < 3:
+        displayedValues[int(dut.prox_select.value)] = int(dut.segments.value) << 1
+        
+        await ClockCycles(dut.clk, 1)
+        
+        attemptCount += 1
+        if attemptCount > 100:
+            dut._log.error(f"NEVER HAVE {displayedValues}")
+            return displayedValues
+            
+    # dut._log.info(f'Display Segments: {displayedValues} ( [ {bin(displayedValues[0])} , {bin(displayedValues[1])}])')
+    return displayedValues
+    
+async def inputPulsesFor(dut, tunerInputFreqHz:int, inputTimeSecs=0.51):
+    #numPulses = tunerInputFreqHz * inputTimeSecs 
+    #pulsePeriod = 1/tunerInputFreqHz
+    #pulseHalfCycleUs = round(1e6*pulsePeriod/2.0)
+    
+    pulseClock = Clock(dut.input_pulse, 1000*(1.0/tunerInputFreqHz), units='ms')
+    cocotb.start_soon(pulseClock.start())
+    # for _pidx in range(math.ceil(numPulses)):
+    #     dut.input_pulse.value = 1
+    #     await Timer(pulseHalfCycleUs, units='us')
+    #     dut.input_pulse.value = 0
+    #     await Timer(pulseHalfCycleUs, units='us')
+    await Timer(inputTimeSecs, 'sec')
+    dispV = await getDisplayValues(dut)
+    
+    return dispV
+    
 
 
-def die_on_error(msg:str):
-    log.error(msg)
-    return False 
+async def setup_tuner(dut):
+    dut._log.info("start")
+    await startup(dut)
+    
 
-def run(loops:int=2, note_delay_ms:int=2000):
+async def note_toggle(dut, freq, delta=0, msg="", toggleTime=1.2):
+    dut._log.info(msg)
+    await startup(dut)
+    dispValues = await inputPulsesFor(dut, freq + delta, toggleTime)  
+    return dispValues
+    
+    
+
+async def note_e(dut, eFreq=330, delta=0, msg=""):
+    dut._log.info(f"E @ {eFreq} delta {delta}")
+    dispValues = await note_toggle(dut, freq=eFreq, delta=delta, msg=msg);
+    note_target = (displayNotes['E'] & SegmentMask)
+    assert dispValues[1] == note_target, f"Note E FAIL: {dispValues[1]} != {note_target}"
+    dut._log.info(f"Note E @ {eFreq} pass ({bin(dispValues[1])})")
+    return dispValues
+
+
+    
+@cocotb.test()
+async def note_e_highfar(dut):
+    dispValues = await note_e(dut, eFreq=330, delta=12, msg="little E high/far")
+    target_value =  (displayProx['hifar'] & ProxSegMask)
+    assert dispValues[0] == target_value, f"high/far fail {dispValues[0]} != {target_value}"
+    dut._log.info("Note E full pass")
+
+
+
+async def note_g(dut, delta=0, msg=""):
+    gFreq = 196
+    
+    dut._log.info(f"G delta {delta}")
+    dispValues = await note_toggle(dut, freq=gFreq, delta=delta, msg=msg);
+    
+    note_target = (displayNotes['G'] & SegmentMask)
+    assert dispValues[1] == note_target, f"Note G FAIL: {dispValues[1]} != {note_target}"
+    dut._log.info(f"Note G: PASS ({bin(dispValues[1])})")
+    return dispValues
+
+@cocotb.test()
+async def note_g_highclose(dut):
+    dispValues = await note_g(dut, delta=3, msg="High/close")
+    target_value =  (displayProx['hiclose'] & ProxSegMask)
+    assert dispValues[0] == target_value, f"High/close fail {dispValues[0]} != {target_value}"
+    dut._log.info("Note G full pass")
+    
+
+
+async def note_a(dut, delta=0, msg=""):
+    aFreq = 110
+    
+    dut._log.info(f"A delta {delta}")
+    dispValues = await note_toggle(dut, freq=aFreq, delta=delta, msg=msg);
+    
+    note_target = (displayNotes['A'] & SegmentMask)
+    assert dispValues[1] == note_target, f"Note A FAIL: {dispValues[1]} != {note_target}"
+    dut._log.info(f"Note A pass ({bin(dispValues[1])})")
+    return dispValues
+
+@cocotb.test()
+async def note_a_exact(dut):
+    dispValues = await note_a(dut, delta=0, msg="A exact")
+    
+    target_value =  (displayProx['exact'] & ProxSegMask)
+    assert dispValues[0] == target_value, f"exact fail {dispValues[0]} != {target_value}"
+    dut._log.info("Note A full pass")
+
+def main():
+    import ttboard.cocotb.dut
+    
+    class DUT(ttboard.cocotb.dut.DUT):
+        def __init__(self):
+            super().__init__('Neptune')
+            self.tt = DemoBoard.get()
+            # inputs
+            self.display_single_select = self.new_slice_attribute(self.tt.ui_in, 7)
+            self.display_single_enable = self.new_slice_attribute(self.tt.ui_in, 6)
+            self.input_pulse = self.new_slice_attribute(self.tt.ui_in, 5)
+            self.clk_config = self.new_slice_attribute(self.tt.ui_in, 4, 2)
+            # outputs
+            self.prox_select = self.new_slice_attribute(self.tt.uo_out, 7)
+            self.segments = self.new_slice_attribute(self.tt.uo_out, 6, 0)
+            
     tt = DemoBoard.get()
-    if not tt.shuttle.has('tt_um_psychogenic_neptuneproportional'):
-        return die_on_error("This chip doesn't got neptune on-board!")
-        
-    if tt.user_config.has_section('tt_um_psychogenic_neptuneproportional'):
-        log.info('Found a neptune section in config--letting it handle things')
-    else:
-        log.info('No neptune section in config--doing it manual style')
-        tt.mode = RPMode.ASIC_RP_CONTROL
-        tt.reset_project(True) # hold in reset, in case something else is loaded
-        # input byte
-        # clock speed is lower bits, input comes on in5
-        # display mode single/control are bits 6 and 7
-        tt.input_byte = 0b11001000
-        
-        # with these settings (input bits) the system expects 
-        # a 4kHz clock, enable that
-        tt.clock_project_PWM(4000)
-        
-        # we want to read the bidir pins, make sure they're 
-        # all inputs:
-        tt.bidir_mode = [Pins.IN]*8
-        
-    # actually enable the project
     tt.shuttle.tt_um_psychogenic_neptuneproportional.enable()
-    
-    tt.reset_project(False) # start her up
-    
-    # here are some notes to detect
-    # (NAME, Hz)
-    notes = [
-        ('E2', 83),
-        ('A2', 110),
-        ('D3', 146),
-        ('E3', 83*2),
-        ('G3', 196),
-        ('A3', 220),
-        ('B3', 247),
-        ('D4', 146*2),
-        ('E4', 330),
-        ('G4', 196*2),
-    ]
-    
-    # start up the PWM action on input 5 to the project
-    # we need to keep a handle to the returned object
-    # so we can change the frequency
-    # starting up at 10Hz just because
-    pwm = tt.in5.pwm(10)
-    for _i in range(loops):
-        for n in notes:
-            pwm.freq(n[1]) # set the right frequency
-            print(f'"Playing" a note: {n[0]} ({n[1]}Hz)')
-            # keep an eye on the output (LEDs) and bidir (counter report)
-            for _j in range(3):
-                time.sleep_ms(int(note_delay_ms/3))
-                reported_count = tt.bidir_byte
-                ratio = n[1]/reported_count # it's fractional, because we aren't sampling a full second
-                print(f'   Bidir count: {reported_count} (ratio {ratio:.1f}), Outputs {hex(tt.output_byte)}')
-                
-            
-    
-    pwm.deinit() # shut that PWM down to be nice during future interactions with pin
-    tt.in5(0) # bring low
-    tt.out6(1)
-    
-    print("Done")
-    return True # say it all went well
-            
+    tt.clock_project_stop()
+    dut = DUT()
+    dut._log.info("enabled neptune project")
+    runner = cocotb.get_runner()
+    runner.test(dut)
+
+
 if __name__ == '__main__':
-    if not run():
-        print("Error running the sample")
+    main()
