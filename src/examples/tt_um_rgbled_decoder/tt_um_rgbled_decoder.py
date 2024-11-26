@@ -21,10 +21,10 @@ TT demoboard with SDK
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ttboard.cocotb as cocotb
-from ttboard.cocotb.clock import Clock
-from ttboard.cocotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
-from ttboard.cocotb.utils import get_sim_time
+import microcotb as cocotb
+from microcotb.clock import Clock
+from microcotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
+from microcotb.utils import get_sim_time
 
 def time_delta_not(cond:str):
     return f'sim time delta not {cond}'
@@ -169,10 +169,10 @@ async def test_rgbled(dut):
 
 
 from ttboard.demoboard import DemoBoard
-import ttboard.cocotb.dut
-from ttboard.cocotb.dut import Wire
+import ttboard.cocotb.dut as basedut
+from microcotb.dut import Wire
 
-class RGBLED(ttboard.cocotb.dut.DUT):
+class RGBLED(basedut.DUT):
     def __init__(self, data:Wire, data_rdy:Wire):
         super().__init__('RGBLED')
         self.data = data 
@@ -180,7 +180,7 @@ class RGBLED(ttboard.cocotb.dut.DUT):
         self.led = self.new_slice_attribute(self.tt.uo_out, 0)
         self.nreset = self.rst_n
 
-class TBSPI(ttboard.cocotb.dut.DUT):
+class TBSPI(basedut.DUT):
     
     def __init__(self, data:Wire, data_rdy:Wire):
         super().__init__('SPI')
@@ -191,7 +191,7 @@ class TBSPI(ttboard.cocotb.dut.DUT):
         self.sclk = self.new_bit_attribute(self.tt.ui_in, 1)
         self.nsel = self.new_bit_attribute(self.tt.ui_in, 2)
         
-class DUT(ttboard.cocotb.dut.DUT):
+class DUT(basedut.DUT):
     def __init__(self):
         super().__init__('RGBDUT')
         self.data = Wire()

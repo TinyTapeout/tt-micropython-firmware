@@ -2,7 +2,7 @@ import asyncio
 import io 
 import sys
 
-from ttboard.cocotb.time.value import TimeValue
+from microcotb.time.value import TimeValue
 from ttboard.demoboard import DemoBoard
 
 def start_soon(c):
@@ -79,8 +79,8 @@ class Runner:
         
         
     def test(self, dut):
-        from ttboard.cocotb.time.system import SystemTime
-        from ttboard.cocotb.clock import Clock
+        from microcotb.time.system import SystemTime
+        from microcotb.clock import Clock
         
         ttdb = DemoBoard.get()
         if ttdb.is_auto_clocking:

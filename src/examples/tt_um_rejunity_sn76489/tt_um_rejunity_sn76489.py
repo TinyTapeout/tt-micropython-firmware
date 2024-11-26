@@ -26,9 +26,9 @@ Adapted from https://github.com/rejunity/tt05-psg-sn76489/blob/main/test/test.py
 #   await set_noise(dut, white=True, divider=512)
 #   await write(dut, data=1111_0000)              # write data directly on the data bus of the chip, holds /WE low
 
-import ttboard.cocotb as cocotb 
-from ttboard.cocotb.clock import Clock
-from ttboard.cocotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
+import microcotb as cocotb 
+from microcotb.clock import Clock
+from microcotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
 
 # MASTER_CLOCK = 3_579_545 # NTSC frequency of SN as used in Sega Master System,    0xFE = 440 Hz
 # MASTER_CLOCK = 3_546_895 # PAL                 ---- // ----

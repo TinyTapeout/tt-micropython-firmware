@@ -8,13 +8,8 @@ Created on Jan 23, 2024
 
 RP2040SystemClockDefaultHz = 125000000
 
-IsRP2040 = False 
-try:
-    import machine 
-    import rp2
-    IsRP2040 = True 
-except:
-    pass
+import microcotb.platform
+IsRP2040 = microcotb.platform.IsRP2040
 
 
 if IsRP2040:
@@ -48,6 +43,8 @@ if IsRP2040:
                 to behave normally.
         
     '''
+    import rp2
+    import machine
     
     def dump_portset(p:str, v:int):
         print(f'ps {p}: {bin(v)}')

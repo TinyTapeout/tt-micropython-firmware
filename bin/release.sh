@@ -75,6 +75,8 @@ touch $BUILDDIR/release_v$VERSION
 
 echo "Including SDK from $SRCDIR"
 cp -Ra $SRCDIR/* $BUILDDIR
+echo "Including microcotb"
+cp -Ra $SRCDIR/../microcotb/src/microcotb $BUILDDIR
 for pcd in `find $BUILDDIR -type d -name "__pycache__"`
 do
 	echo "cleaning up $pcd"

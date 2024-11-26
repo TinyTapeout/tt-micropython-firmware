@@ -11,10 +11,10 @@ Created on Oct 28, 2023
 @copyright: Copyright (C) 2023 Pat Deegan, https://psychogenic.com
 '''
 
-from ttboard.cocotb.utils import get_sim_time
-import ttboard.cocotb as cocotb
-from ttboard.cocotb.clock import Clock
-from ttboard.cocotb.triggers import ClockCycles # RisingEdge, FallingEdge, Timer, 
+from microcotb.utils import get_sim_time
+import microcotb as cocotb
+from microcotb.clock import Clock
+from microcotb.triggers import ClockCycles # RisingEdge, FallingEdge, Timer, 
 import hashlib
 import random 
 

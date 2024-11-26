@@ -8,10 +8,10 @@ Created on Nov 22, 2024
 import math
 import gc
 from ttboard.demoboard import DemoBoard
-from ttboard.cocotb.clock import Clock
-from ttboard.cocotb.triggers import RisingEdge, FallingEdge, ClockCycles, Timer
-import ttboard.cocotb as cocotb
-from ttboard.cocotb.utils import get_sim_time
+from microcotb.clock import Clock
+from microcotb.triggers import RisingEdge, FallingEdge, ClockCycles, Timer
+import microcotb as cocotb
+from microcotb.utils import get_sim_time
 
 
 @cocotb.test()
