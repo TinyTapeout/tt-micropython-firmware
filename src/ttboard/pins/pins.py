@@ -144,8 +144,8 @@ class Pins:
             self.pin_hk_csb = self.muxCtrl.ctrlpin.raw_pin 
             self._allpins['hk_csb'] = self.hk_csb
         
-        self.mode = mode 
         self._init_ioports()
+        self.mode = mode 
         
         
     
@@ -153,7 +153,7 @@ class Pins:
         # Note: these are named according the the ASICs point of view
         # we can write ui_in, we read uo_out
         port_defs = [
-            ('uo_out', platform.read_output_byte, platform.write_output_byte),
+            ('uo_out', platform.read_output_byte, None),
             ('ui_in', platform.read_input_byte, platform.write_input_byte),
             ('uio_in', platform.read_bidir_byte, platform.write_bidir_byte),
             ('uio_out', platform.read_bidir_byte, None)
@@ -181,7 +181,7 @@ class Pins:
         return self._mode 
     
     @mode.setter
-    def mode(self, setTo:int):
+    def mode(self, set_mode:int):
         startupMap = {
             RPModeDEVELOPMENT.STANDALONE: self.begin_standalone,
             RPMode.ASIC_RP_CONTROL: self.begin_asiconboard,
@@ -189,13 +189,20 @@ class Pins:
             RPMode.SAFE: self.begin_safe
         }
         
-        if setTo not in startupMap:
-            setTo = RPMode.SAFE 
+        if set_mode not in startupMap:
+            set_mode = RPMode.SAFE 
         
-        self._mode = setTo
-        log.info(f'Setting mode to {RPMode.to_string(setTo)}')
-        beginFunc = startupMap[setTo]
+        self._mode = set_mode
+        log.info(f'Setting mode to {RPMode.to_string(set_mode)}')
+        beginFunc = startupMap[set_mode]
         beginFunc()
+        if set_mode == RPMode.ASIC_RP_CONTROL:
+            self.ui_in.byte_write = platform.write_input_byte
+            self.uio_in.byte_write = platform.write_bidir_byte
+        else:
+            self.ui_in.byte_write = None 
+            self.uio_in.byte_write = None
+            
         
     def begin_inputs_all(self):
         

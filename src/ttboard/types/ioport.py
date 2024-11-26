@@ -6,6 +6,8 @@ Created on Nov 20, 2024
 '''
 
 from ttboard.types.range import Range
+import ttboard.log as logging
+log = logging.getLogger(__name__)
 
 class Port:    
     def __init__(self, name:str, read_byte_fn=None, write_byte_fn=None):
@@ -23,18 +25,21 @@ class Port:
         
     def set_signal_val_int(self, vint:int):
         if self.byte_write is None:
-            raise RuntimeError('writes not supported')
+            log.error(f'writes not supported on {self.name}')
+            return
         self.byte_write(vint)
         
     def set_signal_val_binstr(self, vstr:str):
         if self.byte_write is None:
-            raise RuntimeError('writes not supported')
+            log.error(f'writes not supported on {self.name}')
+            return 
         self.byte_write(int(vstr, 2))
         
         
     def get_signal_val_binstr(self):
         if self.byte_read is None:
-            raise RuntimeError('reads not supported')
+            log.error(f'reads not supported on {self.name}')
+            return
         v = self.byte_read()
         return f'{v:08b}'
     

@@ -15,6 +15,32 @@ class IO(LogicObject):
         self.port = port
         
     
+        self.byte_read = read_byte_fn 
+        self.byte_write = write_byte_fn
+    
+    @property 
+    def is_readable(self):
+        return self.port.is_readable 
+    
+    @property 
+    def is_writeable(self):
+        return self.port.is_readable
+    
+    @property 
+    def byte_read(self):
+        return self.port.byte_read
+    @byte_read.setter 
+    def byte_read(self, func):
+        self.port.byte_read = func
+    @property 
+    def byte_write(self):
+        return self.port.byte_write
+    
+    @byte_write.setter 
+    def byte_write(self, func):
+        self.port.byte_write = func
+        
+    
     def __repr__(self):
         val = hex(int(self.value)) if self.port.is_readable  else ''
         return f'<IO {self.port.name} {val}>'

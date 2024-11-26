@@ -452,6 +452,7 @@ class DemoBoard:
             RPMode.ASIC_RP_CONTROL: True,
             RPMode.ASIC_MANUAL_INPUTS: True
         }
+        
         if not self.apply_configs:
             log.debug(f'apply user conf: disabled')
             # don't wanna
