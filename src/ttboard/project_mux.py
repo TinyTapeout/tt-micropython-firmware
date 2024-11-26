@@ -84,7 +84,7 @@ class DesignStub:
         return dir(des)
     
     def __repr__(self):
-        return f'<Design {self.name} (uninit)>'
+        return f'<Design {self.design_index.count}: {self.name} (uninit)>'
     
 class DesignIndex:
     
