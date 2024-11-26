@@ -72,6 +72,10 @@ class DesignStub:
         self._des = des
         return des
     
+    @property 
+    def project_index(self):
+        return self.design_index.project_index(self.name) 
+    
     def __getattr__(self, name:str):
         if hasattr(self, '_des') and self._des is not None:
             des = self._des
@@ -84,7 +88,7 @@ class DesignStub:
         return dir(des)
     
     def __repr__(self):
-        return f'<Design {self.design_index.count}: {self.name} (uninit)>'
+        return f'<Design {self.project_index}: {self.name} (uninit)>'
     
 class DesignIndex:
     
@@ -149,6 +153,8 @@ class DesignIndex:
     @property 
     def names(self):
         return sorted(self._available_projects.keys())
+    
+    
     @property 
     def all(self):
         '''
@@ -207,6 +213,11 @@ class DesignIndex:
     def is_available(self, project_name:str):
         return project_name in self._available_projects
     
+    def project_index(self, project_name:str) -> int:
+        if self.is_available(project_name):
+            return self._available_projects[project_name]
+        
+        return None 
     def _get_from_shuttle_index(self, name:str):
         if hasattr(self, '_shuttle_index') and name in self._shuttle_index:
             if self._shuttle_index[name] is None:
