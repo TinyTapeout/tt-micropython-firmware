@@ -13,8 +13,6 @@ class IO(LogicObject):
         port = IOPort(name, read_byte_fn, write_byte_fn)
         super().__init__(port)
         self.port = port
-        
-    
         self.byte_read = read_byte_fn 
         self.byte_write = write_byte_fn
     
@@ -35,7 +33,6 @@ class IO(LogicObject):
     @property 
     def byte_write(self):
         return self.port.byte_write
-    
     @byte_write.setter 
     def byte_write(self, func):
         self.port.byte_write = func

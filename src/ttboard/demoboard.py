@@ -585,3 +585,9 @@ class DemoBoard:
         shuttle_run = self.shuttle.run
         return f"<DemoBoard in {RPMode.to_string(self.mode)}{autoclocking} {shuttle_run} project '{self.shuttle.enabled}'{reset}>"
 
+    def __setattr__(self, name:str, value):
+        if hasattr(self, name) and name in ['ui_in', 'uio_in', 'uio_oe_pico', 'uo_out', 'uio_out']:
+            port = getattr(self, name)
+            port.value = value 
+            return
+        super().__setattr__(name, value)
