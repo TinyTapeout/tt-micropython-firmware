@@ -16,10 +16,8 @@ jobs:
         submodules: recursive
         path: sdk
 
-    - name: Git Submodule Update
-      run: |
-        git pull --recurse-submodules
-        git submodule update --remote --recursive
+    - name: take a look
+      run: ls $GITHUB_WORKSPACE/sdk $GITHUB_WORKSPACE/sdk/src
 
     - name: Download stock MicroPython UF2
       run: wget -O /tmp/rp2-pico.uf2 "https://micropython.org/resources/firmware/$RPOS_UF2FILE"
