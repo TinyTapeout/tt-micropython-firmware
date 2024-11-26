@@ -16,9 +16,6 @@ jobs:
         submodules: recursive
         path: sdk
 
-    - name: take a look
-      run: ls $GITHUB_WORKSPACE/sdk/microcotb/* $GITHUB_WORKSPACE/sdk/src
-
     - name: Download stock MicroPython UF2
       run: wget -O /tmp/rp2-pico.uf2 "https://micropython.org/resources/firmware/$RPOS_UF2FILE"
     
@@ -30,7 +27,7 @@ jobs:
 
     - name: Move ucocotb
       run: |
-           cp -r $GITHUB_WORKSPACE/microcotb/src/microcotb $GITHUB_WORKSPACE/sdk/src
+           cp -r $GITHUB_WORKSPACE/sdk/microcotb/src/microcotb $GITHUB_WORKSPACE/sdk/src
            ls $GITHUB_WORKSPACE/sdk/src
     
     - name: Get shuttle indices
