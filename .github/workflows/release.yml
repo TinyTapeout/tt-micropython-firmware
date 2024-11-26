@@ -16,6 +16,11 @@ jobs:
         submodules: recursive
         path: sdk
 
+    - name: Git Submodule Update
+      run: |
+        git pull --recurse-submodules
+        git submodule update --remote --recursive
+
     - name: Download stock MicroPython UF2
       run: wget -O /tmp/rp2-pico.uf2 "https://micropython.org/resources/firmware/$RPOS_UF2FILE"
     
@@ -24,6 +29,11 @@ jobs:
       with:
         python-version: '3.10'
         cache: 'pip'
+
+    - name: Move ucocotb
+      run: |
+           cp -r $GITHUB_WORKSPACE/microcotb/src/microcotb $GITHUB_WORKSPACE/sdk/src
+           ls $GITHUB_WORKSPACE/sdk/src
     
     - name: Get shuttle indices
       run: |
@@ -34,7 +44,6 @@ jobs:
       run: |
            pip install uf2utils
            touch $GITHUB_WORKSPACE/sdk/src/release_${{  github.ref_name }}
-           cp -R $GITHUB_WORKSPACE/microcotb/src/microcotb $GITHUB_WORKSPACE/sdk/src
            python -m uf2utils.examples.custom_pico --fs_root $GITHUB_WORKSPACE/sdk/src --upython /tmp/rp2-pico.uf2 --out /tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2
     
     - name: Upload Artifact
