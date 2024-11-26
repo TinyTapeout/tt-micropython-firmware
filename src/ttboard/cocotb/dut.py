@@ -5,54 +5,9 @@ Created on Nov 21, 2024
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 from ttboard.demoboard import DemoBoard, Pins
-from ttboard.ports.io import IO
+import microcotb.dut
+from microcotb.dut import Wire, NoopSignal
 import ttboard.log as logging
-
-class FakeSignal:
-    def __init__(self, def_value:int=0):
-        self._value = def_value
-        
-    @property 
-    def value(self):
-        return self._value 
-    
-    @value.setter 
-    def value(self, set_to):
-        self._value = set_to
-        
-class Wire(FakeSignal):
-    pass
-
-
-class SliceWrapper:
-    def __init__(self, port, idx_or_start:int, slice_end:int=None):
-        self._port = port 
-        # can't create slice() on uPython...
-        self.slice_start = idx_or_start
-        self.slice_end = slice_end
-        
-    @property 
-    def value(self):
-        if self.slice_end is not None:
-            return self._port[self.slice_start:self.slice_end]
-        
-        return int(self._port[self.slice_start])
-    
-    @value.setter 
-    def value(self, set_to:int):
-        if self.slice_end is not None:
-            self._port[self.slice_start:self.slice_end] = set_to
-        else:
-            self._port[self.slice_start] = set_to
-        
-        
-    def __int__(self):
-        return int(self.value)
-    def __repr__(self):
-        if self.slice_end is not None:
-            return str(self._port[self.slice_start:self.slice_end])
-        else:
-            return str(self._port[self.slice_start])
 
 
 class PinWrapper:
@@ -70,7 +25,7 @@ class PinWrapper:
         self._pin.value(set_to)
             
 
-class DUTWrapper:
+class DUTWrapper(microcotb.dut.DUT):
     def __init__(self, name:str='DUT'):
         self.tt = DemoBoard.get()
         # wrap the bare clock pin
@@ -80,19 +35,11 @@ class DUTWrapper:
         for p in ports:
             setattr(self, p, getattr(self.tt, p))
         self._log = logging.getLogger(name)
-        self.ena = FakeSignal(1)
+        self.ena = NoopSignal(1)
         
-    @classmethod
-    def new_slice_attribute(cls, source:IO, idx_or_start:int, slice_end:int=None):
-        return SliceWrapper(source, idx_or_start, slice_end)
     
-    @classmethod
-    def new_bit_attribute(cls, source:IO, bit_idx:int):
-        return SliceWrapper(source, bit_idx)
-    
-    def add_slice_attribute(self, source:IO, name:str, idx_or_start:int, slice_end:int=None):
-        slc = self.new_slice_attribute(source, idx_or_start, slice_end)
-        setattr(self, name, slc)
+    def testing_will_begin(self):
+        self.tt.clock_project_stop()
         
         
 class DUT(DUTWrapper):

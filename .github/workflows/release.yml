@@ -24,6 +24,11 @@ jobs:
       with:
         python-version: '3.10'
         cache: 'pip'
+
+    - name: Move ucocotb
+      run: |
+           cp -r $GITHUB_WORKSPACE/sdk/microcotb/src/microcotb $GITHUB_WORKSPACE/sdk/src
+           ls $GITHUB_WORKSPACE/sdk/src
     
     - name: Get shuttle indices
       run: |

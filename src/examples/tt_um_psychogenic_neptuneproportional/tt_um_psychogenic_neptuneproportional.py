@@ -8,13 +8,9 @@ import math
 import gc
 from ttboard.demoboard import DemoBoard
 gc.collect()
-print(f'mf tb: {gc.mem_free()}')
-from ttboard.cocotb.clock import Clock
-print(f'mf tb: {gc.mem_free()}')
-from ttboard.cocotb.triggers import Timer, ClockCycles # RisingEdge, FallingEdge, Timer, ClockCycles
-
-print(f'mf tb: {gc.mem_free()}')
-import ttboard.cocotb as cocotb
+from microcotb.clock import Clock
+from microcotb.triggers import Timer, ClockCycles # RisingEdge, FallingEdge, Timer, ClockCycles
+import microcotb as cocotb
 
 displayNotes = {
             'NA':     0b00000010, # -
