@@ -610,10 +610,11 @@ def main():
         print("No tt_um_psychogenic_shaman in this shuttle?")
         return
     tt.shuttle.tt_um_psychogenic_shaman.enable()
+    
     dut = DUT()
     tt.uio_oe_pico.value = dut.oe_pico_setting
     
-    dut._log.info("enabled shaman project, running")
     runner = cocotb.get_runner()
+    dut._log.info(f"enabled shaman project. Will test with\n{runner}")
     runner.test(dut)
 

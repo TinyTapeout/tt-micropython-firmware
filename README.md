@@ -85,7 +85,9 @@ If you know the specific project's official name, great, you can use that.  But 
 
 ```
 >>> tt.shuttle.find('traffic')
-[<Design 71: wokwi_german_traffic_light>, <Design 180: wokwi_traffic_light>, <Design 115: wokwi_traffic_light_1>]
+[<Design 71: wokwi_german_traffic_light>, 
+ <Design 180: wokwi_traffic_light>, 
+ <Design 115: wokwi_traffic_light_1>]
 >>>
 >>> tt.shuttle.find('traffic')[0].enable()
 ttboard.project_mux: Enable design wokwi_german_traffic_light
@@ -96,10 +98,10 @@ Wokwi projects have horrible names like *tt_um_wokwi_375288605206694913* by defa
 
 ```
 >>> tt.shuttle.find('wokwi')
-[ <Design 298: wokwi_2bit_alu_dice>, <Design 102: wokwi_7_segment_display>, <Design 192: wokwi_7_segment_seconds>, 
-  <Design 32: wokwi_7_segment_seconds_verilog_demo>, <Design 99: wokwi_7segment_display_logic_system_>, 
-  <Design 207: wokwi_agl_corticoneuro1>, <Design 101: wokwi_analog_clock>, <Design 41: wokwi_binary_counter>, 
-  <Design 77: wokwi_blinking_a>, <Design 46: wokwi_character_selector>, <Design 40: wokwi_clock_divider>, 
+[ <Design 298: wokwi_2bit_alu_dice>, <Design 102: wokwi_7_segment_display>, 
+  <Design 192: wokwi_7_segment_seconds>, <Design 32: wokwi_7_segment_seconds_verilog_demo>, 
+  <Design 99: wokwi_7segment_display_logic_system_>, <Design 207: wokwi_agl_corticoneuro1>, 
+  <Design 101: wokwi_analog_clock>, <Design 41: wokwi_binary_counter>, 
 # etc...
 ```
 
@@ -345,11 +347,16 @@ tt = DemoBoard() # whatever was in DEFAULT.mode of config.ini
 tt = DemoBoard(RPMode.SAFE) # all RP2040 pins are inputs
 
 # or: ASIC on board
-tt = DemoBoard(RPMode.ASIC_RP_CONTROL) # ASIC drives the inputs (i.e. in0, in1 etc are OUTPUTS for the RP2040)
+# ASIC drives the inputs (i.e. ui_in pins are OUTPUTS 
+# for the RP2040)
+tt = DemoBoard(RPMode.ASIC_RP_CONTROL) 
+
 
 # or: ASIC on board but you want to twiddle inputs and clock 
 # using on-board DIP switches and buttons
-tt = DemoBoard(RPMode.ASIC_MANUAL_INPUTS) # ASIC drives only management pins all else are inputs
+# ASIC drives only management pins all else are inputs
+tt = DemoBoard(RPMode.ASIC_MANUAL_INPUTS) 
+
 
 
 ```
@@ -388,7 +395,9 @@ attributes you can just looking at to see summary info, or print out to see ever
 
 ```
 >>> tt.user_config.sections
-['tt_um_factory_test', 'tt_um_urish_simon', 'tt_um_psychogenic_neptuneproportional', 'tt_um_test', 'tt_um_loopback', 'tt_um_vga_clock', 'tt_um_algofoogle_solo_squash']
+['tt_um_factory_test', 'tt_um_urish_simon', 
+  'tt_um_psychogenic_neptuneproportional', 'tt_um_test', 'tt_um_loopback', 
+  'tt_um_vga_clock', 'tt_um_algofoogle_solo_squash']
 >>> 
 >>> tt.user_config.tt_um_urish_simon
 <UserProjectConfig tt_um_urish_simon, 50000Hz, mode: ASIC_MANUAL_INPUTS>
@@ -398,7 +407,9 @@ attributes you can just looking at to see summary info, or print out to see ever
 >>>
 >>> print(tt.user_config.tt_um_vga_clock)
 UserProjectConfig tt_um_vga_clock
-{'rp_clock_frequency': 1.26e+08, 'mode': 'ASIC_RP_CONTROL', 'clock_frequency': 3.15e+07}
+{'rp_clock_frequency': 1.26e+08, 
+ 'mode': 'ASIC_RP_CONTROL', 
+ 'clock_frequency': 3.15e+07}
 ```
 
 

@@ -6,6 +6,5 @@ Created on Nov 21, 2024
 '''
 import microcotb.ports.io  
 
-
 class IO(microcotb.ports.io.IO):
     pass

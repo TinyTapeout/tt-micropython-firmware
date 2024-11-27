@@ -186,9 +186,11 @@ def main():
             
     tt = DemoBoard.get()
     tt.shuttle.tt_um_psychogenic_neptuneproportional.enable()
-    dut = DUT()
-    dut._log.info("enabled neptune project")
+    
+    
     runner = cocotb.get_runner()
+    dut = DUT()
+    dut._log.info(f"enabled neptune project, will test with {runner}")
     runner.test(dut)
 
 
