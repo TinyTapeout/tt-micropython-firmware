@@ -128,7 +128,9 @@ def main():
     
     
     
-    dut = DUT()
-    dut._log.info("enabled factory test project, running")
     runner = cocotb.get_runner()
+    
+    dut = DUT()
+    dut._log.info(f"enabled factory test project.  Will test with {runner}")
+    
     runner.test(dut)
