@@ -5,14 +5,13 @@ Created on Nov 22, 2024
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 
-import math
 import gc
 from ttboard.demoboard import DemoBoard
 from microcotb.clock import Clock
 from microcotb.triggers import RisingEdge, FallingEdge, ClockCycles, Timer
 import microcotb as cocotb
 from microcotb.utils import get_sim_time
-
+gc.collect()
 
 @cocotb.test()
 async def test_loopback(dut):
@@ -98,12 +97,16 @@ async def test_should_fail(dut):
 async def test_will_skip(dut):
     dut._log.info("This should not be output!")
 
-# DISABLED cocotb.test(timeout_time=100, timeout_unit='us', expect_fail=True)
-async def test_timeout(dut):
-    clock = Clock(dut.clk, 10, units="us")
+
+@cocotb.test(timeout_time=100, timeout_unit='us', expect_fail=True)
+@cocotb.parametrize(
+    clk_period=[10,125], 
+    timer_t=[101, 200])
+async def test_timeout(dut, clk_period:int, timer_t:int):
+    clock = Clock(dut.clk, clk_period, units="us")
     cocotb.start_soon(clock.start())
-    
-    await Timer(200, 'us')
+    # will timeout before the timer expires, hence expect_fail=True above
+    await Timer(timer_t, 'us')
     
 @cocotb.test()
 async def test_timer(dut):
@@ -121,7 +124,7 @@ def main():
             self.tt = DemoBoard.get()
             # inputs
             self.some_bit = self.new_bit_attribute(self.tt.uo_out, 5)
-
+    
     tt = DemoBoard.get()
     tt.shuttle.tt_um_factory_test.enable()
     tt.uio_oe_pico.value = 0 # all inputs
