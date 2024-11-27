@@ -32,6 +32,13 @@ This code accesses the PowerOnSelfTest functions to:
 
 import micropython
 import gc
+
+# stash the current value for garbage 
+# collection threshold (is -1/when full, by default)
+GCThreshold = gc.threshold()
+
+# start very aggressive, to keep thing defragged
+# as we read in ini and JSON files, etc
 gc.threshold(10000)
 import ttboard.util.time as time
 from ttboard.boot.demoboard_detect import DemoboardDetect
@@ -88,6 +95,7 @@ print(f"{colors.color(detection_message, detection_color)}")
 if PowerOnSelfTest.first_boot():
     print('First boot!')
     PowerOnSelfTest.handle_first_boot()
+    gc.collect()
     
 
 
@@ -131,6 +139,9 @@ print()
 
 
 print(f"tt.sdk_version={tt.version}")
+
+# end by being so aggressive on collection
+gc.threshold(GCThreshold)
 
 # to run tests easily import a module of interest, as below, and then 
 # run() it
