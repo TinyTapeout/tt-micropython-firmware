@@ -37,7 +37,7 @@ jobs:
       run: |
            PYTHONPATH="$GITHUB_WORKSPACE/sdk/src/:$PYTHONPATH"
            echo "Path is $PYTHONPATH"
-           for chip in $TT_RUNS_SUPPORTED; do python3 $GITHUB_WORKSPACE/bin/serialize_shuttle.py $GITHUB_WORKSPACE/sdk/src/shuttles/$chip.json; done
+           for chip in $TT_RUNS_SUPPORTED; do python3 $GITHUB_WORKSPACE/sdk/bin/serialize_shuttle.py $GITHUB_WORKSPACE/sdk/src/shuttles/$chip.json; done
     
     - name: Build the final UF2
       run: |
