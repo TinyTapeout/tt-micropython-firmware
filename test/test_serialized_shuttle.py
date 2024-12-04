@@ -65,23 +65,26 @@ def test_check_serialization(shuttle, shuttlepath):
             # some munging happens, get the resulting name
             project_name = emptyIndex.clean_project_name(project)
             
-            #print(f"project: {project_name} ({project['macro']})")
-            assert jsonIndex.is_available(project_name)
-            assert binIndex.is_available(project_name)
             
+            # both should have the same number of matches
             bin_found = binIndex.find(project_name)
             assert len(bin_found)
             json_found = jsonIndex.find(project_name)
             assert len(json_found) == len(bin_found)
-            print(f'find {project_name} {json_found}')
-            if len(bin_found) > 1:
-                # have multiple--that's because some wokwi projects
-                # get the same simplified project_name, so we go
-                # by id
-                addr = int(project['address'])
-                check_design(binIndex.get(addr), project)
-                check_design(jsonIndex.get(addr), project)
+            
+            
+            danger_level = Default_danger
+            if 'danger_level' in project:
+                danger_level = DangerLevel.string_to_level(project['danger_level'])
+            
+            if danger_level >= DangerLevel.HIGH:
+                print(f'{project_name}: HIGH danger')
+                assert not jsonIndex.is_available(project_name)
+                assert not binIndex.is_available(project_name)
             else:
+                #print(f"project: {project_name} ({project['macro']})")
+                assert jsonIndex.is_available(project_name)
+                assert binIndex.is_available(project_name)
                 # ok, found in both, now check values
                 check_design(binIndex.get(project_name), project)
                 check_design(jsonIndex.get(project_name), project)
