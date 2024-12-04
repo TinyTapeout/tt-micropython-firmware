@@ -200,9 +200,11 @@ class Design(Serializable):
         return f'{self.name} ({self.count}) @ {self.repo}'
     
     def __repr__(self):
-        if self.danger_level != DangerLevel.SAFE:
+        if self.danger_level == DangerLevel.SAFE:
+            dangermsg = ''
+        else:
             dangermsg = f' danger={self.danger_level_str}'
-            
+        
         return f'<Design {self.count}: {self.name}{dangermsg}>'
         
 
