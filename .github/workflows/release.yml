@@ -28,12 +28,16 @@ jobs:
     - name: Move ucocotb
       run: |
            cp -r $GITHUB_WORKSPACE/sdk/microcotb/src/microcotb $GITHUB_WORKSPACE/sdk/src
-           ls $GITHUB_WORKSPACE/sdk/src
     
     - name: Get shuttle indices
       run: |
            mkdir $GITHUB_WORKSPACE/sdk/src/shuttles
            for chip in $TT_RUNS_SUPPORTED; do wget -O $GITHUB_WORKSPACE/sdk/src/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=repo,address,commit,clock_hz,title"; done
+    - name: Prepare shuttle bin files
+      run: |
+           PYTHONPATH="$GITHUB_WORKSPACE/sdk/src/:$PYTHONPATH"
+           echo "Path is $PYTHONPATH"
+           for chip in $TT_RUNS_SUPPORTED; do python3 $GITHUB_WORKSPACE/bin/serialize_shuttle.py $GITHUB_WORKSPACE/sdk/src/shuttles/$chip.json; done
     
     - name: Build the final UF2
       run: |
