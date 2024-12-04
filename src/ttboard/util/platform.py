@@ -117,7 +117,7 @@ if IsRP2040:
         machine.freq(int(freqHz))
     
     @micropython.native
-    def write_input_byte(val):
+    def write_ui_in_byte(val):
         # dump_portset('ui_in', val)
         # low level machine stuff
         # move the value bits to GPIO spots
@@ -131,12 +131,12 @@ if IsRP2040:
         machine.mem32[0xd000001c] = val
         
     @micropython.native
-    def read_input_byte():
+    def read_ui_in_byte():
         # just read the high and low nibbles from GPIO and combine into a byte
         return ( (machine.mem32[0xd0000004] & (0xf << 17)) >> (17-4)) | ((machine.mem32[0xd0000004] & (0xf << 9)) >> 9)
     
     @micropython.native
-    def write_bidir_byte(val):
+    def write_uio_byte(val):
         # dump_portset('uio', val)
         # low level machine stuff
         # move the value bits to GPIO spots
@@ -151,24 +151,24 @@ if IsRP2040:
         
         
     @micropython.native
-    def read_bidir_byte():
+    def read_uio_byte():
         return (machine.mem32[0xd0000004] & (0xff << 21)) >> 21
     
     @micropython.native
-    def read_bidir_outputenable():
+    def read_uio_outputenable():
         # GPIO_OE register, masked for our bidir pins
         return (machine.mem32[0xd0000020] & 0x1FE00000) >> 21
         
         
     @micropython.native
-    def write_bidir_outputenable(val):
+    def write_uio_outputenable(val):
         # dump_portset('uio_oe', val)
         # GPIO_OE register, clearing bidir pins and setting any enabled
         val = (val << 21)
         machine.mem32[0xd0000020] = (machine.mem32[0xd0000020] & ((1 << 21) - 1)) | val
         
     @micropython.native
-    def write_output_byte(val):
+    def write_uo_out_byte(val):
         # dump_portset('uo_out', val)
         # low level machine stuff
         # move the value bits to GPIO spots
@@ -181,7 +181,7 @@ if IsRP2040:
         machine.mem32[0xd000001c] = val
     
     @micropython.native
-    def read_output_byte():
+    def read_uo_out_byte():
         
         # sample code to deal with differences between 
         # PCBs, not actually required as we didn't move anything
@@ -228,35 +228,35 @@ else:
         RP2040SystemClockDefaultHz = freqHz
         
     _inbyte = 0
-    def write_input_byte(val):
+    def write_ui_in_byte(val):
         global _inbyte 
         print(f'Sim write_input_byte {val}')
         _inbyte = val
 
-    def read_input_byte():
+    def read_ui_in_byte():
         print('Sim read_output_byte')
         return _inbyte
 
 
     _uio_byte = 0
-    def write_bidir_byte(val):
+    def write_uio_byte(val):
         global _uio_byte
         print(f'Sim write_bidir_byte {val}')
         _uio_byte = val
 
         
         
-    def read_bidir_byte():
+    def read_uio_byte():
         print('Sim read_output_byte')
         return _uio_byte
     
     _outbyte = 0
-    def write_output_byte(val):
+    def write_uo_out_byte(val):
         global _outbyte 
         print(f'Sim write_output_byte {val}')
         _outbyte = val
     
-    def read_output_byte():
+    def read_uo_out_byte():
         global _outbyte 
         v = _outbyte 
         #_outbyte += 1
@@ -264,11 +264,11 @@ else:
         return v
     
     _uio_oe_pico = 0
-    def read_bidir_outputenable():
+    def read_uio_outputenable():
         print('Sim read_bidir_outputenable')
         return _uio_oe_pico
 
-    def write_bidir_outputenable(val):
+    def write_uio_outputenable(val):
         global _uio_oe_pico
         print(f'Sim write_bidir_outputenable {val}')
         _uio_oe_pico = val

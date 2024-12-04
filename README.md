@@ -446,9 +446,44 @@ tt.ui_in[4:2] = 0b101
 Again, it's worth noting that this acts as in verilog, so ui_in[4:2] includes bits 4,3 and 2.
 
 
+### Fast I/O
+
+All the I/O port abstractions and the cocotb compatibility aare nice, but sometimes there's a need for speed.
+
+To read or write a byte in a single, low-level, call, use the fast micropython native functions from the platform, e.g.
+
+```
+>>> import ttboard.util.platform as platform
+>>> platform.read_ui_in_byte()
+1
+>>> platform.write_ui_in_byte(4)
+>>> platform.read_ui_in_byte()
+4
+```
+
+The naming is read/write_u*_byte, so the available functions are
+
+  * read_ui_in_byte()
+  
+  * read_uio_byte()
+  
+  * read_uo_out_byte()
+  
+  * read_uio_outputenable()
+  
+  * write_ui_in_byte(VAL)
+  
+  * write_uio_byte(VAL)
+  
+  * write_uo_out_byte(VAL)
+  
+  * write_uio_outputenable(VAL)
+
+
+
 ### RP2040 pin objects
 
-It's recommended that you stick with reading and writing values using the u* ports as described above.
+It's recommended that you stick with reading and writing values using the u* ports or the low-level platform calls, as described above.
 
 Still, there may be cases where you want to play with micropython pin objects themselves, say to set pull-ups
 

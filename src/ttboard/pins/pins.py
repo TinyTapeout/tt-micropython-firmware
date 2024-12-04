@@ -153,10 +153,10 @@ class Pins:
         # Note: these are named according the the ASICs point of view
         # we can write ui_in, we read uo_out
         port_defs = [
-            ('uo_out',  8, platform.read_output_byte, None),
-            ('ui_in',   8, platform.read_input_byte, platform.write_input_byte),
-            ('uio_in',  8, platform.read_bidir_byte, platform.write_bidir_byte),
-            ('uio_out', 8, platform.read_bidir_byte, None)
+            ('uo_out',  8, platform.read_uo_out_byte, None),
+            ('ui_in',   8, platform.read_ui_in_byte, platform.write_ui_in_byte),
+            ('uio_in',  8, platform.read_uio_byte, platform.write_uio_byte),
+            ('uio_out', 8, platform.read_uio_byte, None)
             ]
         self._ports = dict()
         for pd in port_defs:
@@ -164,8 +164,8 @@ class Pins:
             
             
         self.uio_oe_pico = VerilogOEPort('uio_oe_pico', 8, 
-                                         platform.read_bidir_outputenable, 
-                                         platform.write_bidir_outputenable)
+                                         platform.read_uio_outputenable, 
+                                         platform.write_uio_outputenable)
         
         
     
@@ -199,8 +199,8 @@ class Pins:
         beginFunc = startupMap[set_mode]
         beginFunc()
         if set_mode == RPMode.ASIC_RP_CONTROL:
-            self.ui_in.byte_write = platform.write_input_byte
-            self.uio_in.byte_write = platform.write_bidir_byte
+            self.ui_in.byte_write = platform.write_ui_in_byte
+            self.uio_in.byte_write = platform.write_uio_byte
         else:
             self.ui_in.byte_write = None 
             self.uio_in.byte_write = None
