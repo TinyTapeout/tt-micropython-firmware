@@ -6,7 +6,7 @@ jobs:
   create-release:
     env:
       RPOS_UF2FILE: RPI_PICO-20241025-v1.24.0.uf2
-      TT_RUNS_SUPPORTED: "tt04 tt05 tt06"
+      TT_RUNS_SUPPORTED: "tt04 tt05 tt06 tt07"
     runs-on: ubuntu-latest
     steps:
 
