@@ -53,6 +53,7 @@ def test_check_serialization(shuttle, shuttlepath):
     assert len(shuttle)
     assert len(shuttlepath)
     
+    print(f"\nRunning test for shuttle: ***{shuttle}***\n")
     shuttle_json_file = os.path.join(shuttlepath, f'{shuttle}.json')
     (jsonIndex, binIndex) = get_indices(shuttle, shuttlepath)
     
