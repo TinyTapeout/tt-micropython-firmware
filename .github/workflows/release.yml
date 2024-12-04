@@ -32,7 +32,7 @@ jobs:
     - name: Get shuttle indices
       run: |
            mkdir $GITHUB_WORKSPACE/sdk/src/shuttles
-           for chip in $TT_RUNS_SUPPORTED; do wget -O $GITHUB_WORKSPACE/sdk/src/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=repo,address,commit,clock_hz,title"; done
+           for chip in $TT_RUNS_SUPPORTED; do wget -O $GITHUB_WORKSPACE/sdk/src/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=repo,address,commit,clock_hz,title,danger_level"; done
     - name: Prepare shuttle bin files
       run: |
            cp -R $GITHUB_WORKSPACE/sdk/src $GITHUB_WORKSPACE/sdk/convwork
@@ -40,6 +40,13 @@ jobs:
            echo "Path is $RUNPATH"
            for chip in $TT_RUNS_SUPPORTED; do PYTHONPATH=$RUNPATH python3 $GITHUB_WORKSPACE/sdk/bin/serialize_shuttle.py $GITHUB_WORKSPACE/sdk/src/shuttles/$chip.json; done
     
+    - name: Run PyTests
+      run: |
+           pip install pytest
+           RUNPATH="$GITHUB_WORKSPACE/sdk/convwork:$PYTHONPATH"
+           cd $GITHUB_WORKSPACE/sdk/test
+           for chip in $TT_RUNS_SUPPORTED; do pytest --shuttle $chip --shuttlepath $GITHUB_WORKSPACE/sdk/src/shuttles  test_serialized_shuttle.py; if [ "$?" != "0" ] then echo "FAILURE" fi; done
+
     - name: Build the final UF2
       run: |
            pip install uf2utils

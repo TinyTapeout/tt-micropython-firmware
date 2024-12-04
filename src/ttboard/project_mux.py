@@ -78,6 +78,22 @@ class Serializable:
             log.info(f'Deserializing from v{version} file {fpath}')
             self.deserialize(f)
         
+        
+    @classmethod 
+    def serializable_string(cls, s:str):
+        try:
+            _enc = bytearray(s, cls.StringEncoding)
+            return s
+        except:
+            news = ''
+            for i in range(len(s)):
+                c = s[i]
+                if ord(c) < ord('A') or ord(c) > ord('z'):
+                    news += '_'
+                else:
+                    news += c
+            return news
+        
     @classmethod 
     def deserialize_string(cls, bytestream):
         slen = cls.deserialize_int(bytestream, cls.BytesForStringLen)
@@ -102,15 +118,7 @@ class Serializable:
         try:
             enc = bytearray(s, cls.StringEncoding)
         except:
-            news = ''
-            for i in range(len(s)):
-                c = s[i]
-                if ord(c) < ord('A') or ord(c) > ord('z'):
-                    news += '_'
-                else:
-                    news += c
-            enc = bytearray(news, cls.StringEncoding)
-
+            enc = bytearray(cls.serializable_string(s), cls.StringEncoding)
         bts += enc
         return bts
     
@@ -229,13 +237,13 @@ class DesignStub:
         in the design index so this only happens once.
     '''
     def __init__(self, design_index, projname):
-        self.design_index = design_index 
+        self.design_index = design_index
         self.name = projname 
         self._des = None
     
     def _lazy_load(self):
-        des = self.design_index.load_project(self.name)
-        setattr(self.design_index, self.name, des)
+        des = self.design_index.load_project(self.project_index)
+        setattr(self.design_index, des.name, des)
         self._des = des
         return des
     
@@ -258,7 +266,7 @@ class DesignStub:
         return f'<Design {self.project_index}: {self.name} (uninit)>'
     
 class DesignIndex(Serializable):
-    SerializedBinSuffix = '.bin'
+    SerializedBinSuffix = 'bin'
     BadCharsRe = re.compile(r'[^\w\d\s]+')
     SpaceCharsRe = re.compile(r'\s+')
     
@@ -271,8 +279,7 @@ class DesignIndex(Serializable):
         
         self.load_available(src_JSON_file)
         
-    def load_serialized(self, src_JSON_file):
-        serialized_fpath = f'{src_JSON_file}{self.SerializedBinSuffix}'
+    def load_serialized(self, serialized_fpath):
         try:
             # no os.path on this dumb thing...
             os.stat(serialized_fpath)
@@ -282,12 +289,16 @@ class DesignIndex(Serializable):
         if self.from_bin_file(serialized_fpath):
             return True
         
-    def load_available(self, src_JSON_file:str=None):
+    def load_available(self, src_JSON_file:str=None, force_json:bool=False):
         if src_JSON_file is None:
+            if self._src_json is None:
+                return
             src_JSON_file = self._src_json
-            
-        if self.load_serialized(src_JSON_file):
-            return 
+        
+        self._src_json = src_JSON_file
+        if not force_json:
+            if self.load_serialized(f'{src_JSON_file}.{self.SerializedBinSuffix}'):
+                return 
             
         self._shuttle_index = dict()
         self._available_projects = dict()
@@ -295,20 +306,8 @@ class DesignIndex(Serializable):
             with open(src_JSON_file) as fh:
                 index = json.load(fh)
                 for project in index['projects']:
-                    attrib_name = project['macro']
                     project_address = int(project['address'])
-                    
-                    if attrib_name in self._available_projects:
-                        log.info(f'Already have a "{attrib_name}" here...')
-                        attempt = 1
-                        augmented_name = f'{attrib_name}_{attempt}'
-                        while augmented_name in self._available_projects:
-                            attempt += 1
-                            augmented_name = f'{attrib_name}_{attempt}'
-                        
-                        attrib_name = augmented_name
-                        
-                    attrib_name = self._wokwi_name_cleanup(attrib_name, project)
+                    attrib_name = self.clean_project_name(project)
                     self._available_projects[attrib_name] = int(project_address)
                     # setattr(self, attrib_name, DesignStub(self, attrib_name))
                     self._project_count += 1
@@ -319,15 +318,27 @@ class DesignIndex(Serializable):
         gc.collect()
             
              
-    
-                
+    def clean_project_name(self, project:dict):
+        attrib_name = project['macro']
+        attempt = 1
+        attrib_name = self._wokwi_name_cleanup(attrib_name, project)
+        while attrib_name in self._available_projects:
+            log.error(f'Already have a "{attrib_name}" here...')
+            augmented_name = f'{attrib_name}_{attempt}'
+            if augmented_name in self._available_projects:
+                attempt += 1
+            else:
+                attrib_name = augmented_name
+            
+        return self.serializable_string(attrib_name)
+        
     def _wokwi_name_cleanup(self, name:str, info:dict):
         
         # special cleanup for wokwi gen'ed names
         if name.startswith('tt_um_wokwi') and 'title' in info and len(info['title']):
             new_name = self.SpaceCharsRe.sub('_', self.BadCharsRe.sub('', info['title'])).lower()
             if len(new_name):
-                name = f'wokwi_{new_name}'
+                name = f'wokwi_{new_name}_{name[-3:]}'
         
         return name 
     @property
@@ -383,7 +394,11 @@ class DesignIndex(Serializable):
         if force_all:
             project_address = 0
         else:
-            project_address = self._available_projects[project_name]
+            if isinstance(project_name, int):
+                project_address = project_name 
+                project_name = self.project_name(project_address)
+            else:
+                project_address = self._available_projects[project_name]
         try:
             with open(self._src_json) as fh:
                 log.debug(f"LOADING {self._src_json}")
@@ -415,6 +430,7 @@ class DesignIndex(Serializable):
         
         raise AttributeError(f'Unknown project "{project_name}"') 
         
+        
     def is_available(self, project_name:str):
         return project_name in self._available_projects
     
@@ -422,14 +438,25 @@ class DesignIndex(Serializable):
         if self.is_available(project_name):
             return self._available_projects[project_name]
         
-        return None    
+        return None   
     
+    def project_name(self, from_address:int) -> str:
+        found = list(filter(lambda x: x[1] == from_address, self._available_projects.items()))
+        if len(found):
+            return found[0][0]
+        return None
+    
+    def find(self, search:str) -> list:
+        return list(filter(lambda p: p.name.find(search) >= 0,  self.all))
     
         
     def serialize(self):
         self.load_all()
         bts = bytearray()
         for ades in self.all:
+            pname = self.project_name(ades.project_index)
+            assert ades.name == pname, f'{ades.name} {pname}'
+            ades.name = pname
             bts += ades.serialize()
             
         return bts
@@ -623,9 +650,9 @@ class ProjectMux:
     def get(self, project_name:str) -> Design:
         return getattr(self.projects, project_name)
     
-    def find(self, search:str) -> list:
-        return list(filter(lambda p: p.name.find(search) >= 0,  self.all))
     
+    def find(self, search:str) -> list:
+        return self.projects.find(search)
     def __getattr__(self, name):
         if hasattr(self, 'projects'):
             if self.projects.is_available(name) or hasattr(self.projects, name):
