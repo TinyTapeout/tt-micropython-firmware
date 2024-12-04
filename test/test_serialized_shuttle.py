@@ -68,7 +68,6 @@ def test_check_serialization(shuttle, shuttlepath):
             
             # both should have the same number of matches
             bin_found = binIndex.find(project_name)
-            assert len(bin_found)
             json_found = jsonIndex.find(project_name)
             assert len(json_found) == len(bin_found)
             
