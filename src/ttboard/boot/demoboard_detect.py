@@ -4,7 +4,7 @@ Created on Aug 30, 2024
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
-
+import ttboard.util.platform as platform
 from ttboard.pins.upython import Pin
 import ttboard.pins.gpio_map
 from ttboard.pins.gpio_map import GPIOMapTT04, GPIOMapTT06
@@ -117,9 +117,18 @@ class DemoboardDetect:
         
         log.debug("Mux twiddle has no effect, probably not TT04 db")
         return False
-    
+    @classmethod 
+    def rp_all_inputs(cls):
+        log.debug("Setting all RP GPIO to INPUTS")
+        pins = []
+        for i in range(29):
+            pins.append(platform.pin_as_input(i, Pin.PULL_DOWN))
+            
+        return pins
+        
     @classmethod 
     def probe(cls):
+        cls.rp_all_inputs()
         if cls.probe_tt04mux():
             cls._configure_gpiomap()
             return True 

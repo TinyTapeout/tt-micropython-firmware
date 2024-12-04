@@ -46,6 +46,12 @@ if IsRP2040:
     import rp2
     import machine
     
+    
+    def pin_as_input(gpio_index:int, pull:int=None):
+        if pull is not None:
+            return machine.Pin(gpio_index, machine.Pin.IN, pull)
+        else:
+            return machine.Pin(gpio_index, machine.Pin.IN)
     def dump_portset(p:str, v:int):
         print(f'ps {p}: {bin(v)}')
         return
@@ -211,7 +217,9 @@ else:
         def stop(self):
             self.freq = 0
             print("PIO clock stop")
-            
+    def pin_as_input(gpio_index:int, pull:int=None):
+        from ttboard.pins.upython import Pin
+        return Pin(gpio_index, Pin.IN, pull=pull)
     def get_RP_system_clock():
         return RP2040SystemClockDefaultHz
     def set_RP_system_clock(freqHz:int):
