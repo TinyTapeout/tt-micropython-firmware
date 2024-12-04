@@ -45,7 +45,7 @@ jobs:
            pip install pytest
            RUNPATH="$GITHUB_WORKSPACE/sdk/convwork:$PYTHONPATH"
            cd $GITHUB_WORKSPACE/sdk/test
-           for chip in $TT_RUNS_SUPPORTED; do pytest --shuttle $chip --shuttlepath $GITHUB_WORKSPACE/sdk/src/shuttles  test_serialized_shuttle.py; if [ "$?" != "0" ] then echo "FAILURE" fi; done
+           for chip in $TT_RUNS_SUPPORTED; do PYTHONPATH=$RUNPATH pytest --shuttle $chip --shuttlepath $GITHUB_WORKSPACE/sdk/src/shuttles test_serialized_shuttle.py; done
 
     - name: Build the final UF2
       run: |
