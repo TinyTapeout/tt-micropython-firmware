@@ -7,8 +7,10 @@ Created on Nov 22, 2024
 
 import gc
 from ttboard.demoboard import DemoBoard
+from ttboard.mode import RPMode
 from microcotb.clock import Clock
 from microcotb.triggers import RisingEdge, FallingEdge, ClockCycles, Timer
+from microcotb.time.value import TimeValue
 import microcotb as cocotb
 from microcotb.utils import get_sim_time
 gc.collect()
@@ -115,7 +117,6 @@ async def test_timer(dut):
     dut._log.info(f"System time is now {get_sim_time('us')}us")
     
 def main():
-    # import examples.tt_um_factory_test.tt_um_factory_test as ft
     import ttboard.cocotb.dut
     
     class DUT(ttboard.cocotb.dut.DUT):
@@ -127,9 +128,15 @@ def main():
     
     tt = DemoBoard.get()
     tt.shuttle.tt_um_factory_test.enable()
+    
+    if tt.mode != RPMode.ASIC_RP_CONTROL:
+        print("Setting mode to ASIC_RP_CONTROL")
+        tt.mode = RPMode.ASIC_RP_CONTROL
+        
     tt.uio_oe_pico.value = 0 # all inputs
     
     
+    TimeValue.ReBaseStringUnits = True # I like pretty strings
     
     runner = cocotb.get_runner()
     

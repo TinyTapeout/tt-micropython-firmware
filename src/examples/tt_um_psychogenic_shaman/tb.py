@@ -604,12 +604,17 @@ class DUT(ttboard.cocotb.dut.DUT):
         self.oe_pico_setting = 0b11001100
         
 def main():
-    from ttboard.demoboard import DemoBoard
+    from ttboard.demoboard import DemoBoard, RPMode
     tt = DemoBoard.get()
     if not tt.shuttle.has('tt_um_psychogenic_shaman'):
         print("No tt_um_psychogenic_shaman in this shuttle?")
         return
+    
+    
     tt.shuttle.tt_um_psychogenic_shaman.enable()
+    if tt.mode != RPMode.ASIC_RP_CONTROL:
+        print("Setting mode to ASIC_RP_CONTROL")
+        tt.mode = RPMode.ASIC_RP_CONTROL
     
     dut = DUT()
     tt.uio_oe_pico.value = dut.oe_pico_setting

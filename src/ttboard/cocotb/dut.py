@@ -11,9 +11,9 @@ from microcotb.dut import Wire
 import ttboard.log as logging
 
 
-class PinWrapper:
-    def __init__(self, pin):
-        self._pin = pin 
+class PinWrapper(microcotb.dut.PinWrapper):
+    def __init__(self, name:str, pin):
+        super().__init__(name, pin)
         
     @property 
     def value(self):
@@ -33,8 +33,8 @@ class DUTWrapper(microcotb.dut.DUT):
     def __init__(self, name:str='DUT'):
         self.tt = DemoBoard.get()
         # wrap the bare clock pin
-        self.clk = PinWrapper(self.tt.pins.rp_projclk)
-        self.rst_n = PinWrapper(self.tt.rst_n)
+        self.clk = PinWrapper('clk', self.tt.pins.rp_projclk)
+        self.rst_n = PinWrapper('rst_n', self.tt.rst_n)
         
         # provide the I/O ports from DemoBoard 
         # as attribs here
@@ -42,7 +42,8 @@ class DUTWrapper(microcotb.dut.DUT):
         for p in self.TTIOPortNames:
             setattr(self, p, getattr(self.tt, p))
         self._log = logging.getLogger(name)
-        self.ena = NoopSignal(1)
+        
+        self.ena = NoopSignal('ena', 1)
         
     
     def testing_will_begin(self):

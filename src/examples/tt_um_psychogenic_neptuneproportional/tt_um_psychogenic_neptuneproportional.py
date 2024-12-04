@@ -6,7 +6,7 @@ Created on Nov 21, 2024
 '''
 import math
 import gc
-from ttboard.demoboard import DemoBoard
+from ttboard.demoboard import DemoBoard, RPMode
 gc.collect()
 from microcotb.clock import Clock
 from microcotb.triggers import Timer, ClockCycles # RisingEdge, FallingEdge, Timer, ClockCycles
@@ -186,6 +186,10 @@ def main():
             
     tt = DemoBoard.get()
     tt.shuttle.tt_um_psychogenic_neptuneproportional.enable()
+    
+    if tt.mode != RPMode.ASIC_RP_CONTROL:
+        print("Setting mode to ASIC_RP_CONTROL")
+        tt.mode = RPMode.ASIC_RP_CONTROL
     
     
     runner = cocotb.get_runner()

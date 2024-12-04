@@ -146,11 +146,33 @@ gc.threshold(GCThreshold)
 # to run tests easily import a module of interest, as below, and then 
 # run() it
 
+
+def run_testbench_factorytest():
+    import microcotb
+    # a uPython means to avoid having all
+    # decorators ever seen in the same test run:
+    microcotb.RunnerModuleName = 'factorytest'
+    import examples.tt_um_factory_test as test 
+    test.run()
+    return test 
+
+def run_testbench_neptune():
+    import microcotb
+    # a uPython means to avoid having all
+    # decorators ever seen in the same test run:
+    microcotb.RunnerModuleName = 'neptune'
+    import examples.tt_um_psychogenic_neptuneproportional as test 
+    test.run()
+    return test 
+    
+
+# run_testbench_factorytest()
+# or
 # import examples.tt_um_psychogenic_shaman as test
 # import examples.tt_um_rejunity_sn76489 as test
 # import examples.tt_um_factory_test as test
 # import examples.tt_um_psychogenic_neptuneproportional as test 
 # import examples.tt_um_rgbled_decoder as test
-
 # test.run()
+
 

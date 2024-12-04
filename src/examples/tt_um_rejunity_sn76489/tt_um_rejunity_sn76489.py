@@ -589,7 +589,7 @@ def global_overrides(selection, master_clock, internal_clock_div):
 def main(selection=None, master_clock=None, internal_clock_div = None):
     
     from ttboard.cocotb.dut import DUT
-    from ttboard.demoboard import DemoBoard
+    from ttboard.demoboard import DemoBoard, RPMode
     
     global_overrides(selection, master_clock, internal_clock_div)
     
@@ -597,7 +597,12 @@ def main(selection=None, master_clock=None, internal_clock_div = None):
     if not tt.shuttle.has('tt_um_rejunity_sn76489'):
         print("No tt_um_rejunity_sn76489 in this shuttle?")
         return
+    
     tt.shuttle.tt_um_rejunity_sn76489.enable()
+    
+    if tt.mode != RPMode.ASIC_RP_CONTROL:
+        print("Setting mode to ASIC_RP_CONTROL")
+        tt.mode = RPMode.ASIC_RP_CONTROL
     tt.uio_oe_pico.value = 0b00000111
     
     dut = DUT()

@@ -168,7 +168,7 @@ async def test_rgbled(dut):
 
 
 
-from ttboard.demoboard import DemoBoard
+from ttboard.demoboard import DemoBoard, RPMode
 import ttboard.cocotb.dut as basedut
 from microcotb.dut import Wire
 
@@ -207,6 +207,11 @@ def load_project(tt:DemoBoard):
         return False
     
     tt.shuttle.tt_um_rgbled_decoder.enable()
+    
+    if tt.mode != RPMode.ASIC_RP_CONTROL:
+        print("Setting mode to ASIC_RP_CONTROL")
+        tt.mode = RPMode.ASIC_RP_CONTROL
+        
     return True
 
 def main():
