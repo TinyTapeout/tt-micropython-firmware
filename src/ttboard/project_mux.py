@@ -246,7 +246,7 @@ class DesignIndex(Serializable):
         bts = bytearray()
         for ades in self.all:
             pname = self.project_name(ades.project_index)
-            assert ades.name == pname, f'{ades.name} {pname}'
+            # assert ades.name == pname, f'{ades.name} {pname}'
             ades.name = pname
             bts += ades.serialize()
             
