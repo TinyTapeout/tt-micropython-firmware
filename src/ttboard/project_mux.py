@@ -8,6 +8,7 @@ Created on Jan 9, 2024
 import json
 import re 
 import gc
+import os
 import ttboard.util.time as time
 from ttboard.pins.pins import Pins
 from ttboard.boot.rom import ChipROM
@@ -21,37 +22,188 @@ Fetched with
 https://index.tinytapeout.com/tt04.json?fields=address,clock_hz,title
 
 '''
-class Design:
-    def __init__(self, projectMux, projname:str, projindex:int, info:dict):
+class DangerLevel:
+    SAFE=0
+    UNKNOWN=1
+    MEDIUM=2
+    HIGH=3
+    
+    @classmethod 
+    def string_to_level(cls, s:str):
+        smap = {
+                'safe': cls.SAFE,
+                'unknown': cls.UNKNOWN,
+                'medium': cls.MEDIUM,
+                'HIGH': cls.HIGH
+            }
+        if s in smap:
+            return smap[s]
+        return cls.UNKNOWN
+    
+    @classmethod
+    def level_to_str(cls, level:int):
+        strs = [   
+            'safe',
+            'unknown',
+            'medium',
+            'high'
+            
+            ]
+        if level >= len(strs):
+            return 'high'
+        return strs[level]
+    
+class Serializable:
+    SerializerVersion = 1
+    BytesForStringLen = 1
+    StringEncoding = 'ascii'
+    ByteOrder = 'big'
+    
+    def __init__(self):
+        pass
+    
+    def to_bin_file(self, fpath:str):
+        with open(fpath, 'wb') as f:
+            f.write(self.serialize_int(self.SerializerVersion, 1))
+            f.write(b'TTSER')
+            f.write(self.serialize())
+            f.close()
+            
+    def from_bin_file(self, fpath:str):
+        with open(fpath, 'rb') as f:
+            version = self.deserialize_int(f, 1)
+            header = f.read(5)
+            if header != b'TTSER':
+                raise ValueError(f'bad header {header} in {fpath}')
+            log.info(f'Deserializing from v{version} file {fpath}')
+            self.deserialize(f)
+        
+    @classmethod 
+    def deserialize_string(cls, bytestream):
+        slen = cls.deserialize_int(bytestream, cls.BytesForStringLen)
+        sbytes = bytestream.read(slen)
+        return sbytes.decode(cls.StringEncoding)
+    
+    @classmethod
+    def deserialize_int(cls, bytestream, num_bytes):
+        bts = bytestream.read(num_bytes)
+        if len(bts) != num_bytes:
+            raise ValueError('empty')
+        v = int.from_bytes(bts, cls.ByteOrder)
+        # print(f"THE BTS {bts} {v}")
+        return v
+
+    
+    @classmethod
+    def serialize_string(cls, s:str):
+        slen = len(s)
+        bts = slen.to_bytes(cls.BytesForStringLen, cls.ByteOrder)
+        bts += bytearray(s, cls.StringEncoding)
+        return bts
+    
+    @classmethod 
+    def serialize_int(cls, i:int, num_bytes):
+        return i.to_bytes(num_bytes, cls.ByteOrder)
+    
+    @classmethod
+    def serialize_list(cls, l:list):
+        bts = bytearray()
+        for element in l:
+            if isinstance(element, str):
+                bts += cls.serialize_string(element)
+            elif isinstance(element, int):
+                bts += cls.serialize_int(element, 1)
+            elif isinstance(element, list):
+                if len(element) != 2:
+                    raise RuntimeError(f'Expecting 2 elements in {element}')
+                if not isinstance(element[0], int):
+                    raise RuntimeError(f'Expecting int as first in {element}')
+                if not isinstance(element[1], int):
+                    raise RuntimeError(f'Expecting size as second in {element}')
+                bts += cls.serialize_int(element[0], element[1])
+            else:
+                RuntimeError(f'Unknown serialize {element}')
+        return bts
+                
+                    
+                
+    def serialize(self):
+        raise RuntimeError('Override me')
+    
+    def deserialize(self, bytestream):
+        raise RuntimeError('Override me')
+
+class Design(Serializable):
+    SerializeClockBytes = 4
+    def __init__(self, projectMux, projname:str='NOTSET', projindex:int=0, info:dict=None):
+        super().__init__()
         self.mux = projectMux
         self.count = int(projindex)
         self.name = projname
-        self.macro = info['macro']
+        
+        self.danger_level = DangerLevel.HIGH
+        self.macro = projname 
         self.repo = ''
+        self.commit = ''
+        self.clock_hz = -1
+        self._all = info
+        if info is None:
+            return 
+        
+        self.macro = info['macro']
+        
+        if 'danger_level' in info:
+            self.danger_level = DangerLevel.string_to_level(info['danger_level'])
+        else:
+            self.danger_level = DangerLevel.SAFE
+        
         if 'repo' in info:
             self.repo = info['repo']
             
-        self.commit = ''
         if 'commit' in info:
             self.commit = info['commit']
         self.clock_hz = int(info['clock_hz'])
-        self._all = info
         
     @property 
     def project_index(self):
         return self.count 
     
-    def enable(self):
-        self.mux.enable(self)
+    @property 
+    def danger_level_str(self):
+        return DangerLevel.level_to_str(self.danger_level)
+    
+    def enable(self, force:bool=False):
+        return self.mux.enable(self, force)
         
     def disable(self):
         self.mux.disable()
         
+    def serialize(self):
+        data = [
+                self.name,
+                self.danger_level,
+                [self.count, 2],
+                [self.clock_hz, self.SerializeClockBytes]
+            
+            ]
+        # print(f"Serializing {data}")
+        return self.serialize_list(data)
+        
+    def deserialize(self, bytestream):
+        self.name = self.deserialize_string(bytestream)
+        self.macro = self.name
+        self.danger_level = self.deserialize_int(bytestream, 1)
+        self.count = self.deserialize_int(bytestream, 2)
+        self.clock_hz = self.deserialize_int(bytestream, self.SerializeClockBytes)
+        # print(str(self))
     def __str__(self):
         return f'{self.name} ({self.count}) @ {self.repo}'
     
     def __repr__(self):
-        return f'<Design {self.count}: {self.name}>'
+        if self.danger_level != DangerLevel.SAFE:
+            dangermsg = f' danger={self.danger_level_str}'
+            
+        return f'<Design {self.count}: {self.name}{dangermsg}>'
         
 
 class DesignStub:
@@ -90,8 +242,8 @@ class DesignStub:
     def __repr__(self):
         return f'<Design {self.project_index}: {self.name} (uninit)>'
     
-class DesignIndex:
-    
+class DesignIndex(Serializable):
+    SerializedBinSuffix = '.bin'
     BadCharsRe = re.compile(r'[^\w\d\s]+')
     SpaceCharsRe = re.compile(r'\s+')
     
@@ -99,11 +251,28 @@ class DesignIndex:
         self._src_json = src_JSON_file
         self._project_mux = projectMux
         self._project_count = 0
+        self._shuttle_index = dict()
+        self._available_projects = dict()
+        
         self.load_available(src_JSON_file)
+        
+    def load_serialized(self, src_JSON_file):
+        serialized_fpath = f'{src_JSON_file}{self.SerializedBinSuffix}'
+        try:
+            # no os.path on this dumb thing...
+            os.stat(serialized_fpath)
+        except OSError:
+            return False
+        
+        if self.from_bin_file(serialized_fpath):
+            return True
         
     def load_available(self, src_JSON_file:str=None):
         if src_JSON_file is None:
             src_JSON_file = self._src_json
+            
+        if self.load_serialized(src_JSON_file):
+            return 
             
         self._shuttle_index = dict()
         self._available_projects = dict()
@@ -160,7 +329,9 @@ class DesignIndex:
         '''
             all available projects in the shuttle, whether loaded or not 
         '''
-        return list(map(lambda p: self._shuttle_index[p] if p in self._shuttle_index else DesignStub(self, p), sorted(self._available_projects.keys())))
+        return list(map(
+            lambda p: self._shuttle_index[p] if p in self._shuttle_index else DesignStub(self, p), 
+            sorted(self._available_projects.keys())))
     @property 
     def all_loaded(self):
         '''
@@ -188,21 +359,40 @@ class DesignIndex:
         
         return self.load_project(project_name)
         
-    def load_project(self, project_name:str) -> Design:
+    def load_all(self, max_allowable_danger=DangerLevel.MEDIUM):
+        self.load_project('', force_all=True, max_allowable_danger=max_allowable_danger)
         
+    def load_project(self, project_name:str, 
+                     force_all:bool=False, max_allowable_danger=DangerLevel.MEDIUM) -> Design:
         # neither a know integer nor a loaded project, but is avail
-        project_address = self._available_projects[project_name]
+        if force_all:
+            project_address = 0
+        else:
+            project_address = self._available_projects[project_name]
         try:
             with open(self._src_json) as fh:
+                log.debug(f"LOADING {self._src_json}")
                 index = json.load(fh)
                 for project in index['projects']:
-                    if int(project['address']) == project_address:
+                    if force_all or int(project['address']) == project_address:
                         # this is our guy
-                        des = Design(self._project_mux, project_name, project["address"], project)
+                        if not len(project_name):
+                            pname = self._wokwi_name_cleanup(project['macro'], project)
+                        else:
+                            pname = project_name
+                        des = Design(self._project_mux, pname, project["address"], project)
+                        if des.danger_level > max_allowable_danger:
+                            log.error(f'Design {des.name} danger exceeds max allowed {DangerLevel.level_to_str(max_allowable_danger)}')
+                            continue
                         self._shuttle_index[des.name] = des
+                        log.debug(f'Loaded project {des.name}')
                         index = None
-                        gc.collect()
-                        return des
+                        if not force_all:
+                            gc.collect()
+                            return des
+                
+                if force_all:
+                    return
                         
                     
         except OSError:
@@ -217,9 +407,46 @@ class DesignIndex:
         if self.is_available(project_name):
             return self._available_projects[project_name]
         
-        return None 
+        return None    
+    
+    
+        
+    def serialize(self):
+        self.load_all()
+        bts = bytearray()
+        for ades in self.all:
+            bts += ades.serialize()
+            
+        return bts
+
+    def from_bin_file(self, fpath:str):
+        self._available_projects = dict()
+        self._shuttle_index = dict()
+        super().from_bin_file(fpath)
+        return len(self._available_projects)
+        
+    def deserialize(self, bytestream):
+        
+        while True:
+            aDesign = Design(self._project_mux)
+            try:
+                aDesign.deserialize(bytestream)
+            except:
+                # we're done
+                bytestream.close()
+                gc.collect()
+                return
+            if not len(aDesign.name):
+                raise RuntimeError('empty design name')
+            # print(f'Deserialized {aDesign}')
+            self._shuttle_index[aDesign.name] = aDesign
+            self._available_projects[aDesign.name] = aDesign.count 
+            setattr(self, aDesign.name, aDesign)
+            
+            
+
     def _get_from_shuttle_index(self, name:str):
-        if hasattr(self, '_shuttle_index') and name in self._shuttle_index:
+        if name in self._shuttle_index:
             if self._shuttle_index[name] is None:
                 return DesignStub(self, name)
             return self._shuttle_index[name]
@@ -228,7 +455,13 @@ class DesignIndex:
     
     def __len__(self):
         return len(self._available_projects)
-    def __getattr__(self, name:str):
+    def __getattrXXXDEAD__(self, name:str):
+        if name == '_shuttle_index':
+            if '_shuttle_index' in self.__dict__:
+                return self.__dict__['_shuttle_index']
+            raise AttributeError
+        elif name in self.__dict__:
+            return self.__dict__[name]
         from_shuttle_idx = self._get_from_shuttle_index(name)
         if from_shuttle_idx is not None:
             return from_shuttle_idx
@@ -298,12 +531,19 @@ class ProjectMux:
         
         self.enabled = None
         
-    def enable(self, design:Design):
+    def enable(self, design:Design, force:bool=False):
         log.info(f'Enable design {design.name}')
+        if design.danger_level != DangerLevel.SAFE:
+            if not force:
+                log.error(f"Danger level is '{design.danger_level_str}'.")
+                log.warn(f"call with force=True to enable")
+                return False
         self.reset_and_clock_mux(design.count)
         self.enabled = design
         if self.design_enabled_callback is not None:
             self.design_enabled_callback(design)
+            
+        return True
             
     
     def reset_and_clock_mux(self, count:int):
@@ -382,7 +622,7 @@ class ProjectMux:
             return self.projects[key]
         raise None
     
-    def __dir__(self):
+    def __dirXXX__(self):
         names = []
         if hasattr(self, 'projects'):
             names = self.projects.names
