@@ -98,7 +98,20 @@ class Serializable:
     def serialize_string(cls, s:str):
         slen = len(s)
         bts = slen.to_bytes(cls.BytesForStringLen, cls.ByteOrder)
-        bts += bytearray(s, cls.StringEncoding)
+        
+        try:
+            enc = bytearray(s, cls.StringEncoding)
+        except:
+            news = ''
+            for i in range(len(s)):
+                c = s[i]
+                if ord(c) < ord('A') or ord(c) > ord('z'):
+                    news += '_'
+                else:
+                    news += c
+            enc = bytearray(news, cls.StringEncoding)
+
+        bts += enc
         return bts
     
     @classmethod 
