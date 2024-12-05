@@ -29,24 +29,28 @@ This code accesses the PowerOnSelfTest functions to:
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
-
 print("BOOT")
-import micropython
 import gc
 
 # stash the current value for garbage 
 # collection threshold (is -1/when full, by default)
 GCThreshold = gc.threshold()
-
 # start very aggressive, to keep thing defragged
 # as we read in ini and JSON files, etc
 gc.threshold(10000)
+
+import ttboard.log as logging
+# logging.ticksStart() # start-up tick delta counter
+
+import micropython
 import ttboard.util.time as time
 from ttboard.boot.demoboard_detect import DemoboardDetect
 from ttboard.mode import RPMode
 from ttboard.demoboard import DemoBoard, Pins
 from ttboard.boot.post import PowerOnSelfTest
 import ttboard.util.colors as colors
+
+# logging.dumpTicksMsDelta('import')
 
 gc.collect()
 
@@ -128,9 +132,8 @@ colors.color_end()
 print(tt)
 print()
 
-
+# logging.dumpTicksMsDelta('boot done')
 print(f"tt.sdk_version={tt.version}")
-
 # end by being so aggressive on collection
 gc.threshold(GCThreshold)
 
@@ -156,7 +159,6 @@ def run_testbench_neptune():
     test.run()
     return test 
     
-
 # run_testbench_factorytest()
 # or
 # import examples.tt_um_psychogenic_shaman as test

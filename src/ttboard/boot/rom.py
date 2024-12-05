@@ -81,8 +81,8 @@ class ChipROM(ShuttleProperties):
             if byte == 0:
                 break
             rom_data += chr(byte)
-        
-        log.info(f'Got ROM data {rom_data}')
+            
+        log.info(f'Got ROM data\n{rom_data}')
 
         self._contents = {'shuttle':'tt04', 'commit':'FAKEDATA'}
         if not len(rom_data):

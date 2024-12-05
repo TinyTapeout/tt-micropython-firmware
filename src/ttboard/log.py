@@ -6,6 +6,7 @@ Created on Jan 22, 2024
 '''
 from ttboard.util.platform import IsRP2040
 import ttboard.util.colors as colors 
+import ttboard.util.time as time
 import gc 
 RPLoggers = dict()
 DefaultLogLevel = 20 # info by default
@@ -47,6 +48,18 @@ if IsRP2040:
             
     def dumpMem(prefix:str='Free mem'):
         print(f"{prefix}: {gc.mem_free()}")
+    
+    DeltaTicksStart = time.ticks_ms()
+    def dumpTicksMs(msg:str='ticks'):
+        print(f"{msg}: {time.ticks_ms()}")
+        
+    def ticksStart():
+        global DeltaTicksStart
+        DeltaTicksStart = time.ticks_ms()
+        
+    def dumpTicksMsDelta(msg:str='ticks'):
+        tnow = time.ticks_ms()
+        print(f"{msg}: {time.ticks_diff(tnow, DeltaTicksStart)}")
         
     def getLogger(name:str):
         global RPLoggers
@@ -66,3 +79,11 @@ else:
     from logging import *
     def dumpMem(prefix:str='Free mem'):
         print(f'{prefix}: infinity')
+    def dumpTicksMs(msg:str='ticks ms'):
+        print(f"{msg}: 0")
+    
+    def ticksStart():
+        return 
+        
+    def dumpTicksMsDelta(msg:str='ticks'):
+        print(f"{msg}: 0")
