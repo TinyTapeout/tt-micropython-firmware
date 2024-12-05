@@ -92,7 +92,6 @@ class DesignIndex(Serializable):
     
         
     def _wokwi_name_cleanup(self, name:str, info:dict):
-        
         # special cleanup for wokwi gen'ed names
         if name.startswith('tt_um_wokwi') and 'title' in info and len(info['title']):
             new_name = self.SpaceCharsRe.sub('_', self.BadCharsRe.sub('', info['title'])).lower()
@@ -244,9 +243,12 @@ class DesignIndex(Serializable):
     def serialize(self):
         self.load_all()
         bts = bytearray()
+        processed = dict()
         for ades in self.all:
+            if ades.project_index in processed:
+                continue 
+            processed[ades.project_index] = True
             pname = self.project_name(ades.project_index)
-            # assert ades.name == pname, f'{ades.name} {pname}'
             ades.name = pname
             bts += ades.serialize()
             
@@ -258,7 +260,6 @@ class DesignIndex(Serializable):
         return self._num_projects
     
     def deserialize_design_by_address(self, fpath:str, project_address:int) -> Design:
-        print(f"DBA {project_address}")
         with open(fpath, 'rb') as bytestream:
             version = self.bin_header_valid(bytestream)
             if not version:
@@ -303,7 +304,8 @@ class DesignIndex(Serializable):
                     des.deserialize(bytestream)
                     setattr(self, des.name, des)
                     ret_list.append(des)
-                bytestream.seek(payload_point + size)
+                else:
+                    bytestream.seek(payload_point + size)
     
     def deserialize_design_by_name(self, fpath:str, project_name:str) -> Design:
         with open(fpath, 'rb') as bytestream:

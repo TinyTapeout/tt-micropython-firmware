@@ -79,7 +79,10 @@ class Serializable:
             news = ''
             for i in range(len(s)):
                 c = s[i]
-                if ord(c) < ord('A') or ord(c) > ord('z'):
+                cval = ord(c)
+                if cval >= ord('0') and cval <= ord('9'):
+                    news += c
+                elif cval < ord('A') or cval > ord('z'):
                     news += '_'
                 else:
                     news += c
@@ -101,7 +104,6 @@ class Serializable:
         if len(bts) != num_bytes:
             raise ValueError('empty')
         v = int.from_bytes(bts, cls.ByteOrder)
-        # print(f"THE BTS {bts} {v}")
         return v
 
     
@@ -228,7 +230,7 @@ class Design(Serializable):
         self.macro = self.name
         self.danger_level = self.deserialize_int(bytestream, 1)
         self.clock_hz = self.deserialize_int(bytestream, self.SerializeClockBytes)
-        # print(str(self))
+        
     def __str__(self):
         return f'{self.name} ({self.count}) @ {self.repo}'
     
