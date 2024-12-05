@@ -37,7 +37,7 @@ import gc
 GCThreshold = gc.threshold()
 # start very aggressive, to keep thing defragged
 # as we read in ini and JSON files, etc
-gc.threshold(10000)
+gc.threshold(80000)
 
 import ttboard.log as logging
 # logging.ticksStart() # start-up tick delta counter
