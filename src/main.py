@@ -29,7 +29,7 @@ This code accesses the PowerOnSelfTest functions to:
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
-print("BOOT")
+print("BOOT: Tiny Tapeout SDK")
 import gc
 
 # stash the current value for garbage 
