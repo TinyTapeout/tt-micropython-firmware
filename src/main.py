@@ -30,6 +30,7 @@ This code accesses the PowerOnSelfTest functions to:
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 
+print("BOOT")
 import micropython
 import gc
 
