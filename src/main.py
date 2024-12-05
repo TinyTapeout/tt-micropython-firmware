@@ -89,21 +89,11 @@ detection_message = 'Detected ' + DemoboardDetect.PCB_str() + ' demoboard ' + de
 print(f"{colors.color(detection_message, detection_color)}")
 
 
-
-# check if this is the first boot, if so, 
-# handle that
-if PowerOnSelfTest.first_boot():
-    print('First boot!')
-    PowerOnSelfTest.handle_first_boot()
-    gc.collect()
-    
-
-
 # take a look at project user button state at startup
 # all this "raw" pin access should happen before the DemoBoard object 
 # is instantiated
-run_post_tests = PowerOnSelfTest.dotest_buttons_held()
-# or get a dict with PowerOnSelfTest.read_all_pins()
+run_post_tests = False
+# run_post_tests = PowerOnSelfTest.dotest_buttons_held()
 
 
 tt = startup()

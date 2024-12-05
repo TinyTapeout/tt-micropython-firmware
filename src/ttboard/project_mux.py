@@ -122,7 +122,6 @@ class DesignIndex(Serializable):
         if StrictMemorySaving and self._src_serialized_bin:
             return []
         
-        
         des_attribs = self._get_design_attribs()
         return sorted(des_attribs, key=lambda x: x.count)
     
@@ -264,7 +263,6 @@ class DesignIndex(Serializable):
             version = self.bin_header_valid(bytestream)
             if not version:
                 raise ValueError(f'bad header in {fpath}')
-            log.info(f'des_by_addr from v{version} file {fpath}')
             addrAndSizeBytes = Design.SerializeAddressBytes + Design.SerializePayloadSizeBytes
             
             while True:
@@ -286,7 +284,6 @@ class DesignIndex(Serializable):
             version = self.bin_header_valid(bytestream)
             if not version:
                 raise ValueError(f'bad header in {fpath}')
-            log.debug(f'find_names from v{version} file {fpath}')
             ret_list = []
             while True:
                 start_point = bytestream.tell()

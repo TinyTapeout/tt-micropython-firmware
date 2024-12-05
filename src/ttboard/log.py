@@ -9,6 +9,7 @@ import ttboard.util.colors as colors
 import gc 
 RPLoggers = dict()
 DefaultLogLevel = 20 # info by default
+LoggingPrefix = 'BOOT'
 if IsRP2040:
     # no logging support, add something basic
     DEBUG = 10
@@ -16,6 +17,7 @@ if IsRP2040:
     WARN = 30
     ERROR = 40
     class Logger:
+        
         colorMap = {
                 10: 'yellow',
                 20: 'green',
@@ -26,8 +28,13 @@ if IsRP2040:
             self.name = name 
             self.loglevel = DefaultLogLevel
         def out(self, s, level:int):
+            global LoggingPrefix
             if self.loglevel <= level:
-                print(f'{self.name}: {colors.color(s, self.colorMap[level])}')
+                if LoggingPrefix:
+                    prefix = LoggingPrefix
+                else:
+                    prefix = self.name
+                print(f'{prefix}: {colors.color(s, self.colorMap[level])}')
             
         def debug(self, s):
             self.out(s, DEBUG)

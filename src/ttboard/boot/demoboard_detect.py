@@ -128,18 +128,22 @@ class DemoboardDetect:
         
     @classmethod 
     def probe(cls):
+        result = False
         cls.rp_all_inputs()
         if cls.probe_tt04mux():
             cls._configure_gpiomap()
-            return True 
-        if cls.probe_pullups():
+            result = True 
+        elif cls.probe_pullups():
             cls._configure_gpiomap()
-            return True 
+            result = True 
+        else:
+            log.debug("Neither pullup nor tt04mux tests conclusive, assuming TT06+ board")
+            cls.PCB = DemoboardVersion.TT06
+            cls._configure_gpiomap()
+            result = False
         
-        log.debug("Neither pullup nor tt04mux tests conclusive, assuming TT06+ board")
-        cls.PCB = DemoboardVersion.TT06
-        cls._configure_gpiomap()
-        return False
+        # clear out boot prefix
+        return result
     
     @classmethod
     def force_detection(cls, dbversion:int):

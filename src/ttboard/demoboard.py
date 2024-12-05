@@ -90,9 +90,9 @@ class DemoBoard:
         
         '''
         # interfaces 
-        logging.dumpMem('db init')
+        #logging.dumpMem('db init')
         self.user_config = UserConfig(iniFile)
-        logging.dumpMem('user conf loaded')
+        #logging.dumpMem('user conf loaded')
         log_level = self.user_config.log_level
         if log_level is not None:
             logging.basicConfig(level=log_level)
@@ -150,6 +150,8 @@ class DemoBoard:
         
         if DemoBoard._DemoBoardSingleton_Instance is None:
             DemoBoard._DemoBoardSingleton_Instance = self 
+            # clear-out boot prefix
+            logging.LoggingPrefix = None
         
         
     def load_default_project(self):
