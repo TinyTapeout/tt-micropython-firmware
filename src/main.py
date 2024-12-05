@@ -47,7 +47,7 @@ import ttboard.util.time as time
 from ttboard.boot.demoboard_detect import DemoboardDetect
 from ttboard.mode import RPMode
 from ttboard.demoboard import DemoBoard, Pins
-from ttboard.boot.post import PowerOnSelfTest
+# from ttboard.boot.post import PowerOnSelfTest
 import ttboard.util.colors as colors
 
 # logging.dumpTicksMsDelta('import')
@@ -94,32 +94,7 @@ detection_message = 'Detected ' + DemoboardDetect.PCB_str() + ' demoboard ' + de
 print(f"{colors.color(detection_message, detection_color)}")
 
 
-# take a look at project user button state at startup
-# all this "raw" pin access should happen before the DemoBoard object 
-# is instantiated
-run_post_tests = False
-# run_post_tests = PowerOnSelfTest.dotest_buttons_held()
-
-
 tt = startup()
-
-# run a test if clock button held high 
-# during startup
-if run_post_tests:
-    print('\n\nDoing startup test!')
-    wait_count = 0
-    while PowerOnSelfTest.dotest_buttons_held() and wait_count < 10:
-        print("Waiting for button release...")
-        time.sleep_ms(250)
-        wait_count += 1
-    
-    post = PowerOnSelfTest(tt)
-    if not post.test_bidirs():
-        print('ERRORS encountered while running POST bidir test!')
-    else:
-        print('Startup test GOOD')
-        tt.load_default_project()
-    print('\n\n')
 
 
 gc.collect()
@@ -132,7 +107,7 @@ colors.color_end()
 print(tt)
 print()
 
-# logging.dumpTicksMsDelta('boot done')
+logging.dumpTicksMsDelta('boot done')
 print(f"tt.sdk_version={tt.version}")
 # end by being so aggressive on collection
 gc.threshold(GCThreshold)
