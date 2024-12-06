@@ -13,10 +13,11 @@ DefaultLogLevel = 20 # info by default
 LoggingPrefix = 'BOOT'
 if IsRP2040:
     # no logging support, add something basic
-    DEBUG = 10
-    INFO = 20
-    WARN = 30
-    ERROR = 40
+    DEBUG   = 10
+    INFO    = 20
+    WARN    = 30
+    WARNING = 30
+    ERROR   = 40
     class Logger:
         
         colorMap = {
@@ -36,15 +37,20 @@ if IsRP2040:
                 else:
                     prefix = self.name
                 print(f'{prefix}: {colors.color(s, self.colorMap[level])}')
-            
+        
         def debug(self, s):
             self.out(s, DEBUG)
         def info(self, s):
             self.out(s, INFO)
         def warn(self, s):
             self.out(s, WARN)
+        def warning(self, s):
+            self.out(s, WARNING)
         def error(self, s):
             self.out(s, ERROR)
+            
+        def getChild(self, nm):
+            return getLogger(f'{self.name}.{nm}')
             
     def dumpMem(prefix:str='Free mem'):
         print(f"{prefix}: {gc.mem_free()}")
