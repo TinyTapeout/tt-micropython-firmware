@@ -515,5 +515,16 @@ tt.pins.uio_in3.pwm(FREQUENCY, [DUTY_16])
 If FREQUENCY is 0, PWM will stop and it will revert to simple output.  If duty cycle is not specified, it will be 50% (0xffff/2).
 
 
+## Release History and Compatibility Matrix
+
+
+
+|TT Edition | Timeline   | Compatible Release   | Incompatible Release | Factory Release |
+|-----------|------------|----------------------|----------------------|-----------------|
+|06         | 2024 Q4    | minimum 1.2.0+       | before 1.2.0         | v2.0.0RC5       |
+|05         | 2024 Q2    | 0 to latest          |                      | v1.2.0          |
+|04         | 2024 Q2    | 0 to latest          |                      | v1.1.0          |
+|03p5       | 2024 Q1    | 0 to 1.2.x           | since 2.0.0          | v0.9.16d        |
+
 
 
