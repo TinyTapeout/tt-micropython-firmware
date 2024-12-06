@@ -6,6 +6,7 @@ Created on Nov 21, 2024
 '''
 from ttboard.demoboard import DemoBoard, Pins
 import microcotb.dut
+from microcotb.testcase import TestCase
 from microcotb.dut import NoopSignal
 from microcotb.dut import Wire
 import ttboard.log as logging
@@ -26,28 +27,52 @@ class PinWrapper(microcotb.dut.PinWrapper):
         self._pin.value(set_to)
             
 
-class DUTWrapper(microcotb.dut.DUT):
+class DUT(microcotb.dut.DUT):
     TTIOPortNames = ['uo_out', 'ui_in', 'uio_in', 
-                 'uio_out', 'uio_oe_pico']
+                     'uio_out', 'uio_oe_pico']
     
     def __init__(self, name:str='DUT'):
-        self.tt = DemoBoard.get()
+        tt:DemoBoard = DemoBoard.get()
+        self.tt = tt # give ourselves access to demoboard object
+        
         # wrap the bare clock pin
         self.clk = PinWrapper('clk', self.tt.pins.rp_projclk)
         self.rst_n = PinWrapper('rst_n', self.tt.rst_n)
         
         # provide the I/O ports from DemoBoard 
-        # as attribs here
+        # as attribs here, so we have dut.ui_in.value etc.
         
         for p in self.TTIOPortNames:
             setattr(self, p, getattr(self.tt, p))
         self._log = logging.getLogger(name)
         
+        # ena may be used in existing tests, does nothing
         self.ena = NoopSignal('ena', 1)
         
     
     def testing_will_begin(self):
-        self.tt.clock_project_stop()
+        self._log.debug('About to start a test run')
+        # you should absolutely do this if you override:
+        if self.tt.is_auto_clocking:
+            self._log.info('autoclocking... will stop it.')
+            self.tt.clock_project_stop()
+        
+    def testing_unit_start(self, test:TestCase):
+        # override if desired
+        self._log.debug(f'Test {test.name} about to start')
+
+
+    def testing_unit_done(self, test:TestCase):
+        # override if desired
+        if test.failed:
+            self._log.debug(f'{test.name} failed because: {test.failed_msg}')
+        else:
+            self._log.debug(f'{test.name} passed!')
+        
+    
+    def testing_done(self):
+        # override if desired
+        self._log.debug('All testing done')
         
         
     def __setattr__(self, name:str, value):
@@ -56,12 +81,6 @@ class DUTWrapper(microcotb.dut.DUT):
             port.value = value 
             return
         super().__setattr__(name, value)
-        
-        
-class DUT(DUTWrapper):
-    
-    def __init__(self, name:str='DUT'):
-        super().__init__(name)
         
         
     
