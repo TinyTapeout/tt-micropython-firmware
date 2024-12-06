@@ -90,6 +90,9 @@ class DemoBoard:
         
         '''
         # interfaces 
+        if DemoBoard._DemoBoardSingleton_Instance is not None:
+            raise RuntimeError('DB exists!  Use DemoBoard.get() to access singleton')
+        
         #logging.dumpMem('db init')
         self.user_config = UserConfig(iniFile)
         #logging.dumpMem('user conf loaded')
