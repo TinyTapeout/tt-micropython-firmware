@@ -4,6 +4,20 @@ Created on Dec 6, 2024
 A basic set of samples to get going with 
 cocotb tests on TT demoboards.
 
+You need:
+  * a few @cocotb.test() functions
+  * a little bit of setup, and to call the runner
+
+The @cocotb.test() functions are pretty regular.
+
+The run() function is where more TT-specific stuff happens.
+Check at the bottom.
+
+
+@see: ttboard.cocotb.dut for the base class you 
+can override for custom DUTs (has utility methods 
+and nifty callbacks)
+
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
@@ -15,6 +29,8 @@ from microcotb.triggers import RisingEdge, FallingEdge, ClockCycles, Timer
 import microcotb as cocotb
 from microcotb.utils import get_sim_time
 
+
+# utility method, called by actual tests
 async def do_reset(dut:DUT, num_cycles:int=10):
     # Reset
     dut._log.info("Reset")
@@ -69,12 +85,13 @@ async def test_multiclocks(dut:DUT):
     clock = Clock(dut.clk, 10, units="us")
     cocotb.start_soon(clock.start())
     
-    
+    # startup another clock, on our aliased bit "signal" (ui_in[0])
     clock = Clock(dut.input_pulse, 1, units="ms")
     cocotb.start_soon(clock.start())
     
     await do_reset(dut) # always the same, so in its own async function
     
+    # wait for it to go up and down a few times
     for i in range(5):
         await RisingEdge(dut.input_pulse)
         dut._log.info(f"on {i} uio_in is: {int(dut.uio_in.value)}")
@@ -83,12 +100,19 @@ async def test_multiclocks(dut:DUT):
     
     keepWaiting = True 
     while keepWaiting:
+        # we want to have just started counting up
         await RisingEdge(dut.input_pulse)
+        
+        # and we want to make sure the value is small
+        # enough that we won't wrap around
         if dut.uo_out.value < 100:
             keepWaiting = False 
     
+    # ok, we're good... capture the value of uo_out
+    # right now
     out_val = dut.uo_out.value
-        
+    
+    # and clock the project a few times to see it increment
     for i in range(10):
         assert dut.uo_out.value == (out_val + i), "out val increments"
         dut._log.info(f"uo_out is now {(out_val + i)}")
@@ -96,7 +120,7 @@ async def test_multiclocks(dut:DUT):
         
     
     
-def main():
+def run():
     
     # get the demoboard singleton
     tt = DemoBoard.get()
@@ -126,10 +150,13 @@ def main():
     # bits and slices
     dut = DUT() # basic TT DUT, with dut._log, dut.ui_in, etc
     
-    # say we want to treat a single bit, ui_in[5], as a signal,
-    # to use as a named input, or clock... easy:
+    # say we want to treat a single bit, ui_in[0], as a signal,
+    # to use as a named input, so we can do 
+    # dut.input_pulse.value = 1, or use it as a clock... easy:
     dut.add_bit_attribute('input_pulse', tt.ui_in, 0)
-    # now dut.input_pulse can be used like any signal 
+    # now dut.input_pulse can be used like any other dut wire
+    # there's also an add_slice_attribute to access chunks[4:2]
+    # by name. 
     
     # run all the @cocotb.test()
     runner.test(dut)
