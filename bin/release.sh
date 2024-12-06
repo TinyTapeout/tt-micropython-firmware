@@ -53,6 +53,18 @@ else
 	exit 3
 fi
 
+if [ -e ./bin/serialize_shuttle.py ]
+then 
+	echo "Downloading and serializing shuttles"
+else
+	echo "Run this script from repo topdir, ./bin/release.sh"
+fi
+echo "Download shuttles for $TT_RUNS_SUPPORTED"
+mkdir $SRCDIR/shuttles
+for chip in $TT_RUNS_SUPPORTED; do echo "get shuttle $chip"; wget -O $SRCDIR/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=address,clock_hz,title,danger_level"; done
+for chip in $TT_RUNS_SUPPORTED; do echo "serialize $chip shuttle"; rm $SRCDIR/shuttles/$chip.json.bin; PYTHONPATH="./src/:$PYTHONPATH" python ./bin/serialize_shuttle.py $SRCDIR/shuttles/$chip.json; done
+
+
 # create some temp stuff
 BUILDDIR=`mktemp -d -t ttupython-XXXXX`
 RPEXISTING=`ls /tmp/rp2-pico-????.uf2`
@@ -68,9 +80,6 @@ else
 	RPUF2=$RPEXISTING
 fi
 
-echo "Download shuttles for $TT_RUNS_SUPPORTED"
-mkdir $BUILDDIR/shuttles
-for chip in $TT_RUNS_SUPPORTED; do wget -O $BUILDDIR/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=address,clock_hz,title"; done
 touch $BUILDDIR/release_v$VERSION
 
 echo "Including SDK from $SRCDIR"
@@ -91,6 +100,7 @@ echo
 uf2info $OUTFILE
 
 rm -rf $BUILDDIR
+# echo $BUILDDIR
 #rm $RPUF2
 echo
 echo "Done: $OUTFILE created"
