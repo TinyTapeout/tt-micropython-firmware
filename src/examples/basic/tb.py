@@ -22,13 +22,16 @@ and nifty callbacks)
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 
-from ttboard.demoboard import DemoBoard, RPMode
-from ttboard.cocotb.dut import DUT 
+import microcotb as cocotb
 from microcotb.clock import Clock
 from microcotb.triggers import RisingEdge, FallingEdge, ClockCycles, Timer
-import microcotb as cocotb
 from microcotb.utils import get_sim_time
 
+# get the @cocotb tests into a namespace
+cocotb.RunnerModuleName = 'basic'
+    
+from ttboard.demoboard import DemoBoard, RPMode
+from ttboard.cocotb.dut import DUT 
 
 # utility method, called by actual tests
 async def do_reset(dut:DUT, num_cycles:int=10):
@@ -143,7 +146,7 @@ def run():
     tt.uio_oe_pico.value = 0 # all inputs
     
     # get a runner
-    runner = cocotb.get_runner()
+    runner = cocotb.get_runner('basic')
     
     # here's our DUT... you could subclass this and 
     # do cool things, like rename signals or access 

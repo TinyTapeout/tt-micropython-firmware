@@ -116,31 +116,34 @@ gc.threshold(GCThreshold)
 # run() it
 
 
-def run_testbench_factorytest():
+def run_testbench_basic():
     import microcotb
     # a uPython means to avoid having all
     # decorators ever seen in the same test run:
-    microcotb.RunnerModuleName = 'factorytest'
+    import examples.basic as test 
+    test.run()
+    return test 
+    
+def run_testbench_factorytest():
+    import microcotb
     import examples.tt_um_factory_test as test 
     test.run()
     return test 
 
 def run_testbench_neptune():
     import microcotb
-    # a uPython means to avoid having all
-    # decorators ever seen in the same test run:
-    microcotb.RunnerModuleName = 'neptune'
     import examples.tt_um_psychogenic_neptuneproportional as test 
     test.run()
     return test 
-    
+
 # run_testbench_factorytest()
 # or
 # import examples.tt_um_psychogenic_shaman as test
 # import examples.tt_um_rejunity_sn76489 as test
 # import examples.tt_um_factory_test as test
 # import examples.tt_um_psychogenic_neptuneproportional as test 
+# dut = test.tt_um_psychogenic_neptuneproportional.DUT()
 # import examples.tt_um_rgbled_decoder as test
 # test.run()
-
+# from examples.basic import run
 

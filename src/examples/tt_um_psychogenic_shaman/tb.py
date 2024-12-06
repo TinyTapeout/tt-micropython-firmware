@@ -619,7 +619,7 @@ def main():
     dut = DUT()
     tt.uio_oe_pico.value = dut.oe_pico_setting
     
-    runner = cocotb.get_runner()
+    runner = cocotb.get_runner('tt_um_psychogenic_shaman')
     dut._log.info(f"enabled shaman project. Will test with\n{runner}")
     runner.test(dut)
 

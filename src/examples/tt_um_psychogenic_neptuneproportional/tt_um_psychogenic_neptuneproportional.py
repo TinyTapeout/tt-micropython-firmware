@@ -4,13 +4,15 @@ Created on Nov 21, 2024
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
-import math
-import gc
-from ttboard.demoboard import DemoBoard, RPMode
-gc.collect()
+import microcotb as cocotb
 from microcotb.clock import Clock
 from microcotb.triggers import Timer, ClockCycles # RisingEdge, FallingEdge, Timer, ClockCycles
-import microcotb as cocotb
+
+
+# get the @cocotb tests into a namespace
+cocotb.RunnerModuleName = 'tt_um_psychogenic_neptune'
+
+from ttboard.demoboard import DemoBoard, RPMode
 
 displayNotes = {
             'NA':     0b00000010, # -
@@ -35,24 +37,49 @@ displayProx = {
 SegmentMask = 0xFF
 ProxSegMask = 0xFE
 
+
+
+@cocotb.test()
+async def note_a_exact(dut):
+    dispValues = await note_a(dut, delta=0, msg="A exact")
     
-        
-# os.environ['COCOTB_RESOLVE_X'] = 'RANDOM'
+    target_value =  (displayProx['exact'] & ProxSegMask)
+    assert dispValues[0] == target_value, f"exact fail {dispValues[0]} != {target_value}"
+    dut._log.info("Note A full pass")
+    
+    
+    
+    
+@cocotb.test(skip=False)
+async def note_e_highfar(dut):
+    dispValues = await note_e(dut, eFreq=330, delta=12, msg="little E high/far")
+    target_value =  (displayProx['hifar'] & ProxSegMask)
+    assert dispValues[0] == target_value, f"high/far fail {dispValues[0]} != {target_value}"
+    dut._log.info("Note E full pass")
+
+
+@cocotb.test(skip=False)
+async def note_g_highclose(dut):
+    dispValues = await note_g(dut, delta=3, msg="High/close")
+    target_value =  (displayProx['hiclose'] & ProxSegMask)
+    assert dispValues[0] == target_value, f"High/close fail {dispValues[0]} != {target_value}"
+    dut._log.info("Note G full pass")
+    
+
+
 async def reset(dut):
     dut._log.info(f"reset(dut)")
     dut.display_single_enable.value = 0
     dut.display_single_select.value = 0
-    dut.rst_n.value = 1
+    dut.input_pulse.value = 0
+    dut.rst_n.value = 0
     dut.clk_config.value = 1 # 2khz clock
-    dut._log.info("hold in reset")
-    await ClockCycles(dut.clk, 5)
-    dut._log.info("reset done")
-    dut.input_pulse.value = 1
+    dut._log.debug("hold in reset")
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 5)
-    dut.input_pulse.value = 0
     dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 5)
+    await ClockCycles(dut.clk, 1)
+    dut._log.info("reset done")
    
     
 async def startup(dut):
@@ -60,7 +87,6 @@ async def startup(dut):
     clock = Clock(dut.clk, 500, units="us")
     cocotb.start_soon(clock.start())
     await reset(dut)
-    dut.input_pulse.value = 0
             
 async def getDisplayValues(dut):
     displayedValues = [None, None]
@@ -79,17 +105,9 @@ async def getDisplayValues(dut):
     return displayedValues
     
 async def inputPulsesFor(dut, tunerInputFreqHz:int, inputTimeSecs=0.51):
-    #numPulses = tunerInputFreqHz * inputTimeSecs 
-    #pulsePeriod = 1/tunerInputFreqHz
-    #pulseHalfCycleUs = round(1e6*pulsePeriod/2.0)
     
-    pulseClock = Clock(dut.input_pulse, 1000*(1.0/tunerInputFreqHz), units='ms')
+    pulseClock = Clock(dut.input_pulse, 1000.0*(1.0/tunerInputFreqHz), units='ms')
     cocotb.start_soon(pulseClock.start())
-    # for _pidx in range(math.ceil(numPulses)):
-    #     dut.input_pulse.value = 1
-    #     await Timer(pulseHalfCycleUs, units='us')
-    #     dut.input_pulse.value = 0
-    #     await Timer(pulseHalfCycleUs, units='us')
     await Timer(inputTimeSecs, 'sec')
     dispV = await getDisplayValues(dut)
     
@@ -102,7 +120,7 @@ async def setup_tuner(dut):
     await startup(dut)
     
 
-async def note_toggle(dut, freq, delta=0, msg="", toggleTime=1.2):
+async def note_toggle(dut, freq, delta=0, msg="", toggleTime=0.58):
     dut._log.info(msg)
     await startup(dut)
     dispValues = await inputPulsesFor(dut, freq + delta, toggleTime)  
@@ -119,14 +137,6 @@ async def note_e(dut, eFreq=330, delta=0, msg=""):
     return dispValues
 
 
-    
-@cocotb.test()
-async def note_e_highfar(dut):
-    dispValues = await note_e(dut, eFreq=330, delta=12, msg="little E high/far")
-    target_value =  (displayProx['hifar'] & ProxSegMask)
-    assert dispValues[0] == target_value, f"high/far fail {dispValues[0]} != {target_value}"
-    dut._log.info("Note E full pass")
-
 
 
 async def note_g(dut, delta=0, msg=""):
@@ -140,14 +150,6 @@ async def note_g(dut, delta=0, msg=""):
     dut._log.info(f"Note G: PASS ({bin(dispValues[1])})")
     return dispValues
 
-@cocotb.test()
-async def note_g_highclose(dut):
-    dispValues = await note_g(dut, delta=3, msg="High/close")
-    target_value =  (displayProx['hiclose'] & ProxSegMask)
-    assert dispValues[0] == target_value, f"High/close fail {dispValues[0]} != {target_value}"
-    dut._log.info("Note G full pass")
-    
-
 
 async def note_a(dut, delta=0, msg=""):
     aFreq = 110
@@ -160,30 +162,35 @@ async def note_a(dut, delta=0, msg=""):
     dut._log.info(f"Note A pass ({bin(dispValues[1])})")
     return dispValues
 
-@cocotb.test()
-async def note_a_exact(dut):
-    dispValues = await note_a(dut, delta=0, msg="A exact")
     
-    target_value =  (displayProx['exact'] & ProxSegMask)
-    assert dispValues[0] == target_value, f"exact fail {dispValues[0]} != {target_value}"
-    dut._log.info("Note A full pass")
+
+
+### DUT class override, so I can get nicely-named aliases
+### that match my verilog testbench
+import ttboard.cocotb.dut
+class DUT(ttboard.cocotb.dut.DUT):
+    def __init__(self):
+        super().__init__('Neptune')
+        
+        # inputs
+        self.add_bit_attribute('display_single_select',
+                                    self.tt.ui_in, 7)
+        self.add_bit_attribute('display_single_enable',
+                                    self.tt.ui_in, 6)
+        self.add_bit_attribute('input_pulse', 
+                                    self.tt.ui_in, 5)
+        # tt.ui_in[4:2]
+        self.add_slice_attribute('clk_config', 
+                                    self.tt.ui_in, 4, 2) 
+        # outputs
+        self.add_bit_attribute('prox_select', self.tt.uo_out, 7)
+        # tt.uo_out[6:0]
+        self.add_slice_attribute('segments', self.tt.uo_out, 6, 0) 
+
 
 def main():
-    import ttboard.cocotb.dut
     from microcotb.time.value import TimeValue
-    class DUT(ttboard.cocotb.dut.DUT):
-        def __init__(self):
-            super().__init__('Neptune')
-            self.tt = DemoBoard.get()
-            # inputs
-            self.display_single_select = self.new_bit_attribute(self.tt.ui_in, 7)
-            self.display_single_enable = self.new_bit_attribute(self.tt.ui_in, 6)
-            self.input_pulse = self.new_bit_attribute(self.tt.ui_in, 5)
-            self.clk_config = self.new_slice_attribute(self.tt.ui_in, 4, 2) # tt.ui_in[4:2]
-            # outputs
-            self.prox_select = self.new_bit_attribute(self.tt.uo_out, 7)
-            self.segments = self.new_slice_attribute(self.tt.uo_out, 6, 0) # tt.uo_out[6:0]
-            
+    
     tt = DemoBoard.get()
     tt.shuttle.tt_um_psychogenic_neptuneproportional.enable()
     
@@ -193,7 +200,9 @@ def main():
     
     # I'll spend the cycles to get pretty timestamps
     TimeValue.ReBaseStringUnits = True
-    runner = cocotb.get_runner()
+    
+    # create runner and DUT, and get tests going
+    runner = cocotb.get_runner('tt_um_psychogenic_neptune')
     dut = DUT()
     dut._log.info(f"enabled neptune project, will test with {runner}")
     runner.test(dut)

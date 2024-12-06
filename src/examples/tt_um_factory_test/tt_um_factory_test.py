@@ -15,6 +15,10 @@ import microcotb as cocotb
 from microcotb.utils import get_sim_time
 gc.collect()
 
+
+# get the @cocotb tests into a namespace
+cocotb.RunnerModuleName = 'tt_um_factory_test'
+
 @cocotb.test()
 async def test_loopback(dut):
     dut._log.info("Start")
@@ -40,6 +44,29 @@ async def test_loopback(dut):
         assert dut.uo_out.value == i, f"uio value unstable {dut.uio_out.value} != {i}"
 
     dut._log.info("test_loopback passed")
+
+
+@cocotb.test(timeout_time=100, timeout_unit='us', expect_fail=True)
+@cocotb.parametrize(
+    clk_period=[10,125], 
+    timer_t=[101, 200])
+async def test_timeout(dut, clk_period:int, timer_t:int):
+    clock = Clock(dut.clk, clk_period, units="us")
+    cocotb.start_soon(clock.start())
+    # will timeout before the timer expires, hence expect_fail=True above
+    await Timer(timer_t, 'us')
+    
+@cocotb.test(expect_fail=True)
+async def test_should_fail(dut):
+    
+    dut._log.info("Will fail with msg")
+
+    assert dut.rst_n.value == 0, f"rst_n ({dut.rst_n.value}) == 0"
+
+
+
+
+
 
 @cocotb.test()
 async def test_counter(dut):
@@ -87,35 +114,14 @@ async def test_edge_triggers(dut):
     dut._log.info(f"Got rising edge, now {get_sim_time('us')}us value is {hex(dut.uo_out.value)}")
     
     dut._log.info("test_edge_triggers passed")
-        
-@cocotb.test(expect_fail=True)
-async def test_should_fail(dut):
-    
-    dut._log.info("Will fail with msg")
 
-    assert dut.rst_n.value == 0, f"rst_n ({dut.rst_n.value}) == 0"
-    
+
+
 @cocotb.test(skip=True)
 async def test_will_skip(dut):
     dut._log.info("This should not be output!")
 
 
-@cocotb.test(timeout_time=100, timeout_unit='us', expect_fail=True)
-@cocotb.parametrize(
-    clk_period=[10,125], 
-    timer_t=[101, 200])
-async def test_timeout(dut, clk_period:int, timer_t:int):
-    clock = Clock(dut.clk, clk_period, units="us")
-    cocotb.start_soon(clock.start())
-    # will timeout before the timer expires, hence expect_fail=True above
-    await Timer(timer_t, 'us')
-    
-@cocotb.test()
-async def test_timer(dut):
-    dut._log.info("Doing nothing but waiting 10ms")
-    await Timer(10, units='ms')
-    dut._log.info(f"System time is now {get_sim_time('us')}us")
-    
 def main():
     import ttboard.cocotb.dut
     
@@ -124,7 +130,7 @@ def main():
             super().__init__('FactoryTest')
             self.tt = DemoBoard.get()
             # inputs
-            self.some_bit = self.new_bit_attribute(self.tt.uo_out, 5)
+            self.add_bit_attribute('some_bit', self.tt.uo_out, 5)
     
     tt = DemoBoard.get()
     tt.shuttle.tt_um_factory_test.enable()
@@ -138,7 +144,8 @@ def main():
     
     TimeValue.ReBaseStringUnits = True # I like pretty strings
     
-    runner = cocotb.get_runner()
+    
+    runner = cocotb.get_runner('tt_um_factory_test')
     
     dut = DUT()
     dut._log.info(f"enabled factory test project.  Will test with {runner}")

@@ -30,6 +30,10 @@ import microcotb as cocotb
 from microcotb.clock import Clock
 from microcotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
 
+
+# get the @cocotb tests into a namespace
+cocotb.RunnerModuleName = 'tt_um_rejunity_snXXX'
+
 # MASTER_CLOCK = 3_579_545 # NTSC frequency of SN as used in Sega Master System,    0xFE = 440 Hz
 # MASTER_CLOCK = 3_546_895 # PAL                 ---- // ----
 MASTER_CLOCK = 4_000_000 # 4 MHz frequency of SN as used in BBC Micro,              0x11C = 440 Hz
@@ -607,5 +611,5 @@ def main(selection=None, master_clock=None, internal_clock_div = None):
     
     dut = DUT()
     dut._log.info("enabled factory test project, running")
-    runner = cocotb.get_runner()
+    runner = cocotb.get_runner('tt_um_rejunity_snXXX')
     runner.test(dut)
