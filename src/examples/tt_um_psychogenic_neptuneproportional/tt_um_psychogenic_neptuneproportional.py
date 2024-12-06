@@ -170,7 +170,7 @@ async def note_a_exact(dut):
 
 def main():
     import ttboard.cocotb.dut
-    
+    from microcotb.time.value import TimeValue
     class DUT(ttboard.cocotb.dut.DUT):
         def __init__(self):
             super().__init__('Neptune')
@@ -191,7 +191,8 @@ def main():
         print("Setting mode to ASIC_RP_CONTROL")
         tt.mode = RPMode.ASIC_RP_CONTROL
     
-    
+    # I'll spend the cycles to get pretty timestamps
+    TimeValue.ReBaseStringUnits = True
     runner = cocotb.get_runner()
     dut = DUT()
     dut._log.info(f"enabled neptune project, will test with {runner}")
