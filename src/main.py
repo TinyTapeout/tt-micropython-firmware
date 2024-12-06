@@ -118,8 +118,6 @@ gc.threshold(GCThreshold)
 
 def run_testbench_basic():
     import microcotb
-    # a uPython means to avoid having all
-    # decorators ever seen in the same test run:
     import examples.basic as test 
     test.run()
     return test 

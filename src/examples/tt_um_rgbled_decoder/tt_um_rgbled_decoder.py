@@ -26,9 +26,9 @@ from microcotb.clock import Clock
 from microcotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
 from microcotb.utils import get_sim_time
 
-
-# get the @cocotb tests into a namespace
-cocotb.RunnerModuleName = 'tt_um_rgbled_decoder'
+# get the detected @cocotb tests into a namespace
+# so we can load multiple such modules
+cocotb.set_runner_scope(__name__)
 
 
 def time_delta_not(cond:str):
@@ -230,7 +230,7 @@ def main():
     
     dut = DUT()
     dut._log.info("enabled rgbled project, running")
-    runner = cocotb.get_runner('tt_um_rgbled_decoder')
+    runner = cocotb.get_runner(__name__)
     runner.test(dut)
         
             

@@ -16,8 +16,9 @@ from microcotb.utils import get_sim_time
 gc.collect()
 
 
-# get the @cocotb tests into a namespace
-cocotb.RunnerModuleName = 'tt_um_factory_test'
+# get the detected @cocotb tests into a namespace
+# so we can load multiple such modules
+cocotb.set_runner_scope(__name__)
 
 @cocotb.test()
 async def test_loopback(dut):
@@ -145,7 +146,7 @@ def main():
     TimeValue.ReBaseStringUnits = True # I like pretty strings
     
     
-    runner = cocotb.get_runner('tt_um_factory_test')
+    runner = cocotb.get_runner(__name__)
     
     dut = DUT()
     dut._log.info(f"enabled factory test project.  Will test with {runner}")

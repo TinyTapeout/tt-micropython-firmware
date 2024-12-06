@@ -9,8 +9,9 @@ from microcotb.clock import Clock
 from microcotb.triggers import Timer, ClockCycles # RisingEdge, FallingEdge, Timer, ClockCycles
 
 
-# get the @cocotb tests into a namespace
-cocotb.RunnerModuleName = 'tt_um_psychogenic_neptune'
+# get the detected @cocotb tests into a namespace
+# so we can load multiple such modules
+cocotb.set_runner_scope(__name__)
 
 from ttboard.demoboard import DemoBoard, RPMode
 
@@ -202,7 +203,7 @@ def main():
     TimeValue.ReBaseStringUnits = True
     
     # create runner and DUT, and get tests going
-    runner = cocotb.get_runner('tt_um_psychogenic_neptune')
+    runner = cocotb.get_runner(__name__)
     dut = DUT()
     dut._log.info(f"enabled neptune project, will test with {runner}")
     runner.test(dut)

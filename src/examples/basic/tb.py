@@ -27,8 +27,9 @@ from microcotb.clock import Clock
 from microcotb.triggers import RisingEdge, FallingEdge, ClockCycles, Timer
 from microcotb.utils import get_sim_time
 
-# get the @cocotb tests into a namespace
-cocotb.RunnerModuleName = 'basic'
+# get the detected @cocotb tests into a namespace
+# so we can load multiple such modules
+cocotb.set_runner_scope(__name__)
     
 from ttboard.demoboard import DemoBoard, RPMode
 from ttboard.cocotb.dut import DUT 
@@ -146,7 +147,7 @@ def run():
     tt.uio_oe_pico.value = 0 # all inputs
     
     # get a runner
-    runner = cocotb.get_runner('basic')
+    runner = cocotb.get_runner(__name__)
     
     # here's our DUT... you could subclass this and 
     # do cool things, like rename signals or access 

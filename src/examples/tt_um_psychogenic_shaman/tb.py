@@ -18,6 +18,13 @@ from microcotb.triggers import ClockCycles # RisingEdge, FallingEdge, Timer,
 import hashlib
 import random 
 
+
+
+# get the detected @cocotb tests into a namespace
+# so we can load multiple such modules
+cocotb.set_runner_scope(__name__)
+
+
 GateLevelTest = False
 DoLongLongTest = False
 DoEverySizeBlockTest = False
@@ -619,7 +626,7 @@ def main():
     dut = DUT()
     tt.uio_oe_pico.value = dut.oe_pico_setting
     
-    runner = cocotb.get_runner('tt_um_psychogenic_shaman')
+    runner = cocotb.get_runner(__name__)
     dut._log.info(f"enabled shaman project. Will test with\n{runner}")
     runner.test(dut)
 
