@@ -3,6 +3,12 @@ Created on Jan 9, 2024
 
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
+
+TODO: This code is now a mess of history
+The JSON is used, in github actions, to produce the bin
+but it should be refactored into a common baseclass and 
+two implementations, one that only ever gets used as 
+a fallback and in the UF2 creation.
 '''
 
 import json
@@ -249,7 +255,11 @@ class DesignIndex(Serializable):
             processed[ades.project_index] = True
             pname = self.project_name(ades.project_index)
             ades.name = pname
-            bts += ades.serialize()
+            try:
+                bts += ades.serialize()
+            except Exception as e:
+                log.error(str(e))
+                log.error(f'Problem serializing {str(ades)}')
             
         return bts
 

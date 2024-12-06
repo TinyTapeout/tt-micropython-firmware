@@ -121,7 +121,12 @@ class Serializable:
     
     @classmethod 
     def serialize_int(cls, i:int, num_bytes):
-        return i.to_bytes(num_bytes, cls.ByteOrder)
+        try:
+            return i.to_bytes(num_bytes, cls.ByteOrder)
+        except OverflowError as e:
+            log.error(f'OVERFLOW during conversion using {num_bytes} bytes for {i}: {e}')
+            raise e
+
     
     @classmethod
     def serialize_list(cls, l:list):
