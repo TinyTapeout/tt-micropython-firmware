@@ -163,6 +163,9 @@ class DemoBoard:
                 self.shuttle.get(self.user_config.default_project).enable()
             else:
                 log.warn(f'Default project is unknown "{self.user_config.default_project}"')
+        else:
+            log.info(f'No default project--disabling')
+            self.shuttle.disable()
                 
     @property 
     def version(self) -> str:

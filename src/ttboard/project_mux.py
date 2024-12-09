@@ -80,7 +80,7 @@ class DesignIndex(Serializable):
                 for project in index['projects']:
                     project_address = int(project['address'])
                     attrib_name = self.clean_project_name(project)
-                    des = Design(self, attrib_name, project_address, project)
+                    des = Design(self._project_mux, attrib_name, project_address, project)
                     setattr(self, attrib_name, des)
                     self._num_projects += 1
                 index = None

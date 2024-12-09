@@ -62,8 +62,7 @@ fi
 echo "Download shuttles for $TT_RUNS_SUPPORTED"
 mkdir $SRCDIR/shuttles
 for chip in $TT_RUNS_SUPPORTED; do echo "get shuttle $chip"; wget -O $SRCDIR/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=address,clock_hz,title,danger_level"; done
-for chip in $TT_RUNS_SUPPORTED; do echo "serialize $chip shuttle"; rm $SRCDIR/shuttles/$chip.json.bin; PYTHONPATH="./src/:$PYTHONPATH" python ./bin/serialize_shuttle.py $SRCDIR/shuttles/$chip.json; done
-
+for chip in $TT_RUNS_SUPPORTED; do echo "serialize $chip shuttle"; rm $SRCDIR/shuttles/$chip.json.bin; PYTHONPATH="./src/:./microcotb/src:$PYTHONPATH" python ./bin/serialize_shuttle.py $SRCDIR/shuttles/$chip.json; done
 
 # create some temp stuff
 BUILDDIR=`mktemp -d -t ttupython-XXXXX`
