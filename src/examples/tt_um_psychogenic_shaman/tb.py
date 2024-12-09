@@ -595,20 +595,21 @@ class DUT(ttboard.cocotb.dut.DUT):
     def __init__(self):
         super().__init__('SHAMAN')
         self.databyteIn = self.tt.ui_in
-        self.resultbyteOut = self.tt.uo_out
+        self.resultbyteOut = self.uo_out
         
-        self.resultReady = self.new_bit_attribute(self.tt.uio_out, 0)
-        self.beginProcessingDataBlock = self.new_bit_attribute(self.tt.uio_out, 1)
+        self.resultReady = self.new_bit_attribute('resultReady', self.tt.uio_out, 0)
+        self.beginProcessingDataBlock = self.new_bit_attribute('beginProcessingDataBlock', self.tt.uio_out, 1)
         
-        self.parallelLoading = self.new_bit_attribute(self.tt.uio_in, 2)
-        self.resultNext = self.new_bit_attribute(self.tt.uio_in, 3)
+        self.parallelLoading = self.new_bit_attribute('parallelLoading', self.tt.uio_in, 2)
+        self.resultNext = self.new_bit_attribute('resultNext', self.tt.uio_in, 3)
         
-        self.busy = self.new_bit_attribute(self.tt.uio_out, 4)
-        self.processingReceivedDataBlock = self.new_bit_attribute(self.tt.uio_out, 5)
-        self.start = self.new_bit_attribute(self.tt.uio_in, 6)
-        self.clockinData = self.new_bit_attribute(self.tt.uio_in, 7)
+        self.busy = self.new_bit_attribute('busy', self.tt.uio_out, 4)
+        self.processingReceivedDataBlock = self.new_bit_attribute('processingReceivedDataBlock', self.tt.uio_out, 5)
+        self.start = self.new_bit_attribute('start', self.tt.uio_in, 6)
+        self.clockinData = self.new_bit_attribute('clockinData', self.tt.uio_in, 7)
         
         self.oe_pico_setting = 0b11001100
+        
         
 def main():
     from ttboard.demoboard import DemoBoard, RPMode
