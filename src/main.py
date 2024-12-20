@@ -42,6 +42,9 @@ gc.threshold(80000)
 import ttboard.log as logging
 # logging.ticksStart() # start-up tick delta counter
 
+logging.basicConfig(level=logging.DEBUG, filename='boot.log')
+
+
 import micropython
 import ttboard.util.time as time
 from ttboard.boot.demoboard_detect import DemoboardDetect
@@ -97,6 +100,7 @@ print(f"{colors.color(detection_message, detection_color)}")
 tt = startup()
 
 
+logging.basicConfig(filename=None)
 gc.collect()
 colors.color_start('magenta', False)
 print("Mem info")

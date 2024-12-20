@@ -19,16 +19,28 @@ if IsRP2040:
     WARNING = 30
     ERROR   = 40
     class Logger:
-        
+        OutFile = None 
         colorMap = {
                 10: 'yellow',
                 20: 'green',
                 30: 'yellow',
                 40: 'red'
             }
+        
+        @classmethod 
+        def set_out_file(cls, path_to:str=None):
+            if cls.OutFile is not None:
+                cls.OutFile.close()
+                cls.OutFile = None 
+                
+            if path_to is not None:
+                cls.OutFile = open(path_to, 'w')
+                
+        
         def __init__(self, name):
             self.name = name 
             self.loglevel = DefaultLogLevel
+        
         def out(self, s, level:int):
             global LoggingPrefix
             if self.loglevel <= level:
@@ -36,6 +48,9 @@ if IsRP2040:
                     prefix = LoggingPrefix
                 else:
                     prefix = self.name
+                if self.OutFile is not None:
+                    print(f'{prefix}: {s}', file=self.OutFile)
+                    
                 print(f'{prefix}: {colors.color(s, self.colorMap[level])}')
         
         def debug(self, s):
@@ -73,12 +88,21 @@ if IsRP2040:
             RPLoggers[name] = Logger(name)
         return RPLoggers[name]
     
-    def basicConfig(level:int):
+    def basicConfig(level:int=None, filename:str=None):
         global DefaultLogLevel
         global RPLoggers
-        DefaultLogLevel = level
-        for logger in RPLoggers.values():
-            logger.loglevel = level
+        if level is not None:
+            DefaultLogLevel = level
+            for logger in RPLoggers.values():
+                logger.loglevel = level
+        
+        Logger.set_out_file(filename)
+        
+            
+        
+            
+        
+            
             
         
 else:
