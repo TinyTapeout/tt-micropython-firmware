@@ -18,6 +18,7 @@ import ttboard
 import ttboard.util.time as time
 from ttboard.globals import Globals
 from ttboard.mode import RPMode
+from ttboard.pins.gpio_map import GPIOMapTT06
 from ttboard.pins.pins import Pins
 from ttboard.project_mux import Design
 from ttboard.config.user_config import UserConfig
@@ -139,6 +140,10 @@ class DemoBoard:
             setattr(self, p, getattr(self.pins, p))
             
         self.shuttle = Globals.project_mux(self.user_config.force_shuttle)
+        if self.shuttle.run == 'tt07':
+            pins_mode = self.pins.mode
+            GPIOMapTT06.tt07_cb_fix = True
+            self.pins.mode = pins_mode # force re-init of pins to apply new pin map
         
         # config
         self.apply_configs = apply_user_config
