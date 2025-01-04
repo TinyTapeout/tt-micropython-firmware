@@ -272,6 +272,9 @@ class GPIOMapTT06(GPIOMapBase):
     UIO6 = 27
     UIO7 = 28
     RPIO29 = 29
+
+    # Enable a workaround for a PCB error in TT07 carrier board, which swapped the ctrl_sel_inc and ctrl_sel_nrst lines:
+    tt07_cb_fix = False
     
     @classmethod 
     def project_clock(cls):
@@ -304,7 +307,7 @@ class GPIOMapTT06(GPIOMapBase):
     @classmethod 
     def all(cls):
         retDict = cls.all_common()
-        #retDict = GPIOMapBase.all(cls)
+
         retDict.update({
             'nprojectrst': cls.PROJECT_nRST,
             'cinc': cls.CTRL_SEL_INC,
@@ -315,6 +318,10 @@ class GPIOMapTT06(GPIOMapBase):
             'uo_out2': cls.UO_OUT2,
             'uo_out3': cls.UO_OUT3
         })
+
+        if cls.tt07_cb_fix:
+            retDict['cinc'], retDict['ncrst'] = retDict['ncrst'], retDict['cinc']
+
         return retDict
 
 GPIOMap = GPIOMapTT04
