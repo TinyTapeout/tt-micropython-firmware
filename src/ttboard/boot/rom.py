@@ -18,6 +18,7 @@ class ChipROM(ShuttleProperties):
         self.project_mux = project_mux 
         self._contents = None 
         self._pins = project_mux.pins
+        self._rom_data = None
     
     
     def _send_and_rcv(self, send:int):
@@ -58,7 +59,7 @@ class ChipROM(ShuttleProperties):
         self.project_mux.reset_and_clock_mux(0)
         
         self._contents = {
-                'shuttle': 'tt04',
+                'shuttle': 'unknown',
                 'repo': '',
                 'commit': ''
         }
@@ -81,13 +82,12 @@ class ChipROM(ShuttleProperties):
             if byte == 0:
                 break
             rom_data += chr(byte)
-            
-        log.info(f'Got ROM data\n{rom_data}')
+        self._rom_data = rom_data
 
-        self._contents = {'shuttle':'tt04', 'commit':'FAKEDATA'}
         if not len(rom_data):
             log.warn("ROM data empty")
         else:
+            log.info(f'Got ROM data\n{rom_data}')
             for l in rom_data.splitlines():
                 try:
                     k,v = l.split('=')
@@ -95,7 +95,7 @@ class ChipROM(ShuttleProperties):
                 except:
                     log.warn(f"Issue splitting {l}")
                     pass 
-        log.debug(f"GOT ROM: {self._contents}")
+        log.debug(f"Parsed ROM contents: {self._contents}")
         self.project_mux.disable()
         return self._contents
         
