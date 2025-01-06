@@ -46,10 +46,8 @@ logging.basicConfig(level=logging.DEBUG, filename='boot.log')
 
 
 import micropython
-import ttboard.util.time as time
 from ttboard.boot.demoboard_detect import DemoboardDetect
-from ttboard.mode import RPMode
-from ttboard.demoboard import DemoBoard, Pins
+from ttboard.demoboard import DemoBoard
 # from ttboard.boot.post import PowerOnSelfTest
 import ttboard.util.colors as colors
 
