@@ -138,12 +138,17 @@ class DemoBoard:
         ports = ['uo_out', 'ui_in', 'uio_in', 'uio_out', 'uio_oe_pico']
         for p in ports:
             setattr(self, p, getattr(self.pins, p))
-            
+
+        # Make sure we can read the ROM even if the user has set some of the ui_in DIP switches
+        pins_mode = self.pins.mode
+        self.pins.dieOnInputControlSwitchHigh = False
+        self.pins.mode = pins_mode # force re-init of pins to apply new setting
         self.shuttle = Globals.project_mux(self.user_config.force_shuttle)
         if self.shuttle.run == 'tt07':
-            pins_mode = self.pins.mode
             GPIOMapTT06.tt07_cb_fix = True
             self.pins.mode = pins_mode # force re-init of pins to apply new pin map
+        self.pins.dieOnInputControlSwitchHigh = True
+        self.pins.mode = pins_mode # force re-init of pins to apply new setting
         
         # config
         self.apply_configs = apply_user_config
