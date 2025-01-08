@@ -17,15 +17,6 @@ Then you can
 
 and play with i/o as desired.
 
-This code accesses the PowerOnSelfTest functions to:
-
-    * check if the project clock button was held during powerup;
-    * if so, run a basic test of the bidir pins (and implicitly of 
-      the mux, output reads etc); and
-    * and check if this was a first boot, to run special codes in
-      such cases
-
-
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
@@ -48,7 +39,6 @@ logging.basicConfig(level=logging.DEBUG, filename='boot.log')
 import micropython
 from ttboard.boot.demoboard_detect import DemoboardDetect
 from ttboard.demoboard import DemoBoard
-# from ttboard.boot.post import PowerOnSelfTest
 import ttboard.util.colors as colors
 
 # logging.dumpTicksMsDelta('import')
