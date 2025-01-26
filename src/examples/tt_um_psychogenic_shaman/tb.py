@@ -3,18 +3,15 @@ Created on Nov 24, 2024
 
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
-'''
-'''
-Created on Oct 28, 2023
 
-@author: Pat Deegan
-@copyright: Copyright (C) 2023 Pat Deegan, https://psychogenic.com
+
+
 '''
 
 from microcotb.utils import get_sim_time
 import microcotb as cocotb
 from microcotb.clock import Clock
-from microcotb.triggers import ClockCycles # RisingEdge, FallingEdge, Timer, 
+from microcotb.triggers import ClockCycles, RisingEdge, FallingEdge # , Timer
 import hashlib
 import random 
 
@@ -24,7 +21,7 @@ import random
 # so we can load multiple such modules
 cocotb.set_runner_scope(__name__)
 
-
+UseEdgeTriggers = False
 GateLevelTest = False
 DoLongLongTest = False
 DoEverySizeBlockTest = False
@@ -412,26 +409,38 @@ async def startNewDigest(dut):
 
 
 async def waitNotBusy(dut):
-    numBusyTicks = 0
-    isBusy = dut.busy.value
-    while isBusy and numBusyTicks < 1000:
-        dut._log.debug('busy')
-        await ClockCycles(dut.clk, 1)
-        isBusy = dut.busy.value
-        numBusyTicks += 1
-        assert numBusyTicks < 1000, f"Busy too long: numticks {numBusyTicks}"
+    if not dut.busy.value:
+        dut._log.debug("Await not busy, already not busy")
+        return 0
+    
+    tstart = get_sim_time('us')
+    if UseEdgeTriggers:
+        await FallingEdge(dut.busy)
+    else:
+        while dut.busy.value:
+            await ClockCycles(dut.clk, 1)
+            
+    tnow = get_sim_time('us')
+    numBusyTicks = tnow - tstart
+    assert  numBusyTicks < 1000, f"Busy too long"
     return numBusyTicks
 
 async def waitOutputReady(dut):
-    numReadyTicks = 0
-    outputReady = dut.resultReady.value
-    while not outputReady:
-        dut._log.debug('Check resultReady')
-        outputReady = dut.resultReady.value
-        await ClockCycles(dut.clk, 1)
-        numReadyTicks += 1
-        assert numReadyTicks < 1000, f"Busy too long: numticks {numReadyTicks}"
-        
+    if dut.resultReady.value:
+        dut._log.debug("already ready!")
+        return 0 
+    
+    tstart = get_sim_time('us')
+    if UseEdgeTriggers:
+        await RisingEdge(dut.resultReady)
+    else:
+        while not dut.resultReady.value:
+            await ClockCycles(dut.clk, 1)
+    
+    tnow = get_sim_time('us')
+    numReadyTicks = tnow - tstart
+    assert  numReadyTicks < 1000, f"Busy too long"
+    
     return numReadyTicks
 
 
@@ -483,13 +492,9 @@ async def loadMessageBlock(dut, message_block, quietLogging:bool = True, mode_pa
             byteVal = (i & (0xff << daShift)) >> daShift
             
             numBusyTicks = 0
-            isBusy = dut.busy.value
-            while isBusy and numBusyTicks < 1000:
-                dut._log.debug('busy')
-                await ClockCycles(dut.clk, 1)
-                isBusy = dut.busy.value
-                numBusyTicks += 1
-                assert numBusyTicks < 1000, f"Busy for {numBusyTicks} ticks"
+            if dut.busy.value:
+                numBusyTicks = await waitNotBusy(dut)
+                
             
             dut._log.debug('Setting data byte and clockin')
             dut.databyteIn.value = byteVal 
@@ -586,7 +591,7 @@ async def processMessageBlocks(dut, encodedMsg, message_blocks, quietLogging=Tru
     assert hashval == calculated, f"For message: '{encodedMsg}'\ncalc {calculated} should == {hashval}"
     
     
-    return  tickWaitCountTotal
+    return tickWaitCountTotal
     
     
 import ttboard.cocotb.dut
