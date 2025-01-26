@@ -148,7 +148,8 @@ class UserConfig:
             self._proj_configs[section] = None # UserProjectConfig(section, conf)
             
             
-        def_opts = ['mode', 'project', 'start_in_reset', 'rp_clock_frequency', 'force_shuttle', 'force_demoboard']
+        def_opts = ['mode', 'project', 'start_in_reset', 'log_level',
+                    'rp_clock_frequency', 'force_shuttle', 'force_demoboard']
         for opt in def_opts:
             val = None
             if conf.has_option('DEFAULT', opt):
@@ -197,6 +198,29 @@ class UserConfig:
     @property 
     def force_demoboard(self):
         return self._get_default_option('force_demoboard')
+    
+    
+    @classmethod 
+    def string_to_loglevel(cls, loglevname:str):
+        conv_map = {
+                'debug': logging.DEBUG,
+                'info': logging.INFO,
+                'warn': logging.WARN,
+                'warning': logging.WARN,
+                'error': logging.ERROR
+            }
+        
+        if loglevname.lower() in conv_map:
+            return conv_map[loglevname.lower()]
+        
+        return None
+    
+    
+    
+    @property 
+    def log_level(self):
+        lev_str = self._get_default_option('log_level', 'INFO')
+        return self.string_to_loglevel(lev_str)
         
     def has_project(self, name:str):
         if name in self._proj_configs:
