@@ -91,6 +91,7 @@ if IsRP2040:
     def basicConfig(level:int=None, filename:str=None):
         global DefaultLogLevel
         global RPLoggers
+        
         if level is not None:
             DefaultLogLevel = level
             for logger in RPLoggers.values():

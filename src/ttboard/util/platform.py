@@ -42,6 +42,20 @@ if IsRP2040:
             tt.muxCtrl.mode_project_IO()
                 to behave normally.
         
+        The machine native stuff below uses 
+        direct access to mem32 to go fastfastfast
+        but this is pretty opaque.  For ref, here are 
+        relevant registers from 2.3.1.7. List of Registers
+            0x004 GPIO_IN Input value for GPIO pins
+            0x010 GPIO_OUT GPIO output value
+            0x014 GPIO_OUT_SET GPIO output value set
+            0x018 GPIO_OUT_CLR GPIO output value clear
+            0x01c GPIO_OUT_XOR GPIO output value XOR
+            0x020 GPIO_OE GPIO output enable
+            0x024 GPIO_OE_SET GPIO output enable set
+            0x028 GPIO_OE_CLR GPIO output enable clear
+            0x02c GPIO_OE_XOR GPIO output enable XOR
+        
     '''
     import rp2
     import machine
@@ -135,6 +149,7 @@ if IsRP2040:
         # just read the high and low nibbles from GPIO and combine into a byte
         return ( (machine.mem32[0xd0000004] & (0xf << 17)) >> (17-4)) | ((machine.mem32[0xd0000004] & (0xf << 9)) >> 9)
     
+    
     @micropython.native
     def write_uio_byte(val):
         # dump_portset('uio', val)
@@ -199,6 +214,22 @@ if IsRP2040:
         #else:
         # just read the high and low nibbles from GPIO and combine into a byte
         return ( (machine.mem32[0xd0000004] & (0xf << 13)) >> (13-4)) | ((machine.mem32[0xd0000004] & (0xf << 5)) >> 5)
+    
+    
+    @micropython.native
+    def read_clock():
+        # clock is on GPIO 0
+        return (machine.mem32[0xd0000010] & 1)
+       
+    @micropython.native
+    def write_clock(val):
+        # not a huge optimization, as this is a single bit, 
+        # but 5% or so counts when using the microcotb tests
+        if val:
+            machine.mem32[0xd0000014] = 1 # set bit 0
+        else:
+            machine.mem32[0xd0000018] = 1 # clear bit 0
+        
     
     
 else:
@@ -272,6 +303,14 @@ else:
         global _uio_oe_pico
         print(f'Sim write_bidir_outputenable {val}')
         _uio_oe_pico = val
+    
+    _clk_pin = 0
+    def read_clock():
+        return _clk_pin
+       
+    def write_clock(val):
+        global _clk_pin
+        _clk_pin = val
         
     
     
