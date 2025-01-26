@@ -5,6 +5,7 @@ Created on Nov 21, 2024
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 from ttboard.demoboard import DemoBoard, Pins
+import ttboard.util.platform as plat
 import microcotb.dut
 from microcotb.testcase import TestCase
 from microcotb.dut import NoopSignal
@@ -25,6 +26,25 @@ class PinWrapper(microcotb.dut.PinWrapper):
         if self._pin.mode != Pins.OUT:
             self._pin.mode = Pins.OUT
         self._pin.value(set_to)
+        
+class ClockPin(microcotb.dut.PinWrapper):
+    '''
+        clock pin is use *a lot*, needs
+        to be optimized a little by 
+        calling the low level platform func
+    '''
+    
+    def __init__(self, name:str, pin):
+        super().__init__(name, pin)
+        
+    @property 
+    def value(self):
+        return plat.read_clock()
+    
+    @value.setter 
+    def value(self, set_to:int):
+        plat.write_clock(set_to)
+    
             
 
 class DUT(microcotb.dut.DUT):
@@ -36,8 +56,9 @@ class DUT(microcotb.dut.DUT):
         self.tt = tt # give ourselves access to demoboard object
         
         # wrap the bare clock pin
-        self.clk = PinWrapper('clk', self.tt.pins.rp_projclk)
+        self.clk = ClockPin('clk', self.tt.pins.rp_projclk)
         self.rst_n = PinWrapper('rst_n', self.tt.rst_n)
+        
         
         # provide the I/O ports from DemoBoard 
         # as attribs here, so we have dut.ui_in.value etc.
@@ -57,6 +78,9 @@ class DUT(microcotb.dut.DUT):
             self._log.info('autoclocking... will stop it.')
             self.tt.clock_project_stop()
         
+        # and this: make sure is an output
+        self.tt.pins.rp_projclk.mode = Pins.OUT
+        
     def testing_unit_start(self, test:TestCase):
         # override if desired
         self._log.debug(f'Test {test.name} about to start')
@@ -64,6 +88,7 @@ class DUT(microcotb.dut.DUT):
 
     def testing_unit_done(self, test:TestCase):
         # override if desired
+        
         if test.failed:
             self._log.debug(f'{test.name} failed because: {test.failed_msg}')
         else:
@@ -71,7 +96,11 @@ class DUT(microcotb.dut.DUT):
         
     
     def testing_done(self):
-        # override if desired
+        # override if desired, but good idea to reset clock pin mode
+        # or just call super().testing_unit_done(test) to get it done
+        # make sure is an input
+        self.tt.pins.rp_projclk.mode = Pins.IN
+        
         self._log.debug('All testing done')
         
         
