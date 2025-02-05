@@ -321,12 +321,13 @@ class DemoBoard:
         self._clock_pwm.deinit()
         self._clock_pwm = None 
         
-    def clock_project_PWM(self, freqHz:int, duty_u16:int=(0xffff/2), quiet:bool=False):
+    def clock_project_PWM(self, freqHz:int, duty_u16:int=(0xffff/2), quiet:bool=False, max_rp2040_freq:int=133_000_000):
         '''
             Start an automatic clock for the selected project (using
             PWM).
             @param freqHz: The frequency of the clocking, in Hz, or 0 to disable PWM
-            @param duty_u16: Optional duty cycle (0-0xffff), defaults to 50%  
+            @param duty_u16: Optional duty cycle (0-0xffff), defaults to 50%
+            @param max_rp2040_freq: Maximum RP2040 frequency, overclocking above 133MHz allows higher clock frequencies
         '''
         if freqHz > 0:
             self.pins.project_clk_driven_by_RP2040(True)
@@ -353,8 +354,10 @@ class DemoBoard:
             if self._clock_pio is not None:
                 self._clock_pio.stop()
             try:
-                rp2040_sys_clock = self._get_best_rp2040_freq(freqHz)
-                platform.set_RP_system_clock(rp2040_sys_clock)
+                rp2040_sys_clock = self._get_best_rp2040_freq(freqHz, max_rp2040_freq)
+                if rp2040_sys_clock != platform.get_RP_system_clock():
+                    log.info(f'Setting RP2040 system clock to {rp2040_sys_clock}Hz')
+                    platform.set_RP_system_clock(rp2040_sys_clock)
                 self._clock_pwm = self.pins.rp_projclk.pwm(freqHz, duty_u16)
             except  Exception as e:
                 log.error(f"Could not set project clock PWM: {e}")
