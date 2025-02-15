@@ -66,3 +66,30 @@ jobs:
           artifacts: "/tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2"
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
+
+  simulate:
+    runs-on: ubuntu-24.04
+    needs: create-release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download UF2
+        uses: actions/download-artifact@v4
+        with:
+          name: tt-demo-board-firmware
+          path: /tmp
+
+      - name: Copy UF2 to workspace
+        run: |
+          cp /tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2 $GITHUB_WORKSPACE/release.uf2
+
+      - name: Run a Wokwi CI server
+        uses: wokwi/wokwi-ci-server-action@v1
+
+      - name: Test with Wokwi
+        uses: wokwi/wokwi-ci-action@v1
+        with:
+          token: ${{ secrets.WOKWI_CLI_TOKEN }}
+          path: /
+          expect_text: 'boot done:'

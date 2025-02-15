@@ -1,0 +1,6 @@
+# Wokwi Configuration File
+# Reference: https://docs.wokwi.com/vscode/project-config
+[wokwi]
+version = 1
+firmware = 'release.uf2'
+elf = 'release.uf2'
