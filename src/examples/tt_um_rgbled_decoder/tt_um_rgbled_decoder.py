@@ -192,15 +192,15 @@ class TBSPI(basedut.DUT):
         self.data = data 
         self.data_rdy = data_rdy
         self.nreset = self.rst_n
-        self.mosi = self.new_bit_attribute(self.tt.ui_in, 0)
-        self.sclk = self.new_bit_attribute(self.tt.ui_in, 1)
-        self.nsel = self.new_bit_attribute(self.tt.ui_in, 2)
+        self.add_bit_attribute('mosi', self.tt.ui_in, 0)
+        self.add_bit_attribute('sclk', self.tt.ui_in, 1)
+        self.add_bit_attribute('nsel', self.tt.ui_in, 2)
         
 class DUT(basedut.DUT):
     def __init__(self):
         super().__init__('RGBDUT')
         self.data = Wire()
-        self.data_rdy = self.new_bit_attribute(self.tt.ui_in, 2)
+        self.add_bit_attribute('data_rdy', self.tt.ui_in, 2)
         self.tbrgbled = RGBLED(self.data, self.data_rdy)
         self.tbspi = TBSPI(self.data, self.data_rdy)
         
