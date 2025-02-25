@@ -52,6 +52,7 @@ class DUT(microcotb.dut.DUT):
                      'uio_out', 'uio_oe_pico']
     
     def __init__(self, name:str='DUT'):
+        super().__init__(name)
         tt:DemoBoard = DemoBoard.get()
         self.tt = tt # give ourselves access to demoboard object
         
