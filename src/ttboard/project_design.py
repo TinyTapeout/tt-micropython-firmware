@@ -135,7 +135,13 @@ class Serializable:
             if isinstance(element, str):
                 bts += cls.serialize_string(element)
             elif isinstance(element, int):
-                bts += cls.serialize_int(element, 1)
+                try:
+                    bts += cls.serialize_int(element, 1)
+                except OverflowError as e:
+                    log.error(f'Issue serializing: {e}')
+                    log.error(f'Setting as 0')
+                    i = 0
+                    bts += i.to_bytes(1, cls.ByteOrder)
             elif isinstance(element, list):
                 if len(element) != 2:
                     raise RuntimeError(f'Expecting 2 elements in {element}')
@@ -143,7 +149,13 @@ class Serializable:
                     raise RuntimeError(f'Expecting int as first in {element}')
                 if not isinstance(element[1], int):
                     raise RuntimeError(f'Expecting size as second in {element}')
-                bts += cls.serialize_int(element[0], element[1])
+                try:
+                    bts += cls.serialize_int(element[0], element[1])
+                except OverflowError as e:
+                    log.error(f'Issue serializing: {e}')
+                    log.error(f'Setting as 0')
+                    i = 0
+                    bts += i.to_bytes(element[1], cls.ByteOrder)
             else:
                 RuntimeError(f'Unknown serialize {element}')
         return bts
