@@ -519,7 +519,7 @@ If FREQUENCY is 0, PWM will stop and it will revert to simple output.  If duty c
 
 There is now a TT06+ demoboard compatible [FPGA ASIC Simulator](https://github.com/TinyTapeout/breakout-pcb/tree/main/ASIC-simulator/tt06-fpga-ICE40UP5k).  
 
-![FabricFox FPGA board](images/fpga_breakout2.jpg)
+![FabricFox FPGA board](images/fpga_breakout_ondb.jpg)
 
 The latest SDK should automatically detect this board and allow it to be loaded up with bitstreams directly through the tt object.
 
