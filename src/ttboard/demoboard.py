@@ -23,7 +23,7 @@ from ttboard.pins.pins import Pins
 from ttboard.project_mux import Design
 from ttboard.config.user_config import UserConfig
 import ttboard.util.platform as platform 
-from ttboard.boot.demoboard_detect import DemoboardDetect, DemoboardVersion
+from ttboard.boot.demoboard_detect import DemoboardDetect, DemoboardVersion, DemoboardCarrier
 
 import ttboard.log as logging
 log = logging.getLogger(__name__)
@@ -101,15 +101,20 @@ class DemoBoard:
         if log_level is not None:
             logging.basicConfig(level=log_level)
         
-        if mode is not None:
-            self.default_mode = mode 
+        if DemoboardDetect.CarrierVersion == DemoboardCarrier.FPGA:
+            log.info(f'Demoboard hosting an FPGA, setting mode to manual inputs')
+            mode = RPMode.ASIC_MANUAL_INPUTS
         else:
-            self.default_mode = self.user_config.default_mode
-            if self.default_mode is None:
-                # neither arg and ini file specify mode
-                raise AttributeError('MUST specify either mode in .ini DEFAULT or mode argument')
+            if mode is not None:
+                self.default_mode = mode 
+            else:
+                self.default_mode = self.user_config.default_mode
+                if self.default_mode is None:
+                    # neither arg and ini file specify mode
+                    raise AttributeError('MUST specify either mode in .ini DEFAULT or mode argument')
+                
+                mode = self.default_mode
             
-            mode = self.default_mode
             
         log.info(f'Demoboard starting up in mode {RPMode.to_string(mode)}')
         

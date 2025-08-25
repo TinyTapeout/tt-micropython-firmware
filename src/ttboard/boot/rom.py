@@ -7,6 +7,7 @@ Created on Apr 26, 2024
 
 import ttboard.util.time as time
 from ttboard.boot.shuttle_properties import ShuttleProperties
+from ttboard.boot.demoboard_detect import DemoboardDetect, DemoboardCarrier
 
 
 import ttboard.log as logging
@@ -55,14 +56,24 @@ class ChipROM(ShuttleProperties):
         if self._contents is not None:
             return self._contents 
         
-        # select project 0
-        self.project_mux.reset_and_clock_mux(0)
-        
         self._contents = {
                 'shuttle': 'unknown',
                 'repo': '',
                 'commit': ''
         }
+        if not DemoboardDetect.CarrierPresent:
+            log.warn("No carrier present, skipping chiprom")
+            return self._contents
+        
+        if DemoboardDetect.CarrierVersion != DemoboardCarrier.TT_CARRIER:
+            if DemoboardDetect.CarrierVersion == DemoboardCarrier.FPGA:
+                self._contents['shuttle'] = 'FPGA'
+            
+            return self._contents
+        
+        # select project 0
+        self.project_mux.reset_and_clock_mux(0)
+        
         
         # list of expected outputs as
         # (SEND, RCV)

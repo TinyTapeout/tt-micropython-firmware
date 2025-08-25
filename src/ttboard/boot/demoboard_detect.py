@@ -31,6 +31,12 @@ class DemoboardVersion:
         if v in asStr:
             return asStr[v]
         return 'N/A'
+    
+class DemoboardCarrier:
+    UNKNOWN = 0
+    TT_CARRIER = 1
+    FPGA = 2
+    
 
 class DemoboardDetect:
     '''
@@ -88,7 +94,16 @@ class DemoboardDetect:
             log.info("TT06+ demoboard with carrier present")
             cls.PCB = DemoboardVersion.TT06
             cls.CarrierPresent = True
+            cls.CarrierVersion = DemoboardCarrier.TT_CARRIER
             return True
+        
+        if (crst) and (not cena):
+            log.info("ctrl mux lines pulled to indicate TT06+ compatible FPGA board")
+            cls.PCB = DemoboardVersion.TT06
+            cls.CarrierPresent = True
+            cls.CarrierVersion = DemoboardCarrier.FPGA
+            return True
+            
         
         if crst and cena:
             log.info("probing ctrl mux lines gives no info, unable to determine db version")
@@ -113,6 +128,7 @@ class DemoboardDetect:
         if mux_1 != mux_0:
             log.info("DB seems to have on-board MUX: TT04+")
             cls.PCB = DemoboardVersion.TT04
+            cls.CarrierVersion = DemoboardCarrier.TT_CARRIER
             return True
         
         log.debug("Mux twiddle has no effect, probably not TT04 db")
