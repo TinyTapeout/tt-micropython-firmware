@@ -515,6 +515,22 @@ tt.pins.uio_in3.pwm(FREQUENCY, [DUTY_16])
 If FREQUENCY is 0, PWM will stop and it will revert to simple output.  If duty cycle is not specified, it will be 50% (0xffff/2).
 
 
+## FPGA Breakout
+
+There is now a TT06+ demoboard compatible [FPGA ASIC Simulator](https://github.com/TinyTapeout/breakout-pcb/tree/main/ASIC-simulator/tt06-fpga-ICE40UP5k).  
+
+![FabricFox FPGA board](images/fpga_breakout.jpg)
+
+The latest SDK should automatically detect this board and allow it to be loaded up with bitstreams directly through the tt object.
+
+
+![FabricFox FPGA detection](images/fpga_breakout_boot.png)
+
+To use it, place suitably created bitstreams on the RP2040 filesystem, within a `/bitstreams` directory.  From there, on boot, the system will detect any files suffixed by `.bin` and allow you to load them in a manner analogous to the ASIC projects, using the `tt.shuttle` object.
+
+![FabricFox FPGA detection](images/fpga_breakout_shuttle.png)
+
+
 ## Release History and Compatibility Matrix
 
 
