@@ -8,7 +8,7 @@ on:
 jobs:
   build-micropython:
     env:
-      TT_RUNS_SUPPORTED: "unknown tt08"
+      TT_RUNS_SUPPORTED: "unknown tt08 ttihp0p2 tt09 ttihp25a ttihp0p3 ttcad25a ttihp25b ttsky25a ttgf0p1 ttsky25b ttgf0p2"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout MicroPython repository
