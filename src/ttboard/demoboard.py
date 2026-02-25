@@ -100,6 +100,7 @@ class DemoBoard:
         if DemoboardDetect.CarrierVersion == DemoboardCarrier.FPGA:
             log.info(f'Demoboard hosting an FPGA, setting mode to manual inputs')
             mode = RPMode.ASIC_MANUAL_INPUTS
+            self.default_mode = mode
         else:
             if mode is not None:
                 self.default_mode = mode 
@@ -180,6 +181,13 @@ class DemoBoard:
             SDK version
         '''
         return ttboard.VERSION
+    
+    @property 
+    def revision(self) -> str:
+        '''
+            SDK revision (commit)
+        '''
+        return ttboard.REVISION
     
     @property 
     def chip_ROM(self):
@@ -571,7 +579,7 @@ class DemoBoard:
             Prints out current state of the GPIO
         '''
         print('\n\nDemoboard status')
-        print(f'Demoboard default mode is {RPMode.to_string(self.default_mode)}')
+        print(f'Demoboard mode is {RPMode.to_string(self.mode)} (default {RPMode.to_string(self.default_mode)})')
         print(f'Project nRESET pin is {self.rst_n.mode_str} {self.rst_n()}')
         
         if self.is_auto_clocking:
