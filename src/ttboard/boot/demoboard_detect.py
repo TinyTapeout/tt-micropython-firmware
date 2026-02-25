@@ -100,9 +100,6 @@ class DemoboardDetect:
         if not platform.IsRP2350:
             return False 
         
-        # already determined RP2350, so that's good
-        cls.PCB = DemoboardVersion.TTDBv3
-        
         # check for FPGA board
         fpga_detect_pin = GPIOMapTTDBv3.get_raw_pin(GPIOMapTTDBv3.MNG07, Pin.IN)
         
@@ -148,15 +145,16 @@ class DemoboardDetect:
     def probe(cls):
         result = False
         cls.rp_all_inputs()
-        if cls.probe_rp2350():
-            cls._configure_gpiomap()
-            result = True
+        if platform.IsRP2350:
+            cls.PCB = DemoboardVersion.TTDBv3
+            if cls.probe_rp2350():
+                result = True
         else:
             cls.PCB = DemoboardVersion.UNKNOWN
-            cls._configure_gpiomap()
-            result = False
         
-        # clear out boot prefix
+        # always configure gpio map to _something_
+        cls._configure_gpiomap()
+        
         return result
     
     @classmethod
@@ -168,7 +166,7 @@ class DemoboardDetect:
     def _configure_gpiomap(cls):
         mapToUse = {
             DemoboardVersion.TTDBv3: GPIOMapTTDBv3,
-            
+            DemoboardVersion.UNKNOWN: GPIOMapTTDBv3, # default pin mapping
         }
         if cls.PCB in mapToUse:
             log.debug(f'Setting GPIOMap to {mapToUse[cls.PCB]}')
