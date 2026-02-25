@@ -29,11 +29,17 @@ class Globals:
     @classmethod
     def project_mux(cls, for_shuttle_run:str=None) -> ProjectMux:
         if cls.ProjectMux_Singleton is None:
-            from ttboard.fpga.fpga_mux import FPGAMux
-            if DemoboardDetect.CarrierVersion == DemoboardCarrier.FPGA:
-                cls.ProjectMux_Singleton = FPGAMux(cls.pins()) 
-            else:
+            # allow shuttle forcing regardless of whether this is 
+            # the FPGA breakout or not
+            if for_shuttle_run is not None or DemoboardDetect.CarrierVersion != DemoboardCarrier.FPGA:
+                # instantiate a normal ASIC project mux
                 cls.ProjectMux_Singleton = ProjectMux(cls.pins(), for_shuttle_run)
+            else:
+                # FPGA breakout and no shuttle forced, we actually need the FPGAMux class in this case
+                from ttboard.fpga.fpga_mux import FPGAMux
+                # instantiate it
+                cls.ProjectMux_Singleton = FPGAMux(cls.pins()) 
+                
         elif for_shuttle_run is not None:
             raise RuntimeError('Only expecting a shuttle on first call of Globals.project_mux')
             
