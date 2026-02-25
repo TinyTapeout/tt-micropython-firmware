@@ -137,7 +137,7 @@ def read_uo_out_byte():
 
 ###@micropython.native
 def read_clock():
-    # clock is on GPIO21
+    # clock is on GPIO16
     return ((machine.mem32[0xd0000010] & (1 << 16)) >> 16)
    
 ###@micropython.native
@@ -145,7 +145,7 @@ def write_clock(val):
     # not a huge optimization, as this is a single bit, 
     # but 5% or so counts when using the microcotb tests
     if val:
-        machine.mem32[0xd0000038] = (1 << 16) 
+        machine.mem32[0xd0000018] = (1 << 16) 
     else:
-        machine.mem32[0xd0000040] = (1 << 16)
+        machine.mem32[0xd0000020] = (1 << 16)
     
