@@ -26,16 +26,18 @@ The RP2 and this SDK, in addition to a base micropython environment, provides (f
 
 The RP2350 makes installation really simple:
 
-  * get a UF2 file, which includes OS, SDK and configuration, from the [releases](https://github.com/TinyTapeout/tt-micropython-firmware/releases), e.g. 
+  * Download anything on the filesystem that you've customized and wish to preserve (for instance, if you've customized the [config.ini](#initialization) it will be overwritten by this process)
+  
+  * Get a UF2 file, which includes OS, SDK and configuration, from the [releases](https://github.com/TinyTapeout/tt-micropython-firmware/releases), e.g. 
   tt-demo-rp2350-v3.0.0
 
   * Hold the boot button on the demo board, and connect to computer via the USB port (top right)
 
 ![demo board boot](images/etr-demoboard-bootbutton.jpg)
 
-  * Release the boot button, the RPI-RP2 drive should appear
+  * Release the boot button, the RP2350 drive should appear
   
-  * Copy over the UF2 file
+  * Copy over the UF2 file, the drive will disappear when the transfer is completed.
   
 The system will go through a little sequence on first boot and twiddle the 7-segment display.  You may connect to the device during this time, using a serial terminal (appears as /dev/ttyACM0 on my system)
 
