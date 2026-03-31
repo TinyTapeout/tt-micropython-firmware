@@ -52,7 +52,22 @@ class BitStreamIndex:
                     setattr(self, short_name, bs)
         except:
             pass
-                
+    
+    def project_index(self, project_name:str) -> int:
+        if self.is_available(project_name):
+            for kint, name in self._streams_by_id.items():
+                if project_name == name:
+                    return kint
+        
+        return None
+    
+    
+    def project_name(self, from_address:int) -> str:
+        if from_address in self._streams_by_id:
+            return self._streams_by_id[from_address]
+        
+        return None
+    
     def is_available(self, name:str):
         return  name in self._streams_by_name
     
