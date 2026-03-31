@@ -185,7 +185,7 @@ class DesignIndex(Serializable):
                     loaded_project = self.deserialize_design_by_name(serialized_fpath, project_name)
                 
                 if loaded_project is None:
-                    raise AttributeError(f'Unknown project') 
+                    raise AttributeError(f'Unknown project ({project_name})') 
                 setattr(self, loaded_project.name, loaded_project)
                 return loaded_project
         try:
