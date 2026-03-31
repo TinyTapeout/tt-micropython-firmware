@@ -2,15 +2,26 @@ name: UF2 Generate and Release
 
 on:
   push:
-    branches: [ ttdbv3 ] 
+    tags: [ 'v*' ]
   workflow_dispatch:   # Allows manual triggering
 
 jobs:
   build-micropython:
     env:
-      TT_RUNS_SUPPORTED: "unknown tt08 tt09 ttihp0p1 ttihp0p2 ttihp0p3 ttihp25a ttihp25b ttcad25a ttsky25a ttsky25b ttgf0p1 ttgf0p2"
+      TT_RUNS_SUPPORTED: "unknown tt08 ttihp0p2 tt09 ttihp25a ttihp0p3 ttcad25a ttihp25b ttsky25a ttgf0p1 ttsky25b ttgf0p2"
     runs-on: ubuntu-latest
     steps:
+      - name: Determine version name
+        id: version
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            # Fallback when running on branch (e.g. ttdbv3) or manual trigger
+            VERSION="${{ github.ref_name }}-dev-${GITHUB_SHA::8}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Using version: $VERSION"
       - name: Checkout MicroPython repository
         uses: actions/checkout@v4
         with:
@@ -53,7 +64,7 @@ jobs:
              cp src/config.ini fsroot
              cp -r src/examples fsroot
              cp -r bitstreams fsroot
-             echo "version=${{github.ref_name}}" > fsroot/VERSION
+             echo "version=${{ steps.version.outputs.version }}" > fsroot/VERSION
              echo "revision=$GITHUB_SHA" >> fsroot/VERSION
              
       - name: Set up Python
@@ -107,18 +118,18 @@ jobs:
     
       - name: Build the final UF2
         run: |
-             python -m uf2utils.examples.custom_pico --family rp2350-arm-s --block_count 512 --fs_offset 0x10200000 --fs_root sdk_repo/fsroot --upython micropython/ports/rp2/build-tt_rp2350_board/firmware.uf2 --out /tmp/tt-demo-rp2350-${{  github.ref_name }}.uf2
+             python -m uf2utils.examples.custom_pico --family rp2350-arm-s --block_count 512 --fs_offset 0x10200000 --fs_root sdk_repo/fsroot --upython micropython/ports/rp2/build-tt_rp2350_board/firmware.uf2 --out /tmp/tt-demo-rp2350-${{ steps.version.outputs.version }}.uf2
 
       - name: Upload UF2 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tt-demo-rp2350-${{  github.ref_name }}.uf2
-          path: /tmp/tt-demo-rp2350-${{  github.ref_name }}.uf2
+          name: tt-demo-rp2350-${{ steps.version.outputs.version }}.uf2
+          path: /tmp/tt-demo-rp2350-${{ steps.version.outputs.version }}.uf2
           
       - name: Upload Release
         uses: ncipollo/release-action@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-            artifacts: "/tmp/tt-demo-rp2350-${{  github.ref_name }}.uf2"
+            artifacts: "tt-demo-rp2350-${{ steps.version.outputs.version }}.uf2"
             token: ${{ secrets.GITHUB_TOKEN }}
             generateReleaseNotes: true
