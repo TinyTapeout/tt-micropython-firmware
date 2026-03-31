@@ -14,11 +14,13 @@ jobs:
       - name: Determine version name
         id: version
         run: |
+          RAW_VERSION="${{ github.ref_name }}"
+          CLEAN_REF="${RAW_VERSION#v}"
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            VERSION="${{ github.ref_name }}"
+            VERSION="${CLEAN_REF}"
           else
             # Fallback when running on branch (e.g. ttdbv3) or manual trigger
-            VERSION="${{ github.ref_name }}-dev-${GITHUB_SHA::8}"
+            VERSION="${CLEAN_REF}-dev-${GITHUB_SHA::8}"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Using version: $VERSION"
