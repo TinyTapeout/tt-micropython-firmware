@@ -39,12 +39,16 @@ class BitStreamIndex:
     def __init__(self, loader, dirpath:str):
         self._dirpath = dirpath 
         self._streams_by_name = {}
+        self._streams_by_id = {}
+        pid = 0
         try:
             for f in os.listdir(dirpath):
                 if f.endswith('.bin'):
                     short_name = f.replace('.bin', '')
                     bs = BitStream(loader, f'{dirpath}/{f}', short_name)
                     self._streams_by_name[short_name] = bs
+                    self._streams_by_id[pid] = bs
+                    pid += 1
                     setattr(self, short_name, bs)
         except:
             pass
@@ -53,7 +57,20 @@ class BitStreamIndex:
         return  name in self._streams_by_name
     
     def get(self, name:str):
-        return self._streams_by_name[name]
+        try:
+            asint = int(name)
+            if asint in self._streams_by_id:
+                return self._streams_by_id[asint]
+            raise ValueError(f'Do not have a project {asint}')
+        except ValueError:
+            pass 
+        
+        if name in self._streams_by_name:
+            return self._streams_by_name[name]
+        
+        raise ValueError(f'Do not have a project "{name}"')
+            
+        
         
     def __len__(self):
         return len(list(self._streams_by_name.keys()))
@@ -77,6 +94,10 @@ class FPGAMux:
         self.design_enabled_callback = None
         self._shuttle_props = HardcodedShuttle('FPGA')
         self._design_index = None
+
+    @property 
+    def chip_ROM(self):
+        return self._shuttle_props
         
     def reset(self):
         self.enabled = None
@@ -126,6 +147,9 @@ class FPGAMux:
     
     def find(self, search:str) -> list:
         return self.projects.find(search)
+    
+    def __getitem__(self, idx:int) -> BitStream:
+        return self.get(idx)
     
     def __getattr__(self, name):
         if hasattr(self, 'projects'):
