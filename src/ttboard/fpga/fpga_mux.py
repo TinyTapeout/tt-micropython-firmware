@@ -10,11 +10,12 @@ import ttboard.log as logging
 log = logging.getLogger(__name__)
 import ttboard.fpga.fabricfoxv2 as fpgaloader
 class BitStream:
-    def __init__(self, loader, filepath:str, name:str, clock_hz:int=100):
+    def __init__(self, loader, filepath:str, name:str, project_index:int=0, clock_hz:int=100):
         self._filepath = filepath
         self._name = name
         self._loader = loader
         self._clock_hz = clock_hz
+        self._project_index = project_index
     
     @property 
     def name(self):
@@ -29,6 +30,10 @@ class BitStream:
     @property 
     def clock_hz(self):
         return self._clock_hz
+    
+    @property 
+    def project_index(self):
+        return self._project_index
     
     def __repr__(self):
         return f'<FPGA BitStream {self.name}>'
@@ -45,7 +50,7 @@ class BitStreamIndex:
             for f in os.listdir(dirpath):
                 if f.endswith('.bin'):
                     short_name = f.replace('.bin', '')
-                    bs = BitStream(loader, f'{dirpath}/{f}', short_name)
+                    bs = BitStream(loader, f'{dirpath}/{f}', short_name, project_index=pid)
                     self._streams_by_name[short_name] = bs
                     self._streams_by_id[pid] = bs
                     pid += 1
