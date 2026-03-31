@@ -15,29 +15,28 @@ from machine import Pin
 from rp2 import PIO, StateMachine, asm_pio
 import utime
 from ttboard.pins.gpio_map import GPIOMap
-from ttboard.demoboard import DemoBoard
 DoDummyClocks = True
 def pin_indices():
     '''
         returns map of pin ID (GPIO #)
     '''
     return {
-            'sck': GPIOMap.project_clock(),
-            'mosi': GPIOMap.ctrl_increment(),
-            'ss': GPIOMap.ctrl_enable(),
+            'sck': GPIOMap.MNG03, # mng03,
+            'mosi': GPIOMap.MNG00, # mng 00,
+            'ss': GPIOMap.MNG02, # mng02,
             'reset': GPIOMap.ctrl_reset()
         }
 
-def pin_objects(tt):
+def pin_objects():
     '''
         returns map of pin objects
     '''
-    tt.pins.pin_rp_projclk.init(Pin.OUT),
+    indices = pin_indices()
     return {
-            'sck': tt.pins.pin_rp_projclk,
-            'mosi': tt.pins.cinc,
-            'ss': tt.pins.cena,
-            'reset':tt.pins.ncrst
+            'sck': GPIOMap.get_raw_pin(indices['sck'], Pin.OUT),
+            'mosi': GPIOMap.get_raw_pin(indices['mosi'], Pin.OUT),
+            'ss':  GPIOMap.get_raw_pin(indices['ss'], Pin.OUT),
+            'reset':GPIOMap.get_raw_pin(indices['reset'], Pin.OUT),
         }
     
 
@@ -83,9 +82,8 @@ def spi_transferPIO(filepath: str, freq: int = 1_000_000):
         filepath (str): Path to the file to transmit.
         freq (int): SPI clock frequency in Hz (default 1 MHz).
     """
-    tt = DemoBoard.get()
     # Initialize pins
-    pins = pin_objects(tt)
+    pins = pin_objects()
     pins_idx = pin_indices()
     
     reset = pins['reset']
@@ -209,10 +207,7 @@ def spi_transferBitBang(filepath: str, freq: int = 1_000_000):
         freq (int): SPI clock frequency in Hz (default 1 MHz).
     """
     # Initialize pins
-    tt = DemoBoard.get()
-    # Initialize pins
-    pins = pin_objects(tt)
-    # pins_idx = pin_indices()
+    pins = pin_objects()
     
     reset = pins['reset']
     ss = pins['ss']

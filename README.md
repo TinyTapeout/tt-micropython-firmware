@@ -1,43 +1,43 @@
-# TT4+ MicroPython SDK v2
+# TT MicroPython SDK v3
 
-&copy; 2024 Pat Deegan, [psychogenic.com](https://psychogenic.com)
+&copy; 2024-2026 Pat Deegan, [psychogenic.com](https://psychogenic.com)
 
 This library provides the DemoBoard class, which is the primary
-entry point to all the Tiny Tapeout demo pcb's RP2040 functionality.
+entry point to all the Tiny Tapeout demo pcb's RP2 functionality.
 
-What the RP2040 and this SDK provides, in addition to a base micropython environment (from crucial to nice-to-have):
+The RP2 and this SDK, in addition to a base micropython environment, provides (from crucial to nice-to-have):
 
-  *  It provides an interface equivalent to the [Verilog project](https://github.com/TinyTapeout/tt10-verilog-template/blob/main/src/project.v) and compatible with [cocotb v2](https://www.cocotb.org/) DUTs
+  *  An interface equivalent to the [Verilog project](https://github.com/TinyTapeout/tt10-verilog-template/blob/main/src/project.v) and compatible with [cocotb v2](https://www.cocotb.org/) DUTs
   
-  *  Has a [cocotb v2](https://www.cocotb.org/) system to allow desktop @cocotb.test() functions to be used pretty much as-is, on the RP2040 with hardware in the loop, interacting with actual designs (for example, see the [factory test testbench](src/examples/tt_um_factory_test/tt_um_factory_test.py)
+  *  A simple means to select projects on the chip, e.g. `tt.shuttle.tt_um_myproject.enable()`
+
+  *  Interfaces with all the project I/O, clocking and reset that let you control those completely programatically, or clock+reset only (say, if you're connecting a PMOD like the Simon), or to be in full don't-touch mode while still being able to switch between projects
+
+  *  Abstractions related to the ASIC, so you don't *have* to use individual pins but can think in terms of *ports* (inputs, outputs and bidirectionals)
+
+  * A system to allow for configuration using a simple config.ini: options for default project loaded on boot, clock speed (both RP2 and project), settings for bidir pin directions on a per-project level, project load input pin state, etc 
+
+  *  A [cocotb v2](https://www.cocotb.org/) system to allow desktop @cocotb.test() functions to be used pretty much as-is, on the RP2 with hardware in the loop, interacting with actual designs (for example, see the [factory test testbench](src/examples/tt_um_factory_test/tt_um_factory_test.py)
   
-  *  Handles the demoboard pin multiplexing transparently (TT04 and TT05 demoboards)
-  
-  *  Allows you to forget the json config and do `tt.shuttle.tt_um_myproject.enable()` to select between projects on the chip
-
-  *  Interfaces with all the project I/O, clocking and reset, lets you control those completely programatically, or clock+reset only (say, if you're connecting a PMOD like the Simon), or to be in full don't-touch mode while still being able to switch between projects
-
-  *  Provides abstractions related to the ASIC, so you don't *have* to use individual pins but can think in terms of *ports* (inputs, outputs and bidirectionals)
-
-  * Gives a system to allow for configuration using a simple config.ini: options for default project loaded on boot, clock speed (both RP2040 and project), settings for bidir pin directions on a per-project level, project load input pin state, etc 
-
-  * Provides a REPL to muck about easily, with objects that are for the most part well behaved (dynamic attributes for each project in the shuttle, say, nice `__repr__` and `__str__` for things you'd want to look at etc)
+  * A REPL to muck about easily, with objects that are for the most part well behaved (dynamic attributes for each project in the shuttle, say, nice `__repr__` and `__str__` for things you'd want to look at etc)
 
     
 # Installation
 
-The RP2040 makes installation really simple:
+The RP2350 makes installation really simple:
 
-  * get a UF2 file, which includes OS, SDK and configuration, from the [releases](https://github.com/TinyTapeout/tt-micropython-firmware/releases), e.g. 
-  tt-demo-rp2040-v2.0.0
-
-  * Hold the boot button on the demo board, and connect to computer via the USB port (top left)
-
-![demo board boot](images/demoboard_bootbutton.jpg)
-
-  * Release the boot button, the RPI-RP2 drive should appear
+  * Download anything on the filesystem that you've customized and wish to preserve (for instance, if you've customized the [config.ini](#initialization) it will be overwritten by this process)
   
-  * Copy over the UF2 file
+  * Get a UF2 file, which includes OS, SDK and configuration, from the [releases](https://github.com/TinyTapeout/tt-micropython-firmware/releases), e.g. 
+  tt-demo-rp2350-v3.0.0
+
+  * Hold the boot button on the demo board, and connect to computer via the USB port (top right)
+
+![demo board boot](images/etr-demoboard-bootbutton.jpg)
+
+  * Release the boot button, the RP2350 drive should appear
+  
+  * Copy over the UF2 file, the drive will disappear when the transfer is completed.
   
 The system will go through a little sequence on first boot and twiddle the 7-segment display.  You may connect to the device during this time, using a serial terminal (appears as /dev/ttyACM0 on my system)
 
@@ -146,7 +146,7 @@ With a project loaded, you can interact with the project I/O using the following
   
   * uio_out, design bidirectionals (as outputs)
   
-Note that these are all named from the **ASICs** point of view, i.e. you--from the RP2040 user side--will be *writing* to the inputs (ui_in) and reading from the outputs (uo_out).
+Note that these are all named from the **ASICs** point of view, i.e. you--from the RP2 user side--will be *writing* to the inputs (ui_in) and reading from the outputs (uo_out).
 
 ```
 >>> tt.ui_in
@@ -309,6 +309,62 @@ tt.uio_in[2] = 1 # set high
 tt.mode = RPMode.ASIC_RP_CONTROL # or RPMode.SAFE etc
 ```
 
+### Filesystem Access
+
+To move files around between your computer and the micropython filesystem, [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html) is recommended.
+
+It may be installed with 
+
+```
+$ pip install --user mpremote
+```
+
+and from there, an `mpremote` command is available.
+
+To test the functionality, you can list the remote files:
+
+```
+$ mpremote fs ls
+ls :
+          65 VERSION
+           0 bitstreams/
+          85 boot.log
+        2621 config.ini
+           0 examples/
+        4022 main.py
+           0 shuttles/
+```
+
+If that fails, you may need to specify the port to connect to.  You may have a look at the available devices using
+
+```
+$ mpremote connect list
+```
+
+Then, you can combine commands
+
+```
+$ mpremote connect /dev/ttyACM0 fs ls
+```
+
+
+To copy files, the `:` is used to indicate the remote uPython FS
+
+```
+# copy config.ini from RP2 to temp
+$ mpremote fs cp :/config.ini /tmp
+
+# make changes, then copy back
+$ mpremote fs cp /tmp/config.ini :/
+```
+
+After accessing the RP2 through `mpremote`, it will be in a suspended state.  To get things going again, and for things like modifications to the config.ini to take effect, you can reboot the demoboard with
+
+```
+$ mpremote reset
+```
+
+There are many other uses and capabilities with mpremote, like mounting the FS locally and running scripts directly.  Check out the [official mpremote documentation](https://docs.micropython.org/en/latest/reference/mpremote.html) for details.
 
 # Usage
 
@@ -349,11 +405,11 @@ tt = DemoBoard.get() # whatever was in DEFAULT.mode of config.ini
 
 
 # safe mode, the default
-tt = DemoBoard(RPMode.SAFE) # all RP2040 pins are inputs
+tt = DemoBoard(RPMode.SAFE) # all RP2 pins are inputs
 
 # or: ASIC on board
 # ASIC drives the inputs (i.e. ui_in pins are OUTPUTS 
-# for the RP2040)
+# for the RP2)
 tt = DemoBoard(RPMode.ASIC_RP_CONTROL) 
 
 
@@ -515,7 +571,7 @@ The naming is read/write_u*_byte, so the available functions are
 
 
 
-### RP2040 pin objects
+### RP2 pin objects
 
 It's recommended that you stick with reading and writing values using the u* ports or the low-level platform calls, as described above.
 
@@ -551,16 +607,15 @@ If FREQUENCY is 0, PWM will stop and it will revert to simple output.  If duty c
 
 ## FPGA Breakout
 
-There is now a TT06+ demoboard compatible [FPGA ASIC Simulator](https://github.com/TinyTapeout/breakout-pcb/tree/main/ASIC-simulator/tt06-fpga-ICE40UP5k).  
+There is now a demoboard-compatible [FPGA ASIC Simulator](https://github.com/TinyTapeout/breakout-pcb/tree/nextgenv3/ASIC-simulator/ttdbv3-fpga-ICE40UP5k).  
 
-![FabricFox FPGA board](images/fpga_breakout_ondb.jpg)
+![FabricFox FPGA board](images/etr-fpga-breakout.jpg)
 
 The latest SDK should automatically detect this board and allow it to be loaded up with bitstreams directly through the tt object.
 
-
 ![FabricFox FPGA detection](images/fpga_breakout_boot.png)
 
-To use it, place suitably created bitstreams on the RP2040 filesystem, within a `/bitstreams` directory.  From there, on boot, the system will detect any files suffixed by `.bin` and allow you to load them in a manner analogous to the ASIC projects, using the `tt.shuttle` object.
+To use it, place suitably created bitstreams on the RP2 filesystem, within a `/bitstreams` directory.  From there, on boot, the system will detect any files suffixed by `.bin` and allow you to load them in a manner analogous to the ASIC projects, using the `tt.shuttle` object.
 
 ![FabricFox FPGA detection](images/fpga_breakout_shuttle.png)
 

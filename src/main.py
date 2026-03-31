@@ -101,6 +101,7 @@ print(tt)
 print()
 
 logging.dumpTicksMsDelta('boot done')
+print(f"tt.sdk_revision={tt.revision}")
 print(f"tt.sdk_version={tt.version}")
 # end by being so aggressive on collection
 gc.threshold(GCThreshold)
@@ -120,21 +121,4 @@ def run_testbench_factorytest():
     import examples.tt_um_factory_test as test 
     test.run()
     return test 
-
-def run_testbench_neptune():
-    import microcotb
-    import examples.tt_um_psychogenic_neptuneproportional as test 
-    test.run()
-    return test 
-
-# run_testbench_factorytest()
-# or
-# import examples.tt_um_psychogenic_shaman as test
-# import examples.tt_um_rejunity_sn76489 as test
-# import examples.tt_um_factory_test as test
-# import examples.tt_um_psychogenic_neptuneproportional as test 
-# dut = test.tt_um_psychogenic_neptuneproportional.DUT()
-# import examples.tt_um_rgbled_decoder as test
-# test.run()
-# from examples.basic import run
 

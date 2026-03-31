@@ -2,14 +2,11 @@
 Created on Jan 9, 2024
 
 This module provides the DemoBoard class, which is the primary
-entry point to all the RP2040 demo pcb functionality, including
+entry point to all the RP2 demo pcb functionality, including
 
     * pins (named, transparently muxed)
     * projects (all shuttle projects and means to enable)
     * basic utilities (auto clocking projects etc)
-    
-
-    
 
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
@@ -18,7 +15,6 @@ import ttboard
 import ttboard.util.time as time
 from ttboard.globals import Globals
 from ttboard.mode import RPMode
-from ttboard.pins.gpio_map import GPIOMapTT06
 from ttboard.pins.pins import Pins
 from ttboard.project_mux import Design
 from ttboard.config.user_config import UserConfig
@@ -46,7 +42,7 @@ class DemoBoard:
           
         See below.
         
-        The most obvious danger of using the RP2040 is _contention_, 
+        The most obvious danger of using the RP2 is _contention_, 
         e.g. the ASIC trying to drive out5 HIGH and the RP shorting it LOW.
         So the constructor for this class takes a mode parameter that 
         is passed to the Pins container, which must be one of the 3 modes 
@@ -104,6 +100,7 @@ class DemoBoard:
         if DemoboardDetect.CarrierVersion == DemoboardCarrier.FPGA:
             log.info(f'Demoboard hosting an FPGA, setting mode to manual inputs')
             mode = RPMode.ASIC_MANUAL_INPUTS
+            self.default_mode = mode
         else:
             if mode is not None:
                 self.default_mode = mode 
@@ -125,15 +122,14 @@ class DemoBoard:
                 'tt06': DemoboardVersion.TT06,
                 'tt07': DemoboardVersion.TT06,
                 'tt08': DemoboardVersion.TT06,
-                'tt09': DemoboardVersion.TT06,
-                'tt10': DemoboardVersion.TT06,
+                'ttDBv3': DemoboardVersion.TTDBv3,
                 
                 }
             if self.user_config.force_demoboard in versionMap:
                 log.warn(f'Demoboard detection forced to {self.user_config.force_demoboard}')
                 DemoboardDetect.force_detection(versionMap[self.user_config.force_demoboard])
             else:
-                log.error(f'Unrecognized force_demoboard setting: {self.user_config.force_demoboard}')
+                log.error(f'Unrecognized force_demoboard setting: {self.user_config.force_demoboard} ?')
             
             
             
@@ -149,9 +145,6 @@ class DemoBoard:
         self.pins.dieOnInputControlSwitchHigh = False
         self.pins.mode = pins_mode # force re-init of pins to apply new setting
         self.shuttle = Globals.project_mux(self.user_config.force_shuttle)
-        if self.shuttle.run == 'tt07':
-            GPIOMapTT06.tt07_cb_fix = True
-            self.pins.mode = pins_mode # force re-init of pins to apply new pin map
         self.pins.dieOnInputControlSwitchHigh = True
         self.pins.mode = pins_mode # force re-init of pins to apply new setting
         
@@ -188,6 +181,13 @@ class DemoBoard:
             SDK version
         '''
         return ttboard.VERSION
+    
+    @property 
+    def revision(self) -> str:
+        '''
+            SDK revision (commit)
+        '''
+        return ttboard.REVISION
     
     @property 
     def chip_ROM(self):
@@ -313,7 +313,7 @@ class DemoBoard:
         if self.is_auto_clocking:
             self.clock_project_stop()
             
-        self.pins.project_clk_driven_by_RP2040(True)
+        self.pins.project_clk_driven_by_RP2(True)
         self.clk.toggle()
         if msDelay > 0:
             time.sleep_ms(msDelay)
@@ -335,7 +335,7 @@ class DemoBoard:
             @param max_rp2040_freq: Maximum RP2040 frequency, overclocking above 133MHz allows higher clock frequencies
         '''
         if freqHz > 0:
-            self.pins.project_clk_driven_by_RP2040(True)
+            self.pins.project_clk_driven_by_RP2(True)
             
         
         if freqHz <= 0:
@@ -384,7 +384,7 @@ class DemoBoard:
             log.debug('PWM auto-clock stop')
             self.clock_project_PWM(0)
             self.clk(0) # make certain we are low
-        self.pins.project_clk_driven_by_RP2040(False)
+        self.pins.project_clk_driven_by_RP2(False)
         
     def reset_system_clock(self):
         '''
@@ -564,7 +564,7 @@ class DemoBoard:
         if projConfig.has('clock_frequency'):
             if self.mode == RPMode.ASIC_MANUAL_INPUTS:
                 log.info('In "manual inputs" mode but clock freq set--setting up for CLK/RST RP ctrl')
-                self.pins.project_clk_driven_by_RP2040(True)
+                self.pins.project_clk_driven_by_RP2(True)
             self.clock_project_PWM(projConfig.clock_frequency)
         else:
             self.clock_project_stop()
@@ -579,7 +579,7 @@ class DemoBoard:
             Prints out current state of the GPIO
         '''
         print('\n\nDemoboard status')
-        print(f'Demoboard default mode is {RPMode.to_string(self.default_mode)}')
+        print(f'Demoboard mode is {RPMode.to_string(self.mode)} (default {RPMode.to_string(self.default_mode)})')
         print(f'Project nRESET pin is {self.rst_n.mode_str} {self.rst_n()}')
         
         if self.is_auto_clocking:

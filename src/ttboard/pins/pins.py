@@ -4,8 +4,6 @@ Created on Jan 6, 2024
 Main purposes of this module are to:
 
   * provide named access to pins
-  * provide a consistent and transparent interface 
-    to standard and MUXed pins
   * provide utilities to handle logically related pins as ports (e.g. all the 
     INn pins as a list or a byte)
   * augment the machine.Pin to give us access to mode, pull etc
@@ -34,8 +32,6 @@ import ttboard.util.platform as platform
 from ttboard.pins.upython import Pin
 import ttboard.pins.gpio_map as gp
 from ttboard.pins.standard import StandardPin
-from ttboard.pins.muxed import MuxedPin, MuxedPinInfo
-from ttboard.pins.mux_control import MuxControl
 
 from ttboard.ports.io import IO as VerilogIOPort
 from ttboard.ports.oe import OutputEnable as VerilogOEPort
@@ -74,8 +70,6 @@ class Pins:
         prepending the name with "pin_", e.g.
         
             bp.pin_out1.irq(handler=whatever, trigger=Pin.IRQ_FALLING)
-        
-        Just beware if accessing the muxed pins (e.g. cinc_out3).
         
         # Named Ports and Utilities:
         In addition to single pin access, named ports are available for 
@@ -129,21 +123,10 @@ class Pins:
     PULL_DOWN = Pin.PULL_DOWN
     PULL_UP = Pin.PULL_UP
     
-    # MUX pin is especial...
-    muxName = 'hk_csb' # special pin
-    
-    
     def __init__(self, mode:int=RPMode.SAFE):
         self.dieOnInputControlSwitchHigh = True
         self._mode = None
         self._allpins = {}
-        if gp.GPIOMap.demoboard_uses_mux():
-            self.muxCtrl = MuxControl(self.muxName, gp.GPIOMap.mux_select(), Pin.OUT)
-            # special case: give access to mux control/HK nCS pin
-            self.hk_csb = self.muxCtrl.ctrlpin
-            self.pin_hk_csb = self.muxCtrl.ctrlpin.raw_pin 
-            self._allpins['hk_csb'] = self.hk_csb
-        
         self._init_ioports()
         self.mode = mode 
         
@@ -169,9 +152,6 @@ class Pins:
         
         
     
-    @property 
-    def demoboard_uses_mux(self):
-        return gp.GPIOMap.demoboard_uses_mux()
     
     @property 
     def all(self):
@@ -211,8 +191,6 @@ class Pins:
         log.debug(f'Begin inputs all with {gp.GPIOMap}')
         always_out = gp.GPIOMap.always_outputs()
         for name,gpio in gp.GPIOMap.all().items():
-            if name == self.muxName:
-                continue
             p_type = Pin.IN
             if always_out.count(name) > 0:
                 p_type = Pin.OUT
@@ -240,7 +218,6 @@ class Pins:
         log.debug('begin: SAFE')
         self.begin_inputs_all()
         self._begin_alwaysOut()
-        self._begin_muxPins()
     
     
     def begin_asiconboard(self):
@@ -260,19 +237,15 @@ class Pins:
         
         if len(unconfigured_pins):
             log.error(f'Following pins have not be set as outputs owing to contention: {",".join(unconfigured_pins)}')
-        self._begin_muxPins()
-        # needs to be after mux because reset now muxed
-        self.project_clk_driven_by_RP2040(True)
+        self.project_clk_driven_by_RP2(True)
         
     def begin_asic_manual_inputs(self):
         log.debug('begin: ASIC + MANUAL INPUTS')
         self.begin_inputs_all()
         self._begin_alwaysOut()
         # leave in* as inputs
-        self._begin_muxPins()
         # leave clk and reset as inputs, for manual operation
-        # needs to be after mux, because reset now muxed
-        self.project_clk_driven_by_RP2040(False)
+        self.project_clk_driven_by_RP2(False)
         
         
     
@@ -290,11 +263,9 @@ class Pins:
                 p = getattr(self, pname)
                 p.pull = Pin.PULL_DOWN
                 
-        self._begin_muxPins()
-        # needs to be after mux, because reset now muxed
-        self.project_clk_driven_by_RP2040(True)
+        self.project_clk_driven_by_RP2(True)
         
-    def project_clk_driven_by_RP2040(self, rpControlled:bool):
+    def project_clk_driven_by_RP2(self, rpControlled:bool):
         for pname in ['rp_projclk']:
             p = getattr(self, pname)
             if rpControlled:
@@ -302,33 +273,17 @@ class Pins:
             else:
                 p.mode = Pin.IN
                 
+    
+    def project_clk_driven_by_RP2040(self, rpControlled:bool):
+        print('project_clk_driven_by_RP2040 deprecated -- prefer project_clk_driven_by_RP2')
+        return self.project_clk_driven_by_RP2(rpControlled)
+                
             
     def _begin_alwaysOut(self):
         for pname in gp.GPIOMap.always_outputs():
             p = getattr(self, pname)
             p.mode = Pin.OUT 
-            
-    def _begin_muxPins(self):
-        if not gp.GPIOMap.demoboard_uses_mux():
-            return 
-        muxedPins = gp.GPIOMap.muxed_pairs()
-        modeMap = gp.GPIOMap.muxed_pinmode_map(self.mode)
-        for pname, muxPair in muxedPins.items():
-            log.debug(f'Creating muxed pin {pname}')
-            mp = MuxedPin(pname, self.muxCtrl, 
-                          getattr(self, pname),
-                          MuxedPinInfo(muxPair[0],
-                                       0, modeMap[muxPair[0]]),
-                          MuxedPinInfo(muxPair[1],
-                                       1, modeMap[muxPair[1]])
-                          )
-            self.muxCtrl.add_muxed(mp)
-            self._allpins[pname] = mp
-            setattr(self, muxPair[0], getattr(mp, muxPair[0]))
-            setattr(self, muxPair[1], getattr(mp, muxPair[1]))
-            # override bare pin attrib
-            setattr(self, pname, mp)
-            
+    
     # aliases
     @property 
     def clk(self):
@@ -336,18 +291,14 @@ class Pins:
     
     @property 
     def nproject_rst(self):
-        # had to munge the name because nproject_rst
-        # is now in hardware MUX group, alias
-        # allows use of old name with_underscore
         return self.nprojectrst
     
     @property 
     def ctrl_ena(self):
-        # had to munge name, now going through hw mux
         return self.cena
     
     def _dumpPin(self, p:StandardPin):
-        print(f'  {p.name} {p.mode_str} {p()}') 
+        print(f'  {p.name}[{p.gpio_num}] {p.mode_str} {p()}') 
     def dump(self):
         print(f'Pins configured in mode {RPMode.to_string(self.mode)}')
         print(f'Currently:')

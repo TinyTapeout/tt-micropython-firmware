@@ -411,16 +411,11 @@ class ProjectMux:
     def disable(self):
         log.info(f'Disable (selecting project 0)')
         self.reset_and_clock_mux(0)
-        if self.p.demoboard_uses_mux:
-            # enable admin pins through hw mux
-            self.p.muxCtrl.mode_admin() 
             
         self.p.cena(0)
         # let's stay in admin mode from here
         # so we're actually holding this ena low
         # as we were directed
-        #if self.p.demoboard_uses_mux:
-        #    self.p.muxCtrl.mode_project_IO()
         
         self.enabled = None
         
@@ -442,10 +437,6 @@ class ProjectMux:
     def reset_and_clock_mux(self, count:int):
         self.p.safe_bidir() # reset bidirectionals to safe mode
         
-        if self.p.demoboard_uses_mux:
-            # enable admin pins through hw mux
-            self.p.muxCtrl.mode_admin() 
-        
         self.reset()
         # send the number of pulses required
         for _c in range(count):
@@ -455,8 +446,6 @@ class ProjectMux:
             time.sleep_ms(1)
         
         self.p.cena(1)
-        if self.p.demoboard_uses_mux:
-            self.p.muxCtrl.mode_project_IO() 
         
     @property 
     def pins(self) -> Pins:

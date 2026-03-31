@@ -7,26 +7,27 @@ Created on Aug 30, 2024
 import ttboard.util.platform as platform
 from ttboard.pins.upython import Pin
 import ttboard.pins.gpio_map
-from ttboard.pins.gpio_map import GPIOMapTT04, GPIOMapTT06
+from ttboard.pins.gpio_map_dbv3 import GPIOMapTTDBv3
 
 import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 class DemoboardVersion:
     '''
-        Simple wrapper for an 'enum' type deal with db versions.
-        Supported are TT04/TT05 and TT06+
+        Simple wrapper for an 'enum' type deal with db versions.=
     '''
     UNKNOWN = 0
     TT04 = 1
     TT06 = 2
+    TTDBv3 = 3
     
     @classmethod 
     def to_string(cls, v:int):
         asStr = {
             cls.UNKNOWN: 'UNKNOWN',
             cls.TT04: 'TT04/TT05',
-            cls.TT06: 'TT06+'
+            cls.TT06: 'TT06+',
+            cls.TTDBv3: 'TTDBv3',
         }
         if v in asStr:
             return asStr[v]
@@ -44,31 +45,46 @@ class DemoboardDetect:
         centralizes and implements strategies for detecting
         the version of the demoboard.
         
-        Because the TT demoboards have had disruptive changes in the 
-        migration to TT06+ chips, namely in terms of 
-        GPIO mapping and the removal of the demoboard MUX,
-        and because the presence or absence of a carrier board on the
-        db can make a difference, we use a combination of strategies.
+        Breaking changes in pinouts between demoboard versions
+        have been handled here, as required, to detect the current 
+        hardware and map pins to functions in a unified manner.
         
-        TT06+ boards have a mix of pull-up/pull-downs on the ASIC mux
-        control lines, which allow detection of both:
-          * the fact this is a TT06+ demoboard; and
-          * the fact that the carrier is present
-        However, this still looks identical to TT04 for a db with 
-        no carrier inserted.
+        Starting with the release of the DB v3 "ETR", SDK 
+        support is now limited to RP2350-based boards and, as 
+        of the time of this comment, only one such board exists.
         
-        TT04 boards have an on-board MUX, so if we play with that, 
-        we should have different values showing on the ASIC mux lines.
-        If it has no impact (this pin is mapped to project reset, so 
-        it shouldn't unless a project is selected--so this is only assured
-        to work on powerup)
+        In order to allow for future potentially breaking modifications,
+        without disruption to existing code, the functionality remains 
+        here, even if in a degenerate form that currently does very little
+        in regards to detecting the DB version.
         
+        However the probing job is also used to see what is populated atop
+        the demoboard, and running the probe will also populate
+        
+            DemoboardDetect.CarrierPresent (boolean)
+        and
+            DemoboardDetect.CarrierVersion 
+        one of
+            DemoboardCarrier.UNKNOWN 
+            DemoboardCarrier.TT_CARRIER   # an ASIC
+            DemoboardCarrier.FPGA         # FPGA breakout
+            
+
         This class has:
          a probe() method, to encapsulate all the action,
          PCB, CarrierPresent class attribs to hold the results
-         
-         
-    
+        
+        Recommended start-up for scripts is thus of the form
+        
+            from ttboard.boot.demoboard_detect import DemoboardDetect
+            from ttboard.demoboard import DemoBoard
+            
+            tt = None # will hold our SDK handle
+            if DemoboardDetect.probe():
+                print(f' Yay {DemoboardDetect.PCB_str()} db detected')
+                tt = DemoBoard.get()
+            
+            # ...
     '''
     PCB = DemoboardVersion.UNKNOWN
     CarrierPresent = None 
@@ -79,65 +95,48 @@ class DemoboardDetect:
     def PCB_str(cls):
         return DemoboardVersion.to_string(cls.PCB)
     
-    @classmethod 
-    def probe_pullups(cls):
-        cena_pin = GPIOMapTT06.get_raw_pin(GPIOMapTT06.ctrl_enable(), Pin.IN)
-        # cinc_pin = GPIOMapTT06.get_raw_pin(GPIOMapTT06.ctrl_increment(), Pin.IN)
-        crst_pin = GPIOMapTT06.get_raw_pin(GPIOMapTT06.ctrl_reset(), Pin.IN)
+    @classmethod
+    def probe_rp2350(cls):
+        if not platform.IsRP2350:
+            return False 
         
-        crst = crst_pin()
-        cena = cena_pin()
+        # check for FPGA board
+        fpga_detect_pin = GPIOMapTTDBv3.get_raw_pin(GPIOMapTTDBv3.MNG07, Pin.IN)
         
-        
-        if (not crst) and (not cena):
-            log.debug("ctrl mux lines pulled to indicate TT06+ carrier present--tt06+ db")
-            log.info("TT06+ demoboard with carrier present")
-            cls.PCB = DemoboardVersion.TT06
-            cls.CarrierPresent = True
-            cls.CarrierVersion = DemoboardCarrier.TT_CARRIER
-            return True
-        
-        if (crst) and (not cena):
-            log.info("ctrl mux lines pulled to indicate TT06+ compatible FPGA board")
-            cls.PCB = DemoboardVersion.TT06
+        # mng 7 pulled high?
+        if fpga_detect_pin():
             cls.CarrierPresent = True
             cls.CarrierVersion = DemoboardCarrier.FPGA
             return True
             
         
-        if crst and cena:
-            log.info("probing ctrl mux lines gives no info, unable to determine db version")
-            log.warn("TT04 demoboard OR TT06 No carrier present")
-            cls.PCB = DemoboardVersion.UNKNOWN
-            cls.CarrierPresent = None
+        # check for standard carrier
+        cena_pin = GPIOMapTTDBv3.get_raw_pin(GPIOMapTTDBv3.ctrl_enable(), Pin.IN)
+        crst_pin = GPIOMapTTDBv3.get_raw_pin(GPIOMapTTDBv3.ctrl_reset(), Pin.IN)
         
-        return False
+        crst = crst_pin()
+        cena = cena_pin()
         
-    @classmethod 
-    def probe_tt04mux(cls):
-        mux_pin = GPIOMapTT04.get_raw_pin(GPIOMapTT04.mux_select(), Pin.OUT)
-        cena_pin = GPIOMapTT04.get_raw_pin(GPIOMapTT04.ctrl_enable(), Pin.IN)
-        cinc_pin = GPIOMapTT04.get_raw_pin(GPIOMapTT04.ctrl_increment(), Pin.IN)
-        crst_pin = GPIOMapTT04.get_raw_pin(GPIOMapTT04.ctrl_reset(), Pin.IN)
-        
-        mux_pin(0)
-        mux_0 = [cena_pin(), cinc_pin(), crst_pin()]
-        
-        mux_pin(1)
-        mux_1 = [cena_pin(), cinc_pin(), crst_pin()]
-        if mux_1 != mux_0:
-            log.info("DB seems to have on-board MUX: TT04+")
-            cls.PCB = DemoboardVersion.TT04
+        if (not crst) and (not cena):
+            log.debug("ctrl lines pulled to indicate TT carrier present on board")
+            log.info("TTDBv3 demoboard with carrier present")
+            cls.CarrierPresent = True
             cls.CarrierVersion = DemoboardCarrier.TT_CARRIER
             return True
         
-        log.debug("Mux twiddle has no effect, probably not TT04 db")
-        return False
+        
+        cls.CarrierVersion = DemoboardCarrier.UNKNOWN
+        return False 
+    
+    
     @classmethod 
     def rp_all_inputs(cls):
         log.debug("Setting all RP GPIO to INPUTS")
         pins = []
-        for i in range(29):
+        num_io = 30
+        if platform.IsRP2350:
+            num_io = 41
+        for i in range(num_io):
             pins.append(platform.pin_as_input(i, Pin.PULL_DOWN))
             
         return pins
@@ -146,19 +145,16 @@ class DemoboardDetect:
     def probe(cls):
         result = False
         cls.rp_all_inputs()
-        if cls.probe_tt04mux():
-            cls._configure_gpiomap()
-            result = True 
-        elif cls.probe_pullups():
-            cls._configure_gpiomap()
-            result = True 
+        if platform.IsRP2350:
+            cls.PCB = DemoboardVersion.TTDBv3
+            if cls.probe_rp2350():
+                result = True
         else:
-            log.debug("Neither pullup nor tt04mux tests conclusive, assuming TT06+ board")
-            cls.PCB = DemoboardVersion.TT06
-            cls._configure_gpiomap()
-            result = False
+            cls.PCB = DemoboardVersion.UNKNOWN
         
-        # clear out boot prefix
+        # always configure gpio map to _something_
+        cls._configure_gpiomap()
+        
         return result
     
     @classmethod
@@ -169,16 +165,14 @@ class DemoboardDetect:
     @classmethod 
     def _configure_gpiomap(cls):
         mapToUse = {
-            
-            DemoboardVersion.TT04: GPIOMapTT04,
-            DemoboardVersion.TT06: GPIOMapTT06
-            
-            }
+            DemoboardVersion.TTDBv3: GPIOMapTTDBv3,
+            DemoboardVersion.UNKNOWN: GPIOMapTTDBv3, # default pin mapping
+        }
         if cls.PCB in mapToUse:
             log.debug(f'Setting GPIOMap to {mapToUse[cls.PCB]}')
             ttboard.pins.gpio_map.GPIOMap = mapToUse[cls.PCB]
         else:
-            raise RuntimeError('Cannot set GPIO map')
+            raise RuntimeError(f'Cannot set GPIO map: this SDK is does not support {DemoboardVersion.to_string(cls.PCB)} demoboards')
             
         
     

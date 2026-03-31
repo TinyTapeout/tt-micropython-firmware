@@ -1,95 +1,124 @@
 name: UF2 Generate and Release
+
 on:
-  workflow_dispatch:
   push:
+    branches: [ ttdbv3 ] 
+  workflow_dispatch:   # Allows manual triggering
+
 jobs:
-  create-release:
+  build-micropython:
     env:
-      RPOS_UF2FILE: RPI_PICO-20241025-v1.24.0.uf2
-      TT_RUNS_SUPPORTED: "unknown tt04 tt05 tt06 tt07 tt08"
-    runs-on: ubuntu-24.04
+      TT_RUNS_SUPPORTED: "unknown tt08 ttihp0p2 tt09 ttihp25a ttihp0p3 ttcad25a ttihp25b ttsky25a ttgf0p1 ttsky25b ttgf0p2"
+    runs-on: ubuntu-latest
     steps:
-
-    - name: checkout repo
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-        path: sdk
-
-    - name: Download stock MicroPython UF2
-      run: wget -O /tmp/rp2-pico.uf2 "https://micropython.org/resources/firmware/$RPOS_UF2FILE"
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-        cache: 'pip'
-
-    - name: Move ucocotb
-      run: |
-           cp -r $GITHUB_WORKSPACE/sdk/microcotb/src/microcotb $GITHUB_WORKSPACE/sdk/src
-    
-    - name: Get shuttle indices
-      run: |
-           mkdir $GITHUB_WORKSPACE/sdk/src/shuttles
-           for chip in $TT_RUNS_SUPPORTED; do wget -O $GITHUB_WORKSPACE/sdk/src/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=repo,address,commit,clock_hz,title,danger_level"; done
-    - name: Prepare shuttle bin files
-      run: |
-           cp -R $GITHUB_WORKSPACE/sdk/src $GITHUB_WORKSPACE/sdk/convwork
-           RUNPATH="$GITHUB_WORKSPACE/sdk/convwork:$PYTHONPATH"
-           echo "Path is $RUNPATH"
-           for chip in $TT_RUNS_SUPPORTED; do PYTHONPATH=$RUNPATH python3 $GITHUB_WORKSPACE/sdk/bin/serialize_shuttle.py $GITHUB_WORKSPACE/sdk/src/shuttles/$chip.json; done
-    
-    - name: Run PyTests
-      run: |
-           pip install pytest
-           RUNPATH="$GITHUB_WORKSPACE/sdk/convwork:$PYTHONPATH"
-           cd $GITHUB_WORKSPACE/sdk/test
-           for chip in $TT_RUNS_SUPPORTED; do PYTHONPATH=$RUNPATH pytest --shuttle $chip --shuttlepath $GITHUB_WORKSPACE/sdk/src/shuttles test_serialized_shuttle.py; done
-
-    - name: Build the final UF2
-      run: |
-           pip install uf2utils
-           touch $GITHUB_WORKSPACE/sdk/src/release_${{  github.ref_name }}
-           python -m uf2utils.examples.custom_pico --fs_root $GITHUB_WORKSPACE/sdk/src --upython /tmp/rp2-pico.uf2 --out /tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2
-    
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: tt-demo-board-firmware
-        path: /tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2
-    
-    - name: Upload Release
-      uses: ncipollo/release-action@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-          artifacts: "/tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          generateReleaseNotes: true
-
-  simulate:
-    runs-on: ubuntu-24.04
-    needs: create-release
-    steps:
-      - name: Checkout
+      - name: Checkout MicroPython repository
         uses: actions/checkout@v4
-
-      - name: Download UF2
-        uses: actions/download-artifact@v4
         with:
-          name: tt-demo-board-firmware
-          path: /tmp
+          repository: micropython/micropython
+          path: micropython
+          submodules: recursive  # Initialize submodules
 
-      - name: Copy UF2 to workspace
+      - name: Checkout custom board definition
+        uses: actions/checkout@v4
+        with:
+          repository: psychogenic/tinytapeout_rp2350b
+          path: tt_rp2350_board
+
+      - name: Checkout SDK repository (current repo)
+        uses: actions/checkout@v4
+        with:
+          path: sdk_repo
+          submodules: recursive  # Initialize submodules
+      
+      - name: Create custom modules directories for freezing
         run: |
-          cp /tmp/tt-demo-rp2040-${{  github.ref_name }}.uf2 $GITHUB_WORKSPACE/release.uf2
+          mkdir -p micropython/ports/rp2/modules/ttboard
+          mkdir -p micropython/ports/rp2/modules/microcotb
 
-      - name: Run a Wokwi CI server
-        uses: wokwi/wokwi-ci-server-action@v1
+      - name: Copy SDK modules to freeze
+        run: |
+          cp -r sdk_repo/src/ttboard/* micropython/ports/rp2/modules/ttboard/
+          cp -r sdk_repo/microcotb/src/microcotb/* micropython/ports/rp2/modules/microcotb/
 
-      - name: Test with Wokwi
-        uses: wokwi/wokwi-ci-action@v1
+      - name: Copy custom board definition
+        run: |
+          cp -r tt_rp2350_board/ micropython/ports/rp2/boards/
+
+      - name: Prepare FS root
+        working-directory: sdk_repo
+        run: |
+             mkdir fsroot
+             mkdir fsroot/shuttles
+             cp src/main.py fsroot
+             cp src/config.ini fsroot
+             cp -r src/examples fsroot
+             cp -r bitstreams fsroot
+             echo "version=${{github.ref_name}}" > fsroot/VERSION
+             echo "revision=$GITHUB_SHA" >> fsroot/VERSION
+             
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          token: ${{ secrets.WOKWI_CLI_TOKEN }}
-          path: /
-          expect_text: 'boot done:'
+          python-version: '3.10'
+          cache: 'pip'
+      
+      
+      - name: Get shuttle indices
+        working-directory: sdk_repo
+        run: |
+             for chip in $TT_RUNS_SUPPORTED; do wget -O fsroot/shuttles/$chip.json "https://index.tinytapeout.com/$chip.json?fields=repo,address,commit,clock_hz,title,danger_level"; done
+      - name: Prepare shuttle bin files
+        working-directory: sdk_repo
+        run: |
+             cp -R src convwork
+             cp -R microcotb/src/microcotb convwork/
+             RUNPATH="$GITHUB_WORKSPACE/sdk_repo/convwork:$PYTHONPATH"
+             echo "Path is $RUNPATH"
+             for chip in $TT_RUNS_SUPPORTED; do PYTHONPATH=$RUNPATH python3 $GITHUB_WORKSPACE/sdk_repo/bin/serialize_shuttle.py $GITHUB_WORKSPACE/sdk_repo/fsroot/shuttles/$chip.json; done
+
+      - name: Install dependencies and toolchain
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential git cmake gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+          pip install uf2utils
+      - name: Build mpy-cross compiler
+        working-directory: ./micropython
+        run: make -C mpy-cross
+      
+      - name: Create custom manifest.py for freezing SDK modules
+        run: |
+          cat << EOF > micropython/ports/rp2/modules/manifest.py
+          # Custom manifest to freeze the ttboard SDK modules
+          # Include the default port manifest first
+          include("\$(PORT_DIR)/manifest.py")
+
+          # Freeze the ttboard package (recursively includes all .py files)
+          package("ttboard")
+          package("microcotb")
+          EOF
+
+      - name: Build firmware for custom board
+        working-directory: ./micropython/ports/rp2
+        run: |
+          make clean
+          make submodules
+          make -j$(nproc) BOARD=tt_rp2350_board
+          
+    
+      - name: Build the final UF2
+        run: |
+             python -m uf2utils.examples.custom_pico --family rp2350-arm-s --block_count 512 --fs_offset 0x10200000 --fs_root sdk_repo/fsroot --upython micropython/ports/rp2/build-tt_rp2350_board/firmware.uf2 --out /tmp/tt-demo-rp2350-${{  github.ref_name }}.uf2
+
+      - name: Upload UF2 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tt-demo-rp2350-${{  github.ref_name }}.uf2
+          path: /tmp/tt-demo-rp2350-${{  github.ref_name }}.uf2
+          
+      - name: Upload Release
+        uses: ncipollo/release-action@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+            artifacts: "/tmp/tt-demo-rp2350-${{  github.ref_name }}.uf2"
+            token: ${{ secrets.GITHUB_TOKEN }}
+            generateReleaseNotes: true

@@ -4,14 +4,14 @@ Created on Jan 22, 2024
 @author: Pat Deegan
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
-from ttboard.util.platform import IsRP2040
+from ttboard.util.platform import IsRP2
 import ttboard.util.colors as colors 
 import ttboard.util.time as time
 import gc 
 RPLoggers = dict()
 DefaultLogLevel = 20 # info by default
 LoggingPrefix = 'BOOT'
-if IsRP2040:
+if IsRP2:
     # no logging support, add something basic
     DEBUG   = 10
     INFO    = 20

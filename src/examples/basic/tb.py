@@ -82,8 +82,9 @@ async def test_clockcycles(dut:DUT):
     
     
     dut._log.info(f"Total sim 'runtime': {get_sim_time('ms')}ms")
-    
-@cocotb.test()
+
+
+@cocotb.test(timeout_time=100, timeout_unit='ms')
 async def test_multiclocks(dut:DUT):
     # start up a clock, on the clk signal
     clock = Clock(dut.clk, 10, units="us")

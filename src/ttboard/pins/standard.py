@@ -5,10 +5,10 @@ Created on Jan 23, 2024
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 '''
 
-from ttboard.util.platform import IsRP2040
+from ttboard.util.platform import IsRP2
 from ttboard.pins.upython import Pin
 
-if IsRP2040:
+if IsRP2:
     import machine
 
 import ttboard.log as logging
@@ -106,7 +106,7 @@ class StandardPin:
         
         log.debug(f"Setting PWM on {self.name} to {freq}Hz")
         
-        if IsRP2040:
+        if IsRP2:
             self._pwm = machine.PWM(self.raw_pin)
         else:
             log.warn('Not on RP2040--no PWM')
