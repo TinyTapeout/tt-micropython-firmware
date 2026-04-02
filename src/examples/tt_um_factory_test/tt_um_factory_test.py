@@ -123,6 +123,33 @@ async def test_will_skip(dut):
     dut._log.info("This should not be output!")
 
 
+@cocotb.test()
+async def test_input_mirror(dut):
+    clock = Clock(dut.clk, 10, units="us")
+    cocotb.start_soon(clock.start())
+    dut.uio_oe_pico.value = 0 # all inputs on our side
+    
+    dut.ui_in.value = 0
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 10)
+
+    # leave RESET low for this mode
+
+    dut._log.info("Testing input mirror ")
+    in_value = 0
+    for i in range(8):
+        in_value |= (1<<i)
+        dut.ui_in.value = in_value
+        await ClockCycles(dut.clk, 1)
+        
+        assert dut.uo_out.value == in_value, f"uo_out != {in_value}"
+        assert dut.uio_out.value == in_value, f"uio_out != {in_value}"
+        
+    dut.ui_in.value = 0
+    
+        
+    
+    
 def main():
     import ttboard.cocotb.dut
     
@@ -152,3 +179,8 @@ def main():
     dut._log.info(f"enabled factory test project.  Will test with {runner}")
     
     runner.test(dut)
+    
+    # show the user we're still running factory test
+    tt.mode = RPMode.ASIC_RP_CONTROL
+    tt.clock_project_PWM(15)
+    tt.ui_in_value = 1
