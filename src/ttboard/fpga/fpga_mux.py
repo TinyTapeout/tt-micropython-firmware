@@ -74,7 +74,7 @@ class BitStreamIndex:
         return None
     
     def is_available(self, name:str):
-        return  name in self._streams_by_name
+        return name in self._streams_by_name
     
     def get(self, name:str):
         try:
@@ -90,10 +90,25 @@ class BitStreamIndex:
         
         raise ValueError(f'Do not have a project "{name}"')
             
+    
+    @property 
+    def all(self):
+        '''
+            all available projects (bitstreams) in the shuttle
+        '''
+        return list(self._streams_by_id.values())
         
+    
+    def find(self, search:str) -> list:
+        results = []
+        for nm, bs in self._streams_by_name:
+            if nm.find(search) >= 0:
+                results.append(bs)
+        
+        return results
         
     def __len__(self):
-        return len(list(self._streams_by_name.keys()))
+        return len(self._streams_by_name)
     
 
 class FPGAMux:
@@ -149,6 +164,12 @@ class FPGAMux:
         return 'FPGA'
     
     
+    @property 
+    def factory_test(self) -> BitStream:
+        try:
+            return self.tt_um_factory_test
+        except:
+            return None
             
     @property
     def projects(self):
