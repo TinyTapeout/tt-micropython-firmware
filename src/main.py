@@ -119,6 +119,13 @@ def run_testbench_basic():
 def run_testbench_factorytest():
     import microcotb
     import examples.tt_um_factory_test as test 
-    test.run()
-    return test 
-
+    runner = test.run()
+    err_msgs = []
+    for atest in runner.tests_to_run.values():
+        if atest.failed:
+            err_msgs.append(f'{atest.name} failed: {atest.failed_msg}')
+    if len(err_msgs):
+        err_str = "\n\t".join(err_msgs)
+        print(f'{len(err_msgs)}/{len(runner.tests_to_run)} test failures:\n\t{err_str}')
+        print()
+    return test
