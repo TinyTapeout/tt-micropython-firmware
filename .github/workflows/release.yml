@@ -18,12 +18,15 @@ jobs:
           CLEAN_REF="${RAW_VERSION#v}"
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             VERSION="${CLEAN_REF}"
+            VERSION_NAME="v${VERSION}"
           else
             # Fallback when running on branch (e.g. ttdbv3) or manual trigger
             VERSION="${CLEAN_REF}-dev-${GITHUB_SHA::8}"
+            VERSION_NAME="dev-${GITHUB_SHA::8}"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Using version: $VERSION"
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "Using version: $VERSION ($VERSION_NAME)"
       - name: Checkout MicroPython repository
         uses: actions/checkout@v4
         with:
@@ -120,18 +123,18 @@ jobs:
     
       - name: Build the final UF2
         run: |
-             python -m uf2utils.examples.custom_pico --family rp2350-arm-s --block_count 512 --fs_offset 0x10200000 --fs_root sdk_repo/fsroot --upython micropython/ports/rp2/build-tt_rp2350_board/firmware.uf2 --out /tmp/tt-demo-rp2350-${{ steps.version.outputs.version }}.uf2
+             python -m uf2utils.examples.custom_pico --family rp2350-arm-s --block_count 512 --fs_offset 0x10200000 --fs_root sdk_repo/fsroot --upython micropython/ports/rp2/build-tt_rp2350_board/firmware.uf2 --out /tmp/tt-demo-rp2350-${{ steps.version.outputs.version_name }}.uf2
 
       - name: Upload UF2 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tt-demo-rp2350-${{ steps.version.outputs.version }}.uf2
-          path: /tmp/tt-demo-rp2350-${{ steps.version.outputs.version }}.uf2
+          name: tt-demo-rp2350-${{ steps.version.outputs.version_name }}.uf2
+          path: /tmp/tt-demo-rp2350-${{ steps.version.outputs.version_name }}.uf2
           
       - name: Upload Release
         uses: ncipollo/release-action@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-            artifacts: "/tmp/tt-demo-rp2350-${{ steps.version.outputs.version }}.uf2"
+            artifacts: "/tmp/tt-demo-rp2350-${{ steps.version.outputs.version_name }}.uf2"
             token: ${{ secrets.GITHUB_TOKEN }}
             generateReleaseNotes: true
