@@ -11,6 +11,11 @@ jobs:
       TT_RUNS_SUPPORTED: "unknown tt08 ttihp0p2 tt09 ttihp25a ttihp0p3 ttcad25a ttihp25b ttsky25a ttgf0p1 ttsky25b ttgf0p2"
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout with full history and tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # Required to access all tags
+          fetch-tags: true      # Ensures tags are fetched
       - name: Determine version name
         id: version
         run: |
@@ -21,8 +26,10 @@ jobs:
             VERSION_NAME="v${VERSION}"
           else
             # Fallback when running on branch (e.g. ttdbv3) or manual trigger
-            VERSION="${CLEAN_REF}-dev-${GITHUB_SHA::8}"
-            VERSION_NAME="dev-${GITHUB_SHA::8}"
+            # Get the most recent tag in the entire repository
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            VERSION="${LATEST_TAG#v}"
+            VERSION_NAME="${CLEAN_REF}-v${VERSION}-dev-${GITHUB_SHA::8}"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
