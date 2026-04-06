@@ -13,6 +13,9 @@ import ttboard.log as logging
 log = logging.getLogger(__name__)
 
 def exercise_factory_test():
+    # we re-use the sample factory test and 
+    # have all the functionality in one place.
+    # job here is to provide an error output the commander expects.
     import microcotb
     import examples.tt_um_factory_test as test 
     runner = test.run()
