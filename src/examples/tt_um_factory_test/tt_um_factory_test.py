@@ -16,6 +16,11 @@ from microcotb.utils import get_sim_time
 gc.collect()
 
 
+# some tests are just samples or optional
+# skip them by setting SkipUnrequired True
+SkipUnrequired = True
+
+
 # get the detected @cocotb tests into a namespace
 # so we can load multiple such modules
 cocotb.set_runner_scope(__name__)
@@ -45,31 +50,9 @@ async def test_loopback(dut):
     for i in range(256):
         dut.uio_in.value = i
         await ClockCycles(dut.clk, 1)
-        assert dut.uo_out.value == i, f"uio value unstable {dut.uio_out.value} != {i}"
+        assert dut.uo_out.value == i, f"uo_out ({dut.uo_out.value}) != ui_in {i} ({dut.uio_in.value})"
 
     dut._log.info("test_loopback passed")
-
-
-@cocotb.test(timeout_time=100, timeout_unit='us', expect_fail=True, skip=True)
-@cocotb.parametrize(
-    clk_period=[10,125], 
-    timer_t=[101, 200])
-async def test_timeout(dut, clk_period:int, timer_t:int):
-    clock = Clock(dut.clk, clk_period, units="us")
-    cocotb.start_soon(clock.start())
-    # will timeout before the timer expires, hence expect_fail=True above
-    await Timer(timer_t, 'us')
-    
-@cocotb.test(expect_fail=True, skip=True)
-async def test_should_fail(dut):
-    
-    dut._log.info("Will fail with msg")
-
-    assert dut.rst_n.value == 0, f"rst_n ({dut.rst_n.value}) == 0"
-
-
-
-
 
 
 @cocotb.test()
@@ -92,7 +75,7 @@ async def test_counter(dut):
 
     dut._log.info("Testing counter")
     for i in range(256):
-        assert dut.uo_out.value == dut.uio_out.value, f"uo_out != uio_out"
+        assert dut.uo_out.value == dut.uio_out.value, f"uo_out ({dut.uo_out.value}) != uio_out ({dut.uio_out.value})"
         assert int(dut.uo_out.value) == i, f"uio value not incremented correctly {dut.uio_out.value} != {i}"
         await ClockCycles(dut.clk, 1)
         
@@ -133,7 +116,40 @@ async def test_project_reset(dut):
     
     dut._log.info("reset test passed")
     
-@cocotb.test(skip=True)
+
+
+@cocotb.test()
+async def test_input_mirror(dut):
+    clock = Clock(dut.clk, 2, units="us")
+    cocotb.start_soon(clock.start())
+    dut.uio_oe_pico.value = 0 # all inputs on our side
+    
+    dut.ui_in.value = 0
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 10)
+
+    # leave RESET low for this mode
+    # fact test: assign uo_out  = ~rst_n ? ui_in : ui_in[0] ? cnt : uio_in;
+    # uo_out: in reset, mirrors ui_in 
+    # uo_out: not reset, either counts or mirrors uio_in (bidir in)
+    dut._log.info("Testing input mirror ")
+    in_value = 0
+    for i in range(8):
+        in_value |= (1<<i)
+        dut.ui_in.value = in_value
+        await ClockCycles(dut.clk, 2)
+        
+        assert dut.uo_out.value == in_value, f"uo_out ({dut.uo_out.value}) != {in_value}"
+        
+    dut.ui_in.value = 0
+    
+        
+    
+@cocotb.test(skip=SkipUnrequired)
+async def test_will_skip(dut):
+    dut._log.info("This should not be output!")
+
+@cocotb.test(skip=SkipUnrequired)
 async def test_edge_triggers(dut):
     dut._log.info("Start")
 
@@ -158,39 +174,24 @@ async def test_edge_triggers(dut):
     dut._log.info("test_edge_triggers passed")
 
 
-
-@cocotb.test(skip=True)
-async def test_will_skip(dut):
-    dut._log.info("This should not be output!")
-
-
-@cocotb.test()
-async def test_input_mirror(dut):
-    clock = Clock(dut.clk, 2, units="us")
+@cocotb.test(timeout_time=100, timeout_unit='us', expect_fail=True, skip=SkipUnrequired)
+@cocotb.parametrize(
+    clk_period=[10,125], 
+    timer_t=[101, 200])
+async def test_timeout(dut, clk_period:int, timer_t:int):
+    clock = Clock(dut.clk, clk_period, units="us")
     cocotb.start_soon(clock.start())
-    dut.uio_oe_pico.value = 0 # all inputs on our side
+    # will timeout before the timer expires, hence expect_fail=True above
+    await Timer(timer_t, 'us')
     
-    dut.ui_in.value = 0
-    dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
+@cocotb.test(expect_fail=True, skip=SkipUnrequired)
+async def test_should_fail(dut):
+    
+    dut._log.info("Will fail with msg")
 
-    # leave RESET low for this mode
-    # fact test: assign uo_out  = ~rst_n ? ui_in : ui_in[0] ? cnt : uio_in;
-    # uo_out: in reset, mirrors ui_in 
-    # uo_out: not reset, either counts or mirrors uio_in (bidir in)
-    dut._log.info("Testing input mirror ")
-    in_value = 0
-    for i in range(8):
-        in_value |= (1<<i)
-        dut.ui_in.value = in_value
-        await ClockCycles(dut.clk, 2)
-        
-        assert dut.uo_out.value == in_value, f"uo_out != {in_value} ({dut.uo_out.value})"
-        
-    dut.ui_in.value = 0
-    
-        
-    
+    assert dut.rst_n.value == 0, f"rst_n ({dut.rst_n.value}) == 0"
+
+
     
 def main():
     import ttboard.cocotb.dut
