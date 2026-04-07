@@ -115,7 +115,7 @@ def write_uio_outputenable(val):
     valH = (val & 0x80) >> 7
     
     # TODO: CHECK
-    machine.mem32[0xd0000030] = (machine.mem32[0xd0000030] & ((1 << 26) - 1)) | valL
+    machine.mem32[0xd0000030] = (machine.mem32[0xd0000030] & 0x01ffffff) | valL
     machine.mem32[0xd0000034] = (machine.mem32[0xd0000034] & 0xfffffffe) | valH
                                  
 ###@micropython.native
