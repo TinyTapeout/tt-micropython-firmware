@@ -127,6 +127,7 @@ class Pins:
         self.dieOnInputControlSwitchHigh = True
         self._mode = None
         self._allpins = {}
+        self._subtile_address_pin_names = []
         self._init_ioports()
         self.mode = mode 
         
@@ -185,6 +186,16 @@ class Pins:
             self.ui_in.byte_write = None 
             self.uio_in.byte_write = None
             
+    def subtile_addresspin_add(self, pin_name:str):
+        self._subtile_address_pin_names.append(pin_name)
+        gp.GPIOMap.SubTileAddressPins[:] = self._subtile_address_pin_names
+        
+    def subtile_addresspins_clear(self):
+        if not len(self._subtile_address_pin_names):
+            return 
+        self._subtile_address_pin_names = []
+        gp.GPIOMap.SubTileAddressPins[:] = []
+        
         
     def begin_inputs_all(self):
         

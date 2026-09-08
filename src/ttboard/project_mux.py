@@ -537,13 +537,20 @@ class ProjectMux:
             log.error("Can't enable a 'GROUP'")
             return 
         
+        # clearout any subtile address pins
+        self.pins.subtile_addresspins_clear()
+        
         if design.type == DesignType.SUBTILE:
             if not design.subtile_bits:
                 log.error("Have a subtile with no subtile_bits? abort")
                 return False 
             
             for i in range(design.subtile_bits):
-                uio_pin = getattr(self.pins, f'uio{i}')
+                subtileaddr_pin_name = f'uio{i}'
+                # register this as a reserved-for-subtile pin
+                self.pins.subtile_addresspin_add(subtileaddr_pin_name)
+                # set it to output
+                uio_pin = getattr(self.pins, subtileaddr_pin_name)
                 uio_pin.mode = Pin.OUT 
             
             log.info(f'Setting subtile address to {design.subtile_address}')

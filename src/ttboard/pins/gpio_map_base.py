@@ -7,6 +7,10 @@ Created on Jan 27, 2026
 from ttboard.pins.upython import Pin
 
 class GPIOMapBase:
+    # SubTileAddressPins -- names of all pins used to hold
+    # subtile address.  These are to be appended to the 
+    # "always_out" array
+    SubTileAddressPins = []
     
     @classmethod 
     def project_clock(cls):
@@ -30,11 +34,15 @@ class GPIOMapBase:
     
     @classmethod 
     def always_outputs(cls):
+        # list of pins that should always be output
+        # regardless of mode.  This is board dependent
+        # but also includes pins we don't wish to play 
+        # with when selecting subtiles
         return [
             # 'nproject_rst',
             # 'rp_projclk', -- don't do this during "safe" operation
             #'ctrl_ena'
-        ]
+        ] + cls.SubTileAddressPins 
     
     @classmethod
     def default_pull(cls, pin):
