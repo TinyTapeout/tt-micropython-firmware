@@ -68,7 +68,7 @@ class GPIOMapTTDBv3Alpha(GPIOMapBase):
             'cinc',
             'cena',
             'ncrst'
-        ]
+        ] + cls.SubTileAddressPins
     @classmethod 
     def all(cls):
         retDict = cls.all_common()
@@ -169,6 +169,10 @@ class GPIOMapTTDBv3(GPIOMapBase):
     
     @classmethod 
     def always_outputs(cls):
+        # list of pins that should always be output
+        # regardless of mode.  This is board dependent
+        # but also includes pins we don't wish to play 
+        # with when selecting subtiles
         return [
             'rp_led',
             'mng00',
@@ -178,7 +182,7 @@ class GPIOMapTTDBv3(GPIOMapBase):
             'cena',
             'ncrst',
             'analog_current_source'
-        ]
+        ] + cls.SubTileAddressPins
         
         
     @classmethod
